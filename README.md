@@ -1,18 +1,44 @@
-# React + Vite
+# IBKR Данъчен Калкулатор
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Уеб приложение за изчисляване на данъци от IBKR Activity Statement (CSV).
 
-Currently, two official plugins are available:
+## 🚀 Стартиране
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+## 🏗️ Build
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+```bash
+npm run build
+```
 
-Note: This will impact Vite dev & build performances.
+## 🧰 Стек
 
-## Expanding the ESLint configuration
+React + Vite + MUI
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🌐 Deploy
+
+Проектът използва GitHub Actions за автоматичен deploy към GitHub Pages при push към основния branch.
+
+## 🧪 Демо
+
+* Използвайте бутона **„Зареди демо“** в приложението
+* Или качете собствен IBKR Activity Statement (CSV)
+
+## ⚠️ Важно
+
+Приложението е с информативен характер и не представлява данъчен съвет.
+Проверете резултатите преди подаване към НАП.
+
+## 🔒 Поверителност
+
+* Данните се обработват локално в браузъра
+* Не се съхраняват и не се изпращат към сървър
+* Не се използват cookies или проследяване
+
+## 📄 License
+
+MIT

@@ -10,6 +10,10 @@ import Disclaimer from './content/Disclaimer.jsx'
 import TermsContent from './content/TermsContent.jsx'
 import Dropzone from './components/Dropzone.jsx'
 import DataTable from './components/DataTable.jsx'
+import TaxApp5 from './components/TaxApp5.jsx'
+import TaxApp13 from './components/TaxApp13.jsx'
+import TaxApp8Holdings from './components/TaxApp8Holdings.jsx'
+import TaxApp8Dividends from './components/TaxApp8Dividends.jsx'
 import './App.css'
 
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true'
@@ -164,8 +168,22 @@ export default function App() {
           {result && (
             <>
               <Disclaimer />
+
               <DataTable title="Сделки" data={result.trades} countLabel="сделки" />
-              <DataTable title="Позиции" data={result.holdings} countLabel="позиции" />
+
+              <DataTable title="Отворени позиции" data={result.holdings} countLabel="позиции" />
+
+              {result.dividends.rows.length > 0 && (
+                <>
+                  <DataTable title="Дивиденти" data={result.dividends} countLabel="плащания" />
+                </>
+              )}
+              
+              <TaxApp5  summary={result.taxSummary.app5} />
+              <TaxApp8Holdings data={result.taxSummary.app8Holdings} />
+              <TaxApp8Dividends data={result.taxSummary.app8Dividends} />
+              <TaxApp13 summary={result.taxSummary.app13} />
+
               {DEV_MODE && (
                 <div className="output">
                   <div className="output-header">

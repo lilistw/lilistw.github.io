@@ -60,18 +60,20 @@ function CellContent({ col, value }) {
   )
 }
 
-export default function DataTable({ title, data, countLabel }) {
+export default function DataTable({ title, data, countLabel, embedded = false }) {
   const [expanded, setExpanded] = useState(false)
   const { columns, rows } = data
   const visible = expanded ? rows : rows.slice(0, PREVIEW_ROWS)
   const hidden = rows.length - PREVIEW_ROWS
 
   return (
-    <Box sx={{ mb: 3 }}>
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-        <Typography variant="subtitle1" fontWeight={700}>{title}</Typography>
-        <Chip label={rows.length} size="small" color="primary" />
-      </Box>
+    <Box sx={{ mb: embedded ? 0 : 3 }}>
+      {!embedded && (
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
+          <Typography variant="subtitle1" fontWeight={700}>{title}</Typography>
+          <Chip label={rows.length} size="small" color="primary" />
+        </Box>
+      )}
 
       <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
         <Table size="small">

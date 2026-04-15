@@ -32,12 +32,12 @@
 }
 .app-header::before {
   width: 500px; height: 500px;
-  background: radial-gradient(circle, rgba(22,163,74,0.12) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(37,99,235,0.12) 0%, transparent 70%);
   top: -220px; left: -60px;
 }
 .app-header::after {
   width: 360px; height: 360px;
-  background: radial-gradient(circle, rgba(22,163,74,0.08) 0%, transparent 70%);
+  background: radial-gradient(circle, rgba(37,99,235,0.08) 0%, transparent 70%);
   top: -140px; right: 40px;
 }
 
@@ -146,7 +146,7 @@
   border: 2px dashed var(--green-border);
   border-radius: 12px;
   padding: 40px 24px;
-  background: rgba(223, 248, 233, 0.95);
+  background: var(--green-bg);
   transition: background 0.15s, border-color 0.15s;
   margin-bottom: 24px;
   display: flex;
@@ -157,7 +157,7 @@
 }
 
 .dropzone:hover {
-  background: rgba(216, 244, 226, 1);
+  background: var(--green-light);
   border-color: var(--green);
 }
 
@@ -753,7 +753,7 @@
 .footer-copy {
   margin-top: 8px;
   font-size: 12px;
-  color: #888;
+  color: var(--text-muted);
 }
 
 .footer-links {

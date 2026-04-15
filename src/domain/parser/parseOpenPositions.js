@@ -4,7 +4,7 @@
  * @param {string[][]} rows - 2D array from PapaParse
  * @returns {object[]} normalized holdings
  */
-export function parseOpenPositions(rows) {
+export function parseOpenPositions(rows, instrumentInfo = {}) {
   const isIBKR = rows.some(r => r[0] === 'Statement' && r[1] === 'Data')
   if (!isIBKR) {
     throw new Error('Файлът не е валиден IBKR Activity Statement.')
@@ -28,23 +28,29 @@ export function parseOpenPositions(rows) {
 
   const dataRows = rows
     .filter(r => r[0] === 'Open Positions' && r[1] === 'Data' && r[2] === 'Summary')
-    .map(r => ({
-      assetCategory: r[colIndex['Asset Category']],
-      currency: r[colIndex['Currency']],
-      symbol: r[colIndex['Symbol']],
-      quantity: parseNumber(r[colIndex['Quantity']]),
-      multiplier: parseNumber(r[colIndex['Mult']]),
-      costPrice: parseNumber(r[colIndex['Cost Price']]),
-      costBasis: parseNumber(r[colIndex['Cost Basis']]),
-      closePrice: parseNumber(r[colIndex['Close Price']]),
-      value: parseNumber(r[colIndex['Value']]),
-      unrealizedPL: parseNumber(r[colIndex['Unrealized P/L']]),
-      code: (r[colIndex['Code']] || '').trim(),
-    }))
+    .map(r => {
+      const symbol = r[colIndex['Symbol']]
+      const info = instrumentInfo[symbol] || {}
+      return {
+        assetCategory: r[colIndex['Asset Category']],
+        currency: r[colIndex['Currency']],
+        symbol,
+        country:     info.countryName || info.country || '',
+        quantity:    parseNumber(r[colIndex['Quantity']]),
+        multiplier:  parseNumber(r[colIndex['Mult']]),
+        costPrice:   parseNumber(r[colIndex['Cost Price']]),
+        costBasis:   parseNumber(r[colIndex['Cost Basis']]),
+        closePrice:  parseNumber(r[colIndex['Close Price']]),
+        value:       parseNumber(r[colIndex['Value']]),
+        unrealizedPL: parseNumber(r[colIndex['Unrealized P/L']]),
+        code: (r[colIndex['Code']] || '').trim(),
+      }
+    })
 
   return {
     columns: [
       { key: 'symbol',       label: 'Символ',             bold: true },
+      { key: 'country',      label: 'Държава' },
       { key: 'assetCategory',label: 'Категория' },
       { key: 'currency',     label: 'Валута' },
       { key: 'quantity',     label: 'Количество',         align: 'right', mono: true, decimals: 4 },
