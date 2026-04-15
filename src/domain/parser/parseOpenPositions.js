@@ -26,7 +26,7 @@ export function parseOpenPositions(rows) {
     return Number.isFinite(parsed) ? parsed : null
   }
 
-  return rows
+  const dataRows = rows
     .filter(r => r[0] === 'Open Positions' && r[1] === 'Data' && r[2] === 'Summary')
     .map(r => ({
       assetCategory: r[colIndex['Asset Category']],
@@ -41,4 +41,20 @@ export function parseOpenPositions(rows) {
       unrealizedPL: parseNumber(r[colIndex['Unrealized P/L']]),
       code: (r[colIndex['Code']] || '').trim(),
     }))
+
+  return {
+    columns: [
+      { key: 'symbol',       label: 'Символ',             bold: true },
+      { key: 'assetCategory',label: 'Категория' },
+      { key: 'currency',     label: 'Валута' },
+      { key: 'quantity',     label: 'Количество',         align: 'right', mono: true, decimals: 4 },
+      { key: 'multiplier',   label: 'Множител',           align: 'right', mono: true, decimals: 2 },
+      { key: 'costPrice',    label: 'Цена',               align: 'right', mono: true, decimals: 4 },
+      { key: 'costBasis',    label: 'База',               align: 'right', mono: true, decimals: 2 },
+      { key: 'closePrice',   label: 'Крайна',             align: 'right', mono: true, decimals: 4 },
+      { key: 'value',        label: 'Стойност',           align: 'right', mono: true, decimals: 2 },
+      { key: 'unrealizedPL', label: 'Нереализирана P/L',  align: 'right', mono: true, decimals: 2, pnl: true, nullAs: '—' },
+    ],
+    rows: dataRows,
+  }
 }

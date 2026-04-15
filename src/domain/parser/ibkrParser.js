@@ -28,12 +28,11 @@ export function parseTrades(rows) {
     colIndex[headerRow[i].trim()] = i
   }
 
-  return rows
+  const dataRows = rows
     .filter(r => r[0] === 'Trades' && r[1] === 'Data' && r[2] === 'Order')
     .map(r => {
       const qty = parseFloat(r[colIndex['Quantity']])
       const dateTime = r[colIndex['Date/Time']] || ''
-      // Date/Time format: "2025-12-11, 13:55:15" — take date part only
       const date = dateTime.split(',')[0].trim()
 
       return {
@@ -51,4 +50,19 @@ export function parseTrades(rows) {
         code: (r[colIndex['Code']] || '').trim(),
       }
     })
+
+  return {
+    columns: [
+      { key: 'date',       label: 'Дата',             mono: true },
+      { key: 'symbol',     label: 'Символ',           bold: true },
+      { key: 'type',       label: 'Тип',              chip: true, chipColors: { BUY: 'primary', SELL: 'secondary' } },
+      { key: 'currency',   label: 'Валута' },
+      { key: 'quantity',   label: 'Количество',       align: 'right', mono: true, decimals: 4 },
+      { key: 'price',      label: 'Цена',             align: 'right', mono: true, decimals: 4 },
+      { key: 'fee',        label: 'Такса',            align: 'right', mono: true, decimals: 4 },
+      { key: 'proceeds',   label: 'Постъпления',      align: 'right', mono: true, decimals: 2 },
+      { key: 'realizedPL', label: 'Реализирана П/З',  align: 'right', mono: true, decimals: 2, pnl: true, zeroAs: '—' },
+    ],
+    rows: dataRows,
+  }
 }
