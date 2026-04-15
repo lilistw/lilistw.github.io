@@ -1,23 +1,23 @@
 import { Box, Card, CardContent, Typography } from '@mui/material'
-import { FiFileText, FiTrendingUp, FiShield } from 'react-icons/fi'
+import { ArticleOutlined, ShieldOutlined, TrendingUp } from '@mui/icons-material'
 
 const cards = [
   {
-    icon: <FiFileText size={20} aria-hidden="true" />,
+    icon: <ArticleOutlined fontSize="small" />,
     title: 'За какво служи',
     text: 'Обработва Activity Statement от IBKR и изчислява облагаемите доходи от акции за годишната данъчна декларация.',
     color: 'primary.main',
     bg: 'rgba(22,163,74,0.07)',
   },
   {
-    icon: <FiTrendingUp size={20} aria-hidden="true" />,
+    icon: <TrendingUp fontSize="small" />,
     title: 'Метод',
     text: 'Среднопретеглена цена на придобиване по символ с конвертиране в BGN по курс на БНБ за датата на всяка сделка.',
     color: 'secondary.main',
     bg: 'rgba(79,70,229,0.07)',
   },
   {
-    icon: <FiShield size={20} aria-hidden="true" />,
+    icon: <ShieldOutlined fontSize="small" />,
     title: 'Поверителност',
     text: 'Всичко се изпълнява в браузъра ви. Никакви данни не се качват или съхраняват.',
     color: 'warning.main',

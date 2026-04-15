@@ -3,7 +3,7 @@ import {
   Alert, Box, Button, Checkbox, Dialog, DialogContent, DialogTitle,
   FormControlLabel, IconButton, Link, Typography,
 } from '@mui/material'
-import { FiCheck, FiCopy, FiGithub, FiInfo, FiMail, FiX } from 'react-icons/fi'
+import { Check, Close, ContentCopy, GitHub, InfoOutlined, EmailOutlined } from '@mui/icons-material'
 import { processFile } from './services/processFile.js'
 import AboutSection from './content/AboutSection.jsx'
 import Disclaimer from './content/Disclaimer.jsx'
@@ -23,7 +23,7 @@ function CopyButton({ text }) {
   }
   return (
     <IconButton size="small" onClick={handleCopy} title="Копирай JSON" color={copied ? 'success' : 'default'}>
-      {copied ? <FiCheck size={16} aria-hidden="true" /> : <FiCopy size={16} aria-hidden="true" />}
+      {copied ? <Check fontSize="small" /> : <ContentCopy fontSize="small" />}
     </IconButton>
   )
 }
@@ -34,7 +34,7 @@ function TermsModal({ onClose }) {
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         Условия за ползване
         <IconButton size="small" onClick={onClose} aria-label="Затвори">
-          <FiX size={16} aria-hidden="true" />
+          <Close fontSize="small" />
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
@@ -185,17 +185,17 @@ export default function App() {
       <footer className="app-footer">
         <div className="footer-links">
           <a href="https://github.com/lilistw/ibkr-tax-app" target="_blank" rel="noopener noreferrer" className="footer-link">
-            <FiGithub size={16} aria-hidden="true" />
+            <GitHub sx={{ fontSize: 16 }} />
             GitHub
           </a>
           <span className="footer-sep">·</span>
           <a href="mailto:lili.st.work@gmail.com" className="footer-link">
-            <FiMail size={16} aria-hidden="true" />
+            <EmailOutlined sx={{ fontSize: 16 }} />
             Контакти
           </a>
           <span className="footer-sep">·</span>
           <button className="footer-link footer-btn" onClick={() => setShowTerms(true)}>
-            <FiInfo size={16} aria-hidden="true" />
+            <InfoOutlined sx={{ fontSize: 16 }} />
             Условия&nbsp;за&nbsp;ползване
           </button>
         </div>

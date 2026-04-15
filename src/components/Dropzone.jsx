@@ -1,9 +1,9 @@
 import { useState, useRef } from 'react'
 import {
-  Box, Button, Dialog, DialogContent, DialogTitle, IconButton,
+  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
   Link, Typography,
 } from '@mui/material'
-import { FiUploadCloud, FiFileText, FiX, FiInfo } from 'react-icons/fi'
+import { ArticleOutlined, Close, CloudUpload, InfoOutlined } from '@mui/icons-material'
 
 export default function Dropzone({ file, fileUrl, onFileSelect, onClearFile, onLoadDemo }) {
   const [showInfo, setShowInfo] = useState(false)
@@ -46,18 +46,18 @@ export default function Dropzone({ file, fileUrl, onFileSelect, onClearFile, onL
         {file ? (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
             <Link href={fileUrl} download={file.name} aria-label="Свали файл" color="primary" sx={{ display: 'flex' }}>
-              <FiFileText size={32} aria-hidden="true" />
+              <ArticleOutlined sx={{ fontSize: 32 }} />
             </Link>
             <Link href={fileUrl} download={file.name} underline="hover" color="text.primary" sx={{ fontWeight: 600, fontSize: 14 }}>
               {file.name}
             </Link>
             <IconButton size="small" onClick={handleClearFile} aria-label="Премахни файл" sx={{ ml: 'auto' }}>
-              <FiX size={18} aria-hidden="true" />
+              <Close fontSize="small" />
             </IconButton>
           </Box>
         ) : (
           <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1.5 }}>
-            <FiUploadCloud className="dropzone-icon" size={32} aria-hidden="true" />
+            <CloudUpload className="dropzone-icon" sx={{ fontSize: 32 }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
               <Typography variant="body2" color="text.secondary">
                 Пуснете IBKR Activity Statement CSV тук
@@ -67,7 +67,7 @@ export default function Dropzone({ file, fileUrl, onFileSelect, onClearFile, onL
                 onClick={() => setShowInfo(true)}
                 aria-label="Информация за Activity Statement"
               >
-                <FiInfo size={15} aria-hidden="true" />
+                <InfoOutlined sx={{ fontSize: 15 }} />
               </IconButton>
             </Box>
             <Box sx={{ display: 'flex', gap: 1 }}>
@@ -94,17 +94,21 @@ export default function Dropzone({ file, fileUrl, onFileSelect, onClearFile, onL
         <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
           Как да изтеглите Activity Statement
           <IconButton size="small" onClick={() => setShowInfo(false)} aria-label="Затвори">
-            <FiX size={16} aria-hidden="true" />
+            <Close fontSize="small" />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
-          <ol>
+        <DialogContent sx={{ pt: 1, pb: 0 }}>
+          <ol style={{ margin: 0, paddingLeft: 20 }}>
             <li>Влезте в Client Portal на Interactive Brokers</li>
-            <li>Отидете на Performance&nbsp;&amp;&nbsp;Reports &gt; Statements &gt; Activity&nbsp;Statement</li>
-            <li>Изберете желания период &mdash; "Annual"</li>
+            <li>Отидете на Performance&nbsp;&amp;&nbsp;Reports &gt; Statements</li>
+            <li>Изберете Activity&nbsp;Statement</li>
+            <li>Във формата изберете желания период &mdash; "Annual"</li>
             <li>Генерирайте и изтеглете CSV файла</li>
           </ol>
         </DialogContent>
+        <DialogActions sx={{ px: 3, py: 2 }}>
+          <Button autoFocus variant="contained" onClick={() => setShowInfo(false)}>Затвори</Button>
+        </DialogActions>
       </Dialog>
     </>
   )

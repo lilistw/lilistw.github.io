@@ -7,12 +7,23 @@ const theme = createTheme({
     warning:   { main: '#d97706' },  // amber
     error:     { main: '#dc2626' },
     success:   { main: '#16a34a' },
+    background: {
+      default: '#f1f5f9',  // slate-100 — page background
+      paper:   '#ffffff',  // white — cards, tables, dialogs
+    },
   },
   typography: {
     fontFamily: 'system-ui, "Segoe UI", Roboto, sans-serif',
   },
   shape: { borderRadius: 8 },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        body: {
+          backgroundColor: '#f1f5f9',
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: { textTransform: 'none', fontWeight: 600 },

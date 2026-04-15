@@ -3,7 +3,7 @@ import {
   Box, Button, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Typography,
 } from '@mui/material'
-import { FiChevronDown, FiChevronUp } from 'react-icons/fi'
+import { ExpandLess, ExpandMore } from '@mui/icons-material'
 
 const PREVIEW_ROWS = 5
 
@@ -104,7 +104,7 @@ export default function DataTable({ title, data, countLabel }) {
             size="small"
             variant="text"
             onClick={() => setExpanded(e => !e)}
-            endIcon={expanded ? <FiChevronUp /> : <FiChevronDown />}
+            endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
           >
             {expanded ? 'Скрий' : `Покажи всички ${hidden} скрити ${countLabel}`}
           </Button>
