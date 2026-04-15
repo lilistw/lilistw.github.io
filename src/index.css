@@ -1,0 +1,86 @@
+:root {
+  --text:          #475569;
+  --text-h:        #0f172a;
+  --bg:            #f1f5f9;
+  --bg-surface:    #ffffff;
+  --border:        #e2e8f0;
+  --code-bg:       #f8fafc;
+
+  /* Green */
+  --green:         #16a34a;
+  --green-light:   #bbf7d0;
+  --green-bg:      #f0fdf4;
+  --green-border:  #86efac;
+
+  /* Indigo */
+  --indigo:        #4f46e5;
+  --indigo-light:  #c7d2fe;
+  --indigo-bg:     #eef2ff;
+  --indigo-border: #a5b4fc;
+
+  /* Amber */
+  --amber:         #d97706;
+  --amber-light:   #fde68a;
+  --amber-bg:      #fffbeb;
+  --amber-border:  #fcd34d;
+
+  /* Teal */
+  --teal:          #0d9488;
+  --teal-bg:       #f0fdfa;
+  --teal-border:   #5eead4;
+
+  /* Aliases used throughout */
+  --accent:        var(--green);
+  --accent-light:  var(--green-light);
+  --accent-bg:     var(--green-bg);
+  --accent-border: var(--green-border);
+
+  --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 4px 12px rgba(0,0,0,0.06);
+  --shadow-lg: 0 4px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.12);
+
+  --sans:    system-ui, 'Segoe UI', Roboto, sans-serif;
+  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
+  --mono:    ui-monospace, Consolas, monospace;
+
+  font: 18px/145% var(--sans);
+  letter-spacing: 0.18px;
+  color-scheme: light;
+  color: var(--text);
+  background: var(--bg);
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+
+  @media (max-width: 1024px) { font-size: 16px; }
+}
+
+body { margin: 0; }
+
+#root {
+  width: 1126px;
+  max-width: 100%;
+  margin: 0 auto;
+  min-height: 100svh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  background: var(--bg-surface);
+  border-inline: 1px solid var(--border);
+}
+
+h1, h2, h3 {
+  font-family: var(--heading);
+  font-weight: 600;
+  color: var(--text-h);
+}
+
+h1 {
+  font-size: 48px;
+  letter-spacing: -1.6px;
+  margin: 0;
+  @media (max-width: 1024px) { font-size: 32px; }
+}
+
+h2 { font-size: 22px; letter-spacing: -0.2px; margin: 0 0 8px; }
+p  { margin: 0; }
