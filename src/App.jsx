@@ -179,8 +179,8 @@ export default function App() {
           </a>
           <span className="footer-sep">·</span>
           <button className="footer-link footer-btn" onClick={() => setShowTerms(true)}>
-            <FiInfo style={{ marginRight: 6 }} />
-            Условия за ползване
+            <FiInfo size={16} aria-hidden="true" />
+            Условия&nbsp;за&nbsp;ползване
           </button>
         </div>
         <hr></hr>
