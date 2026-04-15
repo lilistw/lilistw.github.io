@@ -109,6 +109,13 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  margin-bottom: 0;
+}
+
+.about-card-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-bottom: 14px;
 }
 
@@ -121,7 +128,7 @@
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.07em;
-  margin: 0 0 8px;
+  margin: 0;
 }
 
 .about-card--green  h2 { color: var(--green); }
@@ -420,6 +427,30 @@
   transition: background 0.15s, color 0.15s;
 }
 .modal-close:hover { background: #fee2e2; color: #dc2626; border-color: #fca5a5; }
+
+.modal-footer {
+  display: flex;
+  justify-content: flex-end;
+  gap: 12px;
+  padding-top: 16px;
+  border-top: 1px solid var(--border);
+}
+
+.modal-close-btn {
+  padding: 10px 16px;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: transparent;
+  color: var(--text);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.modal-close-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+}
 
 .modal-body {
   overflow-y: auto;

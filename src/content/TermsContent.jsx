@@ -1,4 +1,4 @@
-export default function TermsContent() {
+export default function TermsContent({ onClose }) {
   return (
     <>
       <section>
@@ -74,6 +74,12 @@ export default function TermsContent() {
         <h3>Контакт</h3>
         <p>За въпроси, свързани с Приложението, Потребителят може да се свърже с разработчика чрез предоставените в приложението контакти.</p>
       </section>
+
+      <div className="modal-footer">
+        <button className="modal-close-btn" onClick={onClose}>
+          Затвори
+        </button>
+      </div>
     </>
   )
 }
