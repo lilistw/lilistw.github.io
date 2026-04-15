@@ -588,3 +588,9 @@
   font-size: inherit;
   font-family: inherit;
 }
+
+.footer-copy {
+  margin-top: 8px;
+  font-size: 12px;
+  color: #888;
+}
