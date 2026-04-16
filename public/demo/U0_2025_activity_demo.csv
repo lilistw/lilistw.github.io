@@ -82,11 +82,11 @@ Open Positions,Total,,Stocks,EUR,,,,,6148.00,6428.00,280.00,
 Open Positions,Data,Summary,Stocks,USD,GOOG,3,1,2480.00,7440.00,2560.00,7680.00,240.00,
 Open Positions,Data,Summary,Stocks,USD,AAPL,15,1,175.00,2625.00,186.50,2797.50,172.50,
 Open Positions,Data,Summary,Stocks,USD,NFLX,8,1,520.00,4160.00,535.00,4280.00,120.00,
-Open Positions,Total,,Stocks,USD,,,,,14225.00,14757.50,532.50,
-Open Positions,Total,,Stocks,EUR,,,,,20373.00,21185.50,812.50,
+Open Positions,Data,Summary,Stocks,USD,AMZN,8,1,520.00,4160.00,535.00,4280.00,120.00,
+Open Positions,Total,,Stocks,USD,,,,,18385.00,19037.50,652.50,
+Open Positions,Total,,Stocks,EUR,,,,,24533.00,25465.50,932.50,
 Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,C. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
 Trades,Data,Order,Stocks,EUR,VWCE,"2025-10-15, 09:30:00",12,142.50,143.50,-1710.00,-1.50,1710.00,0.00,30.00,O
-Trades,Data,Order,Stocks,EUR,VWCE,"2025-11-20, 14:15:00",8,143.50,145.00,-1148.00,-1.00,1150.00,0.00,40.00,O
 Trades,Data,Order,Stocks,EUR,SAP,"2025-10-22, 10:45:00",8,147.50,148.00,-1180.00,-1.20,1181.20,0.00,60.00,O
 Trades,Data,Order,Stocks,EUR,SAP,"2025-11-30, 15:30:00",4,148.75,149.00,-595.00,-0.80,595.80,0.00,54.00,O
 Trades,Data,Order,Stocks,EUR,IWDA,"2025-09-08, 08:00:00",12,186.50,189.00,-2238.00,-1.80,2239.80,0.00,84.00,O
@@ -150,6 +150,20 @@ Financial Instrument Information,Data,Stocks,IWDA,ISHARES CORE MSCI WORLD ETF,33
 Financial Instrument Information,Data,Stocks,GOOG,ALPHABET INC-CL C,44444444,US02079K1079,GOOG,NASDAQ,1,COMMON,
 Financial Instrument Information,Data,Stocks,AAPL,APPLE INC,55555555,US0378331005,AAPL,NASDAQ,1,COMMON,
 Financial Instrument Information,Data,Stocks,NFLX,NETFLIX INC,66666666,US64110L1061,NFLX,NASDAQ,1,COMMON,
+Financial Instrument Information,Data,Stocks,AMZN,AMAZON.COM INC,3691937,US0231351067,AMZN,NASDAQ,1,COMMON,
+Interest,Header,Currency,Date,Description,Amount
+Interest,Data,EUR,2025-10-31,Credit Interest on Cash Balances,3.20
+Interest,Data,EUR,2025-11-30,Credit Interest on Cash Balances,8.50
+Interest,Data,EUR,2025-12-31,Credit Interest on Cash Balances,9.10
+Interest,Data,USD,2025-11-30,Credit Interest on Cash Balances,1.80
+Interest,Data,USD,2025-12-31,Credit Interest on Cash Balances,2.40
+Interest,Data,Total,,,20.80
+Interest,Data,Total,,,4.20
+Interest,Data,Total in EUR,,,24.46
+Interest Accruals,Header,Currency,Starting Accrual Balance,Interest Accrued,Accrual Reversal,FX Translation,Ending Accrual Balance,Code
+Interest Accruals,Data,Base Currency Summary,0.00,24.46,-24.12,0.19,0.53,
+Interest Accruals,Data,EUR,0.00,20.80,-20.80,0.00,0.00,
+Interest Accruals,Data,USD,0.00,4.20,-3.72,0.19,0.67,
 Codes,Header,Code,Meaning,Code (Cont.),Meaning (Cont.)
 Codes,Data,A,Assignment
 Codes,Data,AFx,AutoFX conversion resulting from trading

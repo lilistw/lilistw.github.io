@@ -5,7 +5,7 @@ const cards = [
   {
     icon: <ArticleOutlined fontSize="small" />,
     title: 'За какво служи',
-    text: 'Обработва Activity Statement от IBKR и изчислява облагаемите доходи от акции за годишната данъчна декларация.',
+    text: 'Обработва Activity Statement от IBKR и изчислява облагаемите доходи от продажба на акции и от дивиденти за годишната данъчна декларация.',
     color: 'primary.main',
     bg: 'rgba(22,163,74,0.07)',
   },

@@ -43,7 +43,8 @@ const theme = createTheme({
           letterSpacing: '0.06em',
           backgroundColor: '#f8fafc',
           color: '#475569',
-          whiteSpace: 'nowrap',
+          whiteSpace: 'normal',
+          lineHeight: 1.3,
         },
         body: {
           fontSize: 13,

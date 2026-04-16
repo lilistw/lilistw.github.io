@@ -6,9 +6,9 @@ export default function TaxApp8Dividends({ data }) {
   return (
     <TaxFormSection
       title="Приложение №8 – Част III"
-      subtitle="Дължим окончателен данък (чл. 38 ЗДДФЛ) за дивиденти от чужбина"
+      subtitle="Определяне на дължимия окончателен данък по чл. 38 от ЗДДФЛ за доходи от източници в чужбина на местни физически лица"
     >
-      <DataTable data={data} countLabel="записа" embedded />
+      <DataTable title="Дължим данък за дивиденти от чужбина" data={data} countLabel="записа" embedded />
     </TaxFormSection>
   )
 }

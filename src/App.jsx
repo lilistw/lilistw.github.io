@@ -1,9 +1,9 @@
 import { useState, useEffect } from 'react'
 import {
   Alert, Box, Button, Checkbox, Dialog, DialogContent, DialogTitle,
-  FormControlLabel, IconButton, Link, Typography,
+  FormControlLabel, IconButton, Link, Tab, Tabs, Typography,
 } from '@mui/material'
-import { Check, Close, ContentCopy, GitHub, InfoOutlined, EmailOutlined } from '@mui/icons-material'
+import { Check, Close, ContentCopy, GitHub, InfoOutlined, LinkedIn } from '@mui/icons-material'
 import { processFile } from './services/processFile.js'
 import AboutSection from './content/AboutSection.jsx'
 import Disclaimer from './content/Disclaimer.jsx'
@@ -45,6 +45,82 @@ function TermsModal({ onClose }) {
         <TermsContent onClose={onClose} />
       </DialogContent>
     </Dialog>
+  )
+}
+
+function TabPanel({ children, value, index }) {
+  return value === index ? <Box sx={{ pt: 2 }}>{children}</Box> : null
+}
+
+function ResultTabs({ result, jsonText }) {
+  const [tab, setTab] = useState(0)
+  const hasDividends = result.dividends.rows.length > 0
+  const hasInterest  = result.interest.rows.length > 0
+
+  const tabs = [
+    { label: 'Сделки' },
+    { label: 'Позиции и Дивиденти' },
+    ...(hasInterest  ? [{ label: 'Лихви' }]     : []),
+    ...(DEV_MODE     ? [{ label: 'Dev' }]        : []),
+  ]
+
+  let idx = 0
+  const TAB_TRADES    = idx++
+  const TAB_HOLDINGS  = idx++
+  const TAB_INTEREST  = hasInterest  ? idx++ : -1
+  const TAB_DEV       = DEV_MODE     ? idx++ : -1
+
+  return (
+    <Box sx={{ mt: 2 }}>
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}
+      >
+        {tabs.map((t, i) => <Tab key={i} label={t.label} />)}
+      </Tabs>
+
+      {/* Сделки: trades table + Прил. №5 (taxable) + Прил. №13 (EU ETF, untaxable) */}
+      <TabPanel value={tab} index={TAB_TRADES}>
+        <DataTable title="Trades – IBKR" data={result.trades} countLabel="сделки" />
+        <TaxApp5  summary={result.taxSummary.app5} />
+        <TaxApp13 summary={result.taxSummary.app13} />
+      </TabPanel>
+
+      {/* Позиции: holdings table + Прил. №8 Part I */}
+      <TabPanel value={tab} index={TAB_HOLDINGS}>
+        <DataTable title="Open Positions – IBKR" data={result.holdings} countLabel="позиции" />
+        <TaxApp8Holdings data={result.taxSummary.app8Holdings} />
+        {/* Дивиденти: dividends table + Прил. №8 Part III */}
+        {hasDividends && (
+          <TaxApp8Dividends data={result.taxSummary.app8Dividends} />
+        )}
+      </TabPanel>
+
+      {/* Лихви: interest payments table */}
+      {hasInterest && (
+        <TabPanel value={tab} index={TAB_INTEREST}>
+          <DataTable title="Лихви" data={result.interest} countLabel="плащания" />
+        </TabPanel>
+      )}
+
+      {/* Dev: raw JSON */}
+      {DEV_MODE && (
+        <TabPanel value={tab} index={TAB_DEV}>
+          <div className="output">
+            <div className="output-header">
+              <span className="output-count">
+                JSON <span className="output-pill">{result.trades.rows.length + result.holdings.rows.length}</span>
+              </span>
+              <CopyButton text={jsonText} />
+            </div>
+            <pre className="json-output">{jsonText}</pre>
+          </div>
+        </TabPanel>
+      )}
+    </Box>
   )
 }
 
@@ -168,33 +244,7 @@ export default function App() {
           {result && (
             <>
               <Disclaimer />
-
-              <DataTable title="Сделки" data={result.trades} countLabel="сделки" />
-
-              <DataTable title="Отворени позиции" data={result.holdings} countLabel="позиции" />
-
-              {result.dividends.rows.length > 0 && (
-                <>
-                  <DataTable title="Дивиденти" data={result.dividends} countLabel="плащания" />
-                </>
-              )}
-              
-              <TaxApp5  summary={result.taxSummary.app5} />
-              <TaxApp8Holdings data={result.taxSummary.app8Holdings} />
-              <TaxApp8Dividends data={result.taxSummary.app8Dividends} />
-              <TaxApp13 summary={result.taxSummary.app13} />
-
-              {DEV_MODE && (
-                <div className="output">
-                  <div className="output-header">
-                    <span className="output-count">
-                      JSON <span className="output-pill">{result.trades.rows.length + result.holdings.rows.length}</span>
-                    </span>
-                    <CopyButton text={jsonText} />
-                  </div>
-                  <pre className="json-output">{jsonText}</pre>
-                </div>
-              )}
+              <ResultTabs result={result} jsonText={jsonText} />
             </>
           )}
         </main>
@@ -207,9 +257,9 @@ export default function App() {
             GitHub
           </a>
           <span className="footer-sep">·</span>
-          <a href="mailto:lili.st.work@gmail.com" className="footer-link">
-            <EmailOutlined sx={{ fontSize: 16 }} />
-            Контакти
+          <a href="https://www.linkedin.com/in/lili-stoyanova/" className="footer-link">
+            <LinkedIn sx={{ fontSize: 16 }} />
+            LinkedIn
           </a>
           <span className="footer-sep">·</span>
           <button className="footer-link footer-btn" onClick={() => setShowTerms(true)}>

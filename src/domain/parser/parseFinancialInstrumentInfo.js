@@ -22,16 +22,20 @@ export function parseFinancialInstrumentInfo(rows) {
   rows
     .filter(r => r[0] === 'Financial Instrument Information' && r[1] === 'Data')
     .forEach(r => {
-      const symbol = r[colIndex['Symbol']]
       const securityId = (r[colIndex['Security ID']] || '').trim()
       const country = securityId.slice(0, 2).toUpperCase()
-      result[symbol] = {
+      // Symbol field may contain comma-separated aliases e.g. "EXS1, EXS1d" — register all
+      const symbols = (r[colIndex['Symbol']] || '').split(',').map(s => s.trim()).filter(Boolean)
+      const info = {
         securityId,
         country,
-        countryName: COUNTRY_NAMES_BG[country] || country,
-        type: (r[colIndex['Type']] || '').trim(),   // 'ETF', 'COMMON', etc.
-        description: (r[colIndex['Description']] || '').trim(),
+        countryName:  COUNTRY_NAMES_BG[country] || country,
+        type:         (r[colIndex['Type']]         || '').trim(),  // 'ETF', 'COMMON', etc.
+        listingExch:  (r[colIndex['Listing Exch']] || '').trim(),
+        description:  (r[colIndex['Description']]  || '').trim(),
+        aliases:      symbols,
       }
+      symbols.forEach(sym => { result[sym] = info })
     })
 
   return result
