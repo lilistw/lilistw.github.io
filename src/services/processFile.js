@@ -74,7 +74,10 @@ const result = sortedTrades.reduce((acc, t, i) => {
 
     const avgCost = pos.cost / pos.qty
     costBasis = avgCost * t.quantity
-    costBasisBGN = toBGN(costBasis, t.currency, t.date)
+    // Use the weighted-average BGN cost accumulated at BUY time, not the sell-date rate.
+    // This correctly handles trades bought in prior years at different exchange rates.
+    const avgCostBGN = pos.costBGN / pos.qty
+    costBasisBGN = avgCostBGN * t.quantity
 
     pos.qty -= t.quantity
     pos.cost -= costBasis
@@ -83,6 +86,9 @@ const result = sortedTrades.reduce((acc, t, i) => {
 
   // taxable: null=BUY (no tax concept), true=taxable SELL, false=exempt SELL
   const taxable = t.type !== 'SELL' ? null : exempt ? false : true
+
+  const proceedsBGN    = t.type === 'SELL' ? totalWithFeeBGN : null
+  const realizedPLBGN  = t.type === 'SELL' && costBasisBGN != null ? totalWithFeeBGN - costBasisBGN : null
 
   acc.rows.push({
     ...t,
@@ -98,6 +104,8 @@ const result = sortedTrades.reduce((acc, t, i) => {
     totalWithFeeBGN,
     costBasis,
     costBasisBGN,
+    proceedsBGN,
+    realizedPLBGN,
   })
 
   return acc
