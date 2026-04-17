@@ -110,7 +110,7 @@ export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis, 
     const priorCostD   = sym.sellBasisUSD.minus(sym.buyCostUSD)
     if (priorCostD.lte(0)) continue
 
-    const priorCostBGN = toBGN(priorCostD, sym.currency, PREV_YEAR_END_DATE)
+    const priorCostBGN = toLocalCurrency(priorCostD, sym.currency, prevYearEndDate, taxYear)
 
     result.push({
       symbol,
