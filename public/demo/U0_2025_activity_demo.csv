@@ -138,7 +138,7 @@ Dividends,Data,Total,,,52.50
 Dividends,Data,Total in EUR,,,45.00
 Dividends,Data,Total Dividends in EUR,,,100.00
 Withholding Tax,Header,Currency,Date,Description,Amount,Code
-Withholding Tax,Data,USD,2025-12-01,AAPL Cash Dividend USD 0.35 per Share - US Tax,-5.25,
+Withholding Tax,Data,USD,2025-12-01,AAPL(US0378331005) Cash Dividend USD 0.35 per Share - US Tax,-5.25,
 Withholding Tax,Data,Total,,,-5.25,
 Withholding Tax,Data,Total in EUR,,,-4.50,
 Change in Dividend Accruals,Header,Asset Category,Currency,Symbol,Date,Ex Date,Pay Date,Quantity,Tax,Fee,Gross Rate,Gross Amount,Net Amount,Code

@@ -1,6 +1,6 @@
 # IBKR Данъчен Калкулатор
 
-Уеб приложение за изчисляване на данъци от IBKR Activity Statement (CSV).
+Уеб приложение за изчисляване на данъци от Interactive Brokers Statements (CSV+HTML).
 
 ## 🚀 Стартиране
 
@@ -15,9 +15,10 @@ npm run dev
 npm run build
 ```
 
-## 🧰 Стек
+## 🧰 Технически детайли
 
-React + Vite + MUI
+- Стек: React + Vite + MUI
+- Изчисленията се извършват с висока точност чрез `decimal.js`, за да се избегнат грешки от плаваща запетая в JavaScript.
 
 ## 🌐 Deploy
 
