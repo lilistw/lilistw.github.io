@@ -15,6 +15,7 @@ import TaxApp5 from './components/TaxApp5.jsx'
 import TaxApp13 from './components/TaxApp13.jsx'
 import TaxApp8Holdings from './components/TaxApp8Holdings.jsx'
 import TaxApp8Dividends from './components/TaxApp8Dividends.jsx'
+import PriorYearApproxWarning from './components/PriorYearApproxWarning.jsx'
 import './App.css'
 
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true'
@@ -113,6 +114,10 @@ function ResultTabs({ result, jsonText }) {
   }), [result.trades.columns, tradesDataRows])
 
   const taxSummary = useMemo(() => buildTaxSummary(tradesDataRows), [tradesDataRows])
+  const approxRows = useMemo(
+    () => tradesDataRows.filter(r => r.type === 'SELL' && r.costBasisBGNApprox),
+    [tradesDataRows]
+  )
 
   // Pending toggle — holds { rowIdx, row, newTaxable, newLabel } while dialog is open
   const [pendingToggle, setPendingToggle] = useState(null)
@@ -163,6 +168,7 @@ function ResultTabs({ result, jsonText }) {
       {/* Сделки: Trade Confirmation table + Прил. №5 (taxable) + Прил. №13 (EU ETF) */}
       <TabPanel value={tab} index={TAB_TRADES}>
         <DataTable title="Trade Confirmation – Сделки" data={trades} countLabel="сделки" onCheckChange={handleTaxableToggle} />
+        <PriorYearApproxWarning rows={approxRows} />
         <TaxApp5  summary={taxSummary.app5} />
         <TaxApp13 summary={taxSummary.app13} />
       </TabPanel>
