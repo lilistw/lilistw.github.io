@@ -87,6 +87,7 @@ Open Positions,Total,,Stocks,USD,,,,,18385.00,19037.50,652.50,
 Open Positions,Total,,Stocks,EUR,,,,,24533.00,25465.50,932.50,
 Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,C. Price,Proceeds,Comm/Fee,Basis,Realized P/L,MTM P/L,Code
 Trades,Data,Order,Stocks,EUR,VWCE,"2025-10-15, 09:30:00",12,142.50,143.50,-1710.00,-1.50,1710.00,0.00,30.00,O
+Trades,Data,Order,Stocks,EUR,VWCE,"2025-11-20, 14:15:00",8,143.50,145.00,-1148.00,-1.00,1150.00,0.00,40.00,O
 Trades,Data,Order,Stocks,EUR,SAP,"2025-10-22, 10:45:00",8,147.50,148.00,-1180.00,-1.20,1181.20,0.00,60.00,O
 Trades,Data,Order,Stocks,EUR,SAP,"2025-11-30, 15:30:00",4,148.75,149.00,-595.00,-0.80,595.80,0.00,54.00,O
 Trades,Data,Order,Stocks,EUR,IWDA,"2025-09-08, 08:00:00",12,186.50,189.00,-2238.00,-1.80,2239.80,0.00,84.00,O
@@ -96,15 +97,15 @@ Trades,SubTotal,,Stocks,EUR,SAP,,12,,,-1775.00,-2.00,1777.00,0.00,114.00,
 Trades,SubTotal,,Stocks,EUR,IWDA,,8,,,-1478.00,-2.55,1479.05,32.00,92.00,
 Trades,Total,,Stocks,EUR,,,,-6111.00,-7.05,6116.05,32.00,276.00,
 Trades,Data,Order,Stocks,USD,GOOG,"2025-09-10, 11:20:00",2,2475.00,2480.00,-4950.00,-2.50,4952.50,0.00,120.00,O
-Trades,Data,Order,Stocks,USD,GOOG,"2025-11-05, 13:45:00",1,2488.00,2510.00,-2488.00,-2.00,2490.00,120.00,120.00,C
+Trades,Data,Order,Stocks,USD,GOOG,"2025-11-05, 13:45:00",-1,2488.00,2510.00,2488.00,-2.00,-2490.00,13.00,13.00,C
 Trades,Data,Order,Stocks,USD,GOOG,"2025-12-12, 09:15:00",2,2500.00,2560.00,-5000.00,-3.00,5003.00,0.00,240.00,O
 Trades,Data,Order,Stocks,USD,AAPL,"2025-10-08, 14:30:00",10,174.50,175.00,-1745.00,-2.50,1747.50,0.00,105.00,O
 Trades,Data,Order,Stocks,USD,AAPL,"2025-12-18, 16:00:00",5,176.00,186.50,-880.00,-2.00,880.00,0.00,67.50,O
 Trades,Data,Order,Stocks,USD,NFLX,"2025-11-08, 10:00:00",8,519.00,520.00,-4152.00,-3.50,4155.50,0.00,120.00,O
-Trades,SubTotal,,Stocks,USD,GOOG,,3,,,-12438.00,-7.50,10445.50,120.00,480.00,
+Trades,SubTotal,,Stocks,USD,GOOG,,3,,,-7462.00,-7.50,12435.50,13.00,480.00,
 Trades,SubTotal,,Stocks,USD,AAPL,,15,,,-2625.00,-4.50,2627.50,0.00,172.50,
 Trades,SubTotal,,Stocks,USD,NFLX,,8,,,-4152.00,-3.50,4155.50,0.00,120.00,
-Trades,Total,,Stocks,USD,,,,-19215.00,-15.50,19228.50,120.00,772.50,
+Trades,Total,,Stocks,USD,,,,-14239.00,-15.50,19218.50,13.00,772.50,
 Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,,Proceeds,Comm in EUR,,,MTM in EUR,Code
 Trades,Data,Order,Forex,USD,EUR.USD,"2025-12-20, 10:00:00",1350,0.87100,,-1175.85,0,,,-4.50,AFx
 Trades,SubTotal,,Forex,USD,EUR.USD,,1350,,,-1175.85,0,,,-4.50,

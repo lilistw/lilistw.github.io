@@ -2,6 +2,7 @@ import { TaxFormSection, TaxRow } from './TaxFormSection.jsx'
 import { fmt } from '../utils/fmt.js'
 
 export default function TaxApp5({ summary }) {
+  if (!summary) return null
   return (
     <TaxFormSection
       title="Приложение №5 – Таблица 2"

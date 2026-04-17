@@ -4,7 +4,7 @@
  * @param {string[][]} rows - 2D array from PapaParse
  * @returns {object[]} normalized holdings
  */
-export function parseOpenPositions(rows, instrumentInfo = {}) {
+export function parseOpenPositions(rows, instrumentInfo = {}, positionsCostBasis = {}) {
   const isIBKR = rows.some(r => r[0] === 'Statement' && r[1] === 'Data')
   if (!isIBKR) {
     throw new Error('Файлът не е валиден IBKR Activity Statement.')
@@ -29,17 +29,23 @@ export function parseOpenPositions(rows, instrumentInfo = {}) {
   const dataRows = rows
     .filter(r => r[0] === 'Open Positions' && r[1] === 'Data' && r[2] === 'Summary')
     .map(r => {
-      const symbol = r[colIndex['Symbol']]
-      const info = instrumentInfo[symbol] || {}
+      const symbol   = r[colIndex['Symbol']]
+      const info     = instrumentInfo[symbol] || {}
+      const quantity = parseNumber(r[colIndex['Quantity']])
+      // Use the calculated cost basis from trade processing when available;
+      // fall back to IBKR's reported value.
+      const calcPos  = positionsCostBasis[symbol]
+      const costBasis = calcPos?.cost != null ? calcPos.cost : parseNumber(r[colIndex['Cost Basis']])
+      const costPrice = quantity ? costBasis / quantity : parseNumber(r[colIndex['Cost Price']])
       return {
         assetCategory: r[colIndex['Asset Category']],
         currency: r[colIndex['Currency']],
         symbol,
         country:     info.countryName || info.country || '',
-        quantity:    parseNumber(r[colIndex['Quantity']]),
+        quantity,
         multiplier:  parseNumber(r[colIndex['Mult']]),
-        costPrice:   parseNumber(r[colIndex['Cost Price']]),
-        costBasis:   parseNumber(r[colIndex['Cost Basis']]),
+        costPrice,
+        costBasis,
         closePrice:  parseNumber(r[colIndex['Close Price']]),
         value:       parseNumber(r[colIndex['Value']]),
         unrealizedPL: parseNumber(r[colIndex['Unrealized P/L']]),
@@ -49,16 +55,15 @@ export function parseOpenPositions(rows, instrumentInfo = {}) {
 
   return {
     columns: [
-      { key: 'symbol',       label: 'Символ',             bold: true },
-      { key: 'country',      label: 'Държава' },
       { key: 'assetCategory',label: 'Категория' },
       { key: 'currency',     label: 'Валута' },
+      { key: 'symbol',       label: 'Символ',             bold: true },
       { key: 'quantity',     label: 'Количество',         align: 'right', mono: true, decimals: 4 },
       { key: 'multiplier',   label: 'Множител',           align: 'right', mono: true, decimals: 2 },
-      { key: 'costPrice',    label: 'Цена',               align: 'right', mono: true, decimals: 4 },
-      { key: 'costBasis',    label: 'База',               align: 'right', mono: true, decimals: 2 },
-      { key: 'closePrice',   label: 'Крайна',             align: 'right', mono: true, decimals: 4 },
-      { key: 'value',        label: 'Стойност',           align: 'right', mono: true, decimals: 2 },
+      { key: 'costPrice',    label: 'Цена',               align: 'right', mono: true, decimals: 4, nullAs: '—' },
+      { key: 'costBasis',    label: 'База',               align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'closePrice',   label: 'Крайна цена',        align: 'right', mono: true, decimals: 4, nullAs: '—' },
+      { key: 'value',        label: 'Стойност',           align: 'right', mono: true, decimals: 2, nullAs: '—' },
       { key: 'unrealizedPL', label: 'Нереализирана P/L',  align: 'right', mono: true, decimals: 2, pnl: true, nullAs: '—' },
     ],
     rows: dataRows,

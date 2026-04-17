@@ -6,7 +6,7 @@ export default function TaxApp13({ summary }) {
   return (
     <TaxFormSection
       title="Приложение №13 – Част II"
-      subtitle="Необлагаеми доходи от продажба на дялове от ETF от Европейски съюз"
+      subtitle="Необлагаеми доходи от продажба на дялове от ETF на регулирани пазари в ЕС"
     >
       <TaxRow label="Код" value="508" />
       <TaxRow label="Брутен размер на дохода (продажни цени) (лв)" value={fmt(summary.totalProceedsBGN)} />

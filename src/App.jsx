@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import {
-  Alert, Box, Button, Checkbox, Dialog, DialogContent, DialogTitle,
+  Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControlLabel, IconButton, Link, Tab, Tabs, Typography,
 } from '@mui/material'
 import { Check, Close, ContentCopy, GitHub, InfoOutlined, LinkedIn } from '@mui/icons-material'
@@ -9,6 +9,7 @@ import AboutSection from './content/AboutSection.jsx'
 import Disclaimer from './content/Disclaimer.jsx'
 import TermsContent from './content/TermsContent.jsx'
 import Dropzone from './components/Dropzone.jsx'
+import { HTM_INFO } from './components/dropzoneInfo.js'
 import DataTable from './components/DataTable.jsx'
 import TaxApp5 from './components/TaxApp5.jsx'
 import TaxApp13 from './components/TaxApp13.jsx'
@@ -52,21 +53,98 @@ function TabPanel({ children, value, index }) {
   return value === index ? <Box sx={{ pt: 2 }}>{children}</Box> : null
 }
 
+// ── Helpers for dynamic trades totals & tax summary ──────────────────────────
+const TRADE_SUM_COLS     = ['proceeds', 'comm', 'fee', 'totalWithFee']
+const TRADE_SUM_BGN_COLS = ['totalWithFeeBGN', 'costBasisBGN']
+
+function buildTradeTotals(dataRows) {
+  const totals = []
+  for (const label of ['Облагаем', 'Освободен']) {
+    const group = dataRows.filter(r => r.taxExemptLabel === label)
+    if (group.length === 0) continue
+    for (const cur of ['EUR', 'USD']) {
+      const subset = group.filter(r => r.currency === cur)
+      if (subset.length === 0) continue
+      const row = { _total: true, taxExemptLabel: label, currency: cur }
+      TRADE_SUM_COLS.forEach(k     => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
+      TRADE_SUM_BGN_COLS.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
+      totals.push(row)
+    }
+    const bgnRow = { _total: true, taxExemptLabel: label, currency: 'BGN' }
+    TRADE_SUM_BGN_COLS.forEach(k => { bgnRow[k] = group.reduce((s, r) => s + (r[k] ?? 0), 0) })
+    totals.push(bgnRow)
+  }
+  return totals
+}
+
+function buildTaxSummary(dataRows) {
+  const sells   = dataRows.filter(r => r.type === 'SELL')
+  const taxable = sells.filter(r => r.taxable === true)
+  const exempt  = sells.filter(r => r.taxable === false)
+  const summarize = group => {
+    const totalProceedsBGN  = group.reduce((s, r) => s + (r.totalWithFeeBGN ?? 0), 0)
+    const totalCostBasisBGN = group.reduce((s, r) => s + (r.costBasisBGN ?? 0), 0)
+    const profits = group.reduce((s, r) => {
+      const pl = (r.totalWithFeeBGN ?? 0) - (r.costBasisBGN ?? 0)
+      return pl > 0 ? s + pl : s
+    }, 0)
+    const losses = group.reduce((s, r) => {
+      const pl = (r.totalWithFeeBGN ?? 0) - (r.costBasisBGN ?? 0)
+      return pl < 0 ? s + Math.abs(pl) : s
+    }, 0)
+    return { totalProceedsBGN, totalCostBasisBGN, profits, losses }
+  }
+  return { app5: summarize(taxable), app13: summarize(exempt) }
+}
+
 function ResultTabs({ result, jsonText }) {
   const [tab, setTab] = useState(0)
   const hasDividends = result.dividends.rows.length > 0
   const hasInterest  = result.interest.rows.length > 0
 
+  // Mutable trades data rows (user can toggle taxable status)
+  const [tradesDataRows, setTradesDataRows] = useState(() =>
+    result.trades.rows.filter(r => !r._total)
+  )
+
+  const trades = useMemo(() => ({
+    columns: result.trades.columns,
+    rows: [...tradesDataRows, ...buildTradeTotals(tradesDataRows)],
+  }), [result.trades.columns, tradesDataRows])
+
+  const taxSummary = useMemo(() => buildTaxSummary(tradesDataRows), [tradesDataRows])
+
+  // Pending toggle — holds { rowIdx, row, newTaxable, newLabel } while dialog is open
+  const [pendingToggle, setPendingToggle] = useState(null)
+
+  function handleTaxableToggle(rowIdx) {
+    const row = tradesDataRows[rowIdx]
+    if (row.taxable === null) return
+    const newTaxable = !row.taxable
+    const newLabel   = newTaxable ? 'Облагаем' : 'Освободен'
+    setPendingToggle({ rowIdx, row, newTaxable, newLabel })
+  }
+
+  function confirmToggle() {
+    const { rowIdx, newTaxable, newLabel } = pendingToggle
+    setTradesDataRows(prev =>
+      prev.map((r, i) => i === rowIdx ? { ...r, taxable: newTaxable, taxExemptLabel: newLabel } : r)
+    )
+    setPendingToggle(null)
+  }
+
   const tabs = [
     { label: 'Сделки' },
-    { label: 'Позиции и Дивиденти' },
-    ...(hasInterest  ? [{ label: 'Лихви' }]     : []),
-    ...(DEV_MODE     ? [{ label: 'Dev' }]        : []),
+    { label: 'Позиции' },
+    ...(hasDividends ? [{ label: 'Дивиденти' }]  : []),
+    ...(hasInterest  ? [{ label: 'Лихви' }]       : []),
+    ...(DEV_MODE     ? [{ label: 'Dev' }]          : []),
   ]
 
   let idx = 0
   const TAB_TRADES    = idx++
   const TAB_HOLDINGS  = idx++
+  const TAB_DIVIDENDS = hasDividends ? idx++ : -1
   const TAB_INTEREST  = hasInterest  ? idx++ : -1
   const TAB_DEV       = DEV_MODE     ? idx++ : -1
 
@@ -82,24 +160,34 @@ function ResultTabs({ result, jsonText }) {
         {tabs.map((t, i) => <Tab key={i} label={t.label} />)}
       </Tabs>
 
-      {/* Сделки: trades table + Прил. №5 (taxable) + Прил. №13 (EU ETF, untaxable) */}
+      {/* Сделки: Trade Confirmation table + Прил. №5 (taxable) + Прил. №13 (EU ETF) */}
       <TabPanel value={tab} index={TAB_TRADES}>
-        <DataTable title="Trades – IBKR" data={result.trades} countLabel="сделки" />
-        <TaxApp5  summary={result.taxSummary.app5} />
-        <TaxApp13 summary={result.taxSummary.app13} />
+        <DataTable title="Trade Confirmation – Сделки" data={trades} countLabel="сделки" onCheckChange={handleTaxableToggle} />
+        <TaxApp5  summary={taxSummary.app5} />
+        <TaxApp13 summary={taxSummary.app13} />
       </TabPanel>
 
       {/* Позиции: holdings table + Прил. №8 Part I */}
       <TabPanel value={tab} index={TAB_HOLDINGS}>
         <DataTable title="Open Positions – IBKR" data={result.holdings} countLabel="позиции" />
         <TaxApp8Holdings data={result.taxSummary.app8Holdings} />
-        {/* Дивиденти: dividends table + Прил. №8 Part III */}
-        {hasDividends && (
-          <TaxApp8Dividends data={result.taxSummary.app8Dividends} />
-        )}
       </TabPanel>
 
+      {/* Дивиденти: dividends table + Прил. №8 Part III */}
+      {hasDividends && (
+        <TabPanel value={tab} index={TAB_DIVIDENDS}>
+          <TaxApp8Dividends data={result.taxSummary.app8Dividends} />
+        </TabPanel>
+      )}
+
       {/* Лихви: interest payments table */}
+      {/* TODO: add info: 
+      
+      Приложение № 6 доходи от други източници по чл. 35 от ЗДДФЛ 
+      Попълва се ред 6 (кодът е 606)
+      6 Обща сума на доходите с код 606, платците на които не са предприятия или самоосигуряващи се лица
+      Размер на дохода
+      */}
       {hasInterest && (
         <TabPanel value={tab} index={TAB_INTEREST}>
           <DataTable title="Лихви" data={result.interest} countLabel="плащания" />
@@ -112,7 +200,7 @@ function ResultTabs({ result, jsonText }) {
           <div className="output">
             <div className="output-header">
               <span className="output-count">
-                JSON <span className="output-pill">{result.trades.rows.length + result.holdings.rows.length}</span>
+                JSON <span className="output-pill">{result.holdings.rows.length}</span>
               </span>
               <CopyButton text={jsonText} />
             </div>
@@ -120,73 +208,132 @@ function ResultTabs({ result, jsonText }) {
           </div>
         </TabPanel>
       )}
+
+      {/* Confirmation dialog for taxable status toggle */}
+      {pendingToggle && (
+        <Dialog open onClose={() => setPendingToggle(null)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            Промяна на данъчен статус
+            <IconButton size="small" onClick={() => setPendingToggle(null)} aria-label="Затвори">
+              <Close fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" gutterBottom>
+              <strong>{pendingToggle.row.symbol}</strong> &nbsp;·&nbsp; {pendingToggle.row.dateTime}
+            </Typography>
+            <Typography variant="body2">
+              {pendingToggle.row.taxExemptLabel} → <strong>{pendingToggle.newLabel}</strong>
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPendingToggle(null)}>Откажи</Button>
+            <Button variant="contained" onClick={confirmToggle}>Потвърди</Button>
+          </DialogActions>
+        </Dialog>
+      )}
     </Box>
   )
 }
 
 export default function App() {
-  const [file, setFile] = useState(null)
-  const [fileUrl, setFileUrl] = useState('')
+  // ── File states ──────────────────────────────────────────────
+  const [csvFile, setCsvFile] = useState(null)
+  const [csvFileUrl, setCsvFileUrl] = useState('')
+  const [htmlFile, setHtmlFile] = useState(null)
+  const [htmlFileUrl, setHtmlFileUrl] = useState('')
+
+  // ── Results and UI states ────────────────────────────────────
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
 
-  function selectFile(f) {
+  // ── File URL effects ─────────────────────────────────────────
+  useEffect(() => {
+    if (!csvFile) { setCsvFileUrl(''); return }
+    const url = URL.createObjectURL(csvFile)
+    setCsvFileUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [csvFile])
+
+  useEffect(() => {
+    if (!htmlFile) { setHtmlFileUrl(''); return }
+    const url = URL.createObjectURL(htmlFile)
+    setHtmlFileUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [htmlFile])
+
+  // ── File selection handlers ──────────────────────────────────
+  function selectCsvFile(f) {
     if (!f) return
-    setFile(f)
+    setCsvFile(f)
     setResult(null)
     setError(null)
   }
 
-  useEffect(() => {
-    if (!file) { setFileUrl(''); return }
-    const url = URL.createObjectURL(file)
-    setFileUrl(url)
-    return () => URL.revokeObjectURL(url)
-  }, [file])
+  function clearCsvFile() {
+    setCsvFile(null)
+    setResult(null)
+    setError(null)
+  }
 
+  function selectHtmlFile(f) {
+    setHtmlFile(f)
+    setResult(null)
+    setError(null)
+  }
+
+  function clearHtmlFile() {
+    setHtmlFile(null)
+    setResult(null)
+    setError(null)
+  }
+
+
+  // ── Process both files together ──────────────────────────────
   async function handleCalculate() {
-    if (!file || !agreed) return
+    if (!csvFile || !htmlFile || !agreed) return
     setError(null)
     setResult(null)
     setLoading(true)
     try {
-      const data = await processFile(file)
-      setResult(data)
+      // processFile should be updated to accept both files if needed
+      const res = await processFile({ csvFile, htmlFile })
+      setResult(res)
     } catch (e) {
       setError(e.message)
+      console.error(e)
     } finally {
       setLoading(false)
     }
   }
 
-  function handleClearFile() {
-    setFile(null)
-    setResult(null)
-    setError(null)
+  async function loadBothDemoFiles() {
+    const [csvResp, htmResp] = await Promise.all([
+      fetch('/demo/U0_2025_activity_demo.csv'),
+      fetch('/demo/U0_2025_trades_demo.htm'),
+    ])
+    const [csvText, htmText] = await Promise.all([csvResp.text(), htmResp.text()])
+    selectCsvFile(new File([new Blob([csvText], { type: 'text/csv' })],    'U0_2025_activity_demo.csv',  { type: 'text/csv' }))
+    setHtmlFile(  new File([new Blob([htmText], { type: 'text/html' })],   'U0_2025_trades_demo.htm',   { type: 'text/html' }))
   }
 
   async function handleLoadDemo() {
-    try {
-      const response = await fetch('/demo/U0_2025_activity_demo.csv')
-      const text = await response.text()
-      const blob = new Blob([text], { type: 'text/csv' })
-      selectFile(new File([blob], 'U0_2025_activity_demo.csv', { type: 'text/csv' }))
-    } catch (e) {
-      setError('Неуспешно зареждане на демо файл: ' + e.message)
-    }
+    try { await loadBothDemoFiles() }
+    catch (e) { setError('Неуспешно зареждане на демо файл: ' + e.message) }
   }
 
-  const jsonText = result ? JSON.stringify(result, null, 2) : ''
+
+ const jsonText = result ? JSON.stringify(result, null, 2) : ''
 
   return (
     <div className="app">
       <header className="app-header">
         <div className="header-inner">
           <h1>IBKR Данъчен Калкулатор</h1>
-          <p>Качете Activity Statement CSV от Interactive Brokers</p>
+          <p>Качете файловете от Interactive Brokers</p>
         </div>
       </header>
 
@@ -194,53 +341,71 @@ export default function App() {
         <AboutSection />
 
         <main>
-          <Dropzone
-            file={file}
-            fileUrl={fileUrl}
-            onFileSelect={selectFile}
-            onClearFile={handleClearFile}
-            onLoadDemo={handleLoadDemo}
-          />
+          {/* ── Two dropzones ───────────────────────────────────────────── */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
 
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 2, flexWrap: 'wrap' }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={agreed}
-                  onChange={e => setAgreed(e.target.checked)}
-                  size="small"
-                  color="primary"
-                />
-              }
-              label={
-                <Typography variant="body2">
-                  Съгласен/на съм с{' '}
-                  <Link
-                    component="button"
-                    variant="body2"
-                    onClick={() => setShowTerms(true)}
-                    sx={{ verticalAlign: 'baseline' }}
-                  >
-                    условията за ползване
-                  </Link>
-                </Typography>
-              }
-            />
-            <Button
-              variant="contained"
-              disabled={!file || !agreed || loading}
-              onClick={handleCalculate}
-            >
-              {loading ? 'Изчислява се...' : 'Изчисли'}
-            </Button>
+            {/* Activity Statement CSV */}
+            <Box>
+              <Dropzone
+                file={csvFile}
+                fileUrl={csvFileUrl}
+                onFileSelect={selectCsvFile}
+                onClearFile={clearCsvFile}
+                accept=".csv"
+                label="Activity Statement CSV тук"
+              />
+            </Box>
+
+                       {/* Trade Confirmation HTML */}
+            <Box>
+              <Dropzone
+                file={htmlFile}
+                fileUrl={htmlFileUrl}
+                onFileSelect={selectHtmlFile}
+                onClearFile={clearHtmlFile}
+                accept=".htm,.html"
+                label="Trade Confirmation HTML тук"
+                infoContent={HTM_INFO}
+              />
+            </Box>
           </Box>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={agreed}
+                      onChange={e => setAgreed(e.target.checked)}
+                      size="small"
+                      color="primary"
+                    />
+                  }
+                  label={
+                    <Typography variant="body2">
+                      Съгласен/на съм с{' '}
+                      <Link component="button" variant="body2" onClick={() => setShowTerms(true)}
+                        sx={{ verticalAlign: 'baseline' }}>
+                        условията за ползване
+                      </Link>
+                    </Typography>
+                  }
+                />
+                <Button
+                  variant="contained"
+                  disabled={!csvFile || !agreed || loading}
+                  onClick={handleCalculate}
+                >
+                  {loading ? 'Изчислява се...' : 'Изчисли'}
+                </Button>
+                <Button variant="outlined" onClick={handleLoadDemo}>
+                  Зареди демо
+                </Button>
+              </Box>
 
           {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>
-              {error}
-            </Alert>
+            <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
           )}
 
+          {/* Activity Statement result */}
           {result && (
             <>
               <Disclaimer />
@@ -252,7 +417,7 @@ export default function App() {
 
       <footer className="app-footer">
         <div className="footer-links">
-          <a href="https://github.com/lilistw/ibkr-tax-app" target="_blank" rel="noopener noreferrer" className="footer-link">
+          <a href="https://github.com/lilistw/lilistw.github.io" target="_blank" rel="noopener noreferrer" className="footer-link">
             <GitHub sx={{ fontSize: 16 }} />
             GitHub
           </a>

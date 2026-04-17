@@ -29,31 +29,36 @@ export const EU_EEA_EXCHANGE_CODES = new Set([
   'EUIBSI',
 ])
 
-// IBKR exchange code metadata
+// IBKR exchange code metadata - used for tooltips and determining tax treatment
+// TODO if an exchange is not found here - treat it as unregulated.
+// regulated: true  → listed regulated market (MiFID/EEA)
+// regulated: false → non-EU or unregulated (UK post-Brexit, CH, IL)
 export const IBKR_EXCHANGES = {
-  AEB:       { name: 'Euronext Amsterdam',         country: 'Netherlands',     eu: true  },
-  BM:        { name: 'Madrid Stock Exchange',       country: 'Spain',           eu: true  },
-  BUX:       { name: 'Budapest Stock Exchange',     country: 'Hungary',         eu: true  },
-  BVL:       { name: 'Euronext Lisbon',             country: 'Portugal',        eu: true  },
-  BVME:      { name: 'Borsa Italiana',              country: 'Italy',           eu: true  },
-  'BVME.ETF':{ name: 'Borsa Italiana ETF',          country: 'Italy',           eu: true  },
-  CPH:       { name: 'Nasdaq Copenhagen',           country: 'Denmark',         eu: true  },
-  EBS:       { name: 'SIX Swiss Exchange',          country: 'Switzerland',     eu: false },
-  'ENEXT.BE':{ name: 'Euronext Brussels',           country: 'Belgium',         eu: true  },
-  EUIBSI:    { name: 'IBKR EU Internaliser',        country: 'EU',              eu: true  },
-  FWB:       { name: 'Frankfurt Stock Exchange',    country: 'Germany',         eu: true  },
-  GETTEX:    { name: 'Gettex',                      country: 'Germany',         eu: true  },
-  IBIS:      { name: 'Deutsche Börse Xetra',        country: 'Germany',         eu: true  },
-  IBIS2:     { name: 'Deutsche Börse Xetra',        country: 'Germany',         eu: true  },
-  LSE:       { name: 'London Stock Exchange',       country: 'United Kingdom',  eu: false },
-  LSEETF:    { name: 'London Stock Exchange ETF',   country: 'United Kingdom',  eu: false },
-  OMXNO:     { name: 'OMX Norway',                  country: 'Norway',          eu: true  },
-  OSE:       { name: 'Oslo Stock Exchange',         country: 'Norway',          eu: true  },
-  PRA:       { name: 'Prague Stock Exchange',       country: 'Czech Republic',  eu: true  },
-  SBF:       { name: 'Euronext Paris',              country: 'France',          eu: true  },
-  SWB:       { name: 'Börse Stuttgart',             country: 'Germany',         eu: true  },
-  TASE:      { name: 'Tel Aviv Stock Exchange',     country: 'Israel',          eu: false },
-  TGATE:     { name: 'TradeGate Exchange',          country: 'Germany',         eu: true  },
+  AEB:       { regulated: true,  name: 'Euronext Amsterdam',         country: 'Netherlands',     eu: true  },
+  BM:        { regulated: true,  name: 'Madrid Stock Exchange',       country: 'Spain',           eu: true  },
+  BUX:       { regulated: true,  name: 'Budapest Stock Exchange',     country: 'Hungary',         eu: true  },
+  BVL:       { regulated: true,  name: 'Euronext Lisbon',             country: 'Portugal',        eu: true  },
+  BVME:      { regulated: true,  name: 'Borsa Italiana',              country: 'Italy',           eu: true  },
+  'BVME.ETF':{ regulated: true,  name: 'Borsa Italiana ETF',          country: 'Italy',           eu: true  },
+  CPH:       { regulated: true,  name: 'Nasdaq Copenhagen',           country: 'Denmark',         eu: true  },
+  EBS:       { regulated: false, name: 'SIX Swiss Exchange',          country: 'Switzerland',     eu: false },
+  'ENEXT.BE':{ regulated: true,  name: 'Euronext Brussels',           country: 'Belgium',         eu: true  },
+  EUIBSI:    { regulated: false,  name: 'IBKR EU Internaliser',        country: 'EU',              eu: true  },
+  FWB:       { regulated: true,  name: 'Frankfurt Stock Exchange',    country: 'Germany',         eu: true  },
+  FWB2:      { regulated: true,  name: 'Frankfurt Stock Exchange',    country: 'Germany',         eu: true  },
+  GETTEX:    { regulated: false,  name: 'Boerse Muenchen',                      country: 'Germany',         eu: true  },
+  GETTEX2:   { regulated: false,  name: 'Boerse Muenchen',                      country: 'Germany',         eu: true  },
+  IBIS:      { regulated: true,  name: 'Deutsche Börse Xetra',        country: 'Germany',         eu: true  },
+  IBIS2:     { regulated: true,  name: 'Deutsche Börse Xetra',        country: 'Germany',         eu: true  },
+  LSE:       { regulated: false, name: 'London Stock Exchange',       country: 'United Kingdom',  eu: false },
+  LSEETF:    { regulated: false, name: 'London Stock Exchange ETF',   country: 'United Kingdom',  eu: false },
+  OMXNO:     { regulated: true,  name: 'OMX Norway',                  country: 'Norway',          eu: true  },
+  OSE:       { regulated: true,  name: 'Oslo Stock Exchange',         country: 'Norway',          eu: true  },
+  PRA:       { regulated: true,  name: 'Prague Stock Exchange',       country: 'Czech Republic',  eu: true  },
+  SBF:       { regulated: true,  name: 'Euronext Paris',              country: 'France',          eu: true  },
+  SWB:       { regulated: true,  name: 'Börse Stuttgart',             country: 'Germany',         eu: true  },
+  TASE:      { regulated: false, name: 'Tel Aviv Stock Exchange',     country: 'Israel',          eu: false },
+  TGATE:     { regulated: true,  name: 'TradeGate Exchange',          country: 'Germany',         eu: true  },
 }
 
 export const EU_COUNTRY_CODES = new Set([

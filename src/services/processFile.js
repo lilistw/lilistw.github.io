@@ -1,118 +1,168 @@
 import { parseCSV } from "../infra/csvReader.js";
-import { parseTrades } from "../domain/parser/ibkrParser.js";
 import { parseOpenPositions } from "../domain/parser/parseOpenPositions.js";
 import { parseFinancialInstrumentInfo } from "../domain/parser/parseFinancialInstrumentInfo.js";
 import { parseDividends } from "../domain/parser/parseDividends.js";
 import { parseInterest } from "../domain/parser/parseInterest.js";
-import { EU_EEA_EXCHANGE_CODES } from "../domain/constants.js";
 import { toBGN, YEAR_END_DATE } from "../domain/fx/fxRates.js";
+import { processHtmlFile } from "./processHtmlFile.js";
+import { IBKR_EXCHANGES } from '../domain/constants.js'
+import { EU_COUNTRY_CODES } from "../domain/constants.js";
 
 const BG_DIVIDEND_TAX_RATE = 0.05;
 
-// ETF listed on an EU/EEA regulated exchange → gains are tax-exempt under ЗДДФЛ Art. 13(1)(3)
-function isEuEtf(symbol, instrumentInfo) {
-  const info = instrumentInfo[symbol];
-  return info?.type === "ETF" && EU_EEA_EXCHANGE_CODES.has(info.listingExch);
-}
 
-// cost basis of a sell = Proceeds - Fee - RealizedPL
-function sellCostBasis(t) {
-  return t.proceeds - t.fee - t.realizedPL;
+function isTaxExempt(trade, instrumentInfo) {
+  if (instrumentInfo[trade.symbol]?.type !== 'ETF') return false
+  const exch = IBKR_EXCHANGES[trade.exchange]
+  const isEuEtf = EU_COUNTRY_CODES.has(instrumentInfo[trade.symbol]?.country) // ISIN starts with EU country code
+  return exch?.regulated && isEuEtf
 }
 
 function summarizeSells(sells) {
-  const totalProceedsBGN = sells.reduce((s, t) => s + (t.proceedsBGN ?? 0), 0);
-  const totalCostBasisBGN = sells.reduce(
-    (s, t) => s + (t.costBasisBGN ?? 0),
-    0,
-  );
-  const profits = sells.reduce(
-    (s, t) => (t.realizedPLBGN > 0 ? s + t.realizedPLBGN : s),
-    0,
-  );
-  const losses = sells.reduce(
-    (s, t) => (t.realizedPLBGN < 0 ? s + Math.abs(t.realizedPLBGN) : s),
-    0,
-  );
-  return { totalProceedsBGN, totalCostBasisBGN, profits, losses };
+  const totalProceedsBGN  = sells.reduce((s, t) => s + (t.proceedsBGN  ?? 0), 0)
+  const totalCostBasisBGN = sells.reduce((s, t) => s + (t.costBasisBGN ?? 0), 0)
+  const profits = sells.reduce((s, t) => t.realizedPLBGN > 0 ? s + t.realizedPLBGN : s, 0)
+  const losses  = sells.reduce((s, t) => t.realizedPLBGN < 0 ? s + Math.abs(t.realizedPLBGN) : s, 0)
+  return { totalProceedsBGN, totalCostBasisBGN, profits, losses }
 }
 
-export async function processFile(file) {
-  const text = await file.text();
+export async function processFile({csvFile, htmlFile}) {
+  const processedTrades = await processHtmlFile(htmlFile);
+  const text = await csvFile.text();
+
   const rows = parseCSV(text);
 
   const instrumentInfo = parseFinancialInstrumentInfo(rows);
-  const trades = parseTrades(rows);
-  const holdings = parseOpenPositions(rows, instrumentInfo);
   const dividends = parseDividends(rows, instrumentInfo);
   const interest = parseInterest(rows);
 
-  // ── Enrich trades with BGN amounts + description for tooltips ────────────
-  trades.rows.forEach((t) => {
-    t.description = instrumentInfo[t.symbol]?.description ?? "";
-    t.proceedsBGN = toBGN(t.proceeds, t.currency, t.date);
-    t.costBasisBGN = toBGN(sellCostBasis(t), t.currency, t.date);
-    t.realizedPLBGN =
-      t.proceedsBGN != null && t.costBasisBGN != null
-        ? t.proceedsBGN -
-        t.costBasisBGN -
-        (toBGN(t.fee, t.currency, t.date) ?? 0)
-        : null;
-  });
+const sortedTrades = [...processedTrades.rows].sort((a, b) => {
+  // first by symbol
+  if (a.symbol !== b.symbol) {
+    return a.symbol.localeCompare(b.symbol)
+  }
 
-  // Add description tooltip to trades symbol column
-  const tradesSymbolCol = trades.columns.find((c) => c.key === "symbol");
-  if (tradesSymbolCol) tradesSymbolCol.tooltip = "description";
+  // then by date
+  return new Date(a.dateTime) - new Date(b.dateTime)
+})
 
-  // Add BGN columns to the trades DataTable (after realizedPL)
-  trades.columns.push(
+const result = sortedTrades.reduce((acc, t, i) => {
+  const key = t.symbol
+
+  if (!acc.positions[key]) {
+    acc.positions[key] = { qty: 0, cost: 0, costBGN: 0 }
+  }
+
+  const pos = acc.positions[key]
+
+  const rate = toBGN(1, t.currency, t.date)
+  const totalWithFee = t.proceeds + t.comm + t.fee
+  const totalWithFeeBGN = toBGN(totalWithFee, t.currency, t.date)
+
+  const exempt = t.type === 'SELL' && isTaxExempt(t, instrumentInfo)
+
+  let costBasis = null
+  let costBasisBGN = null
+
+  if (t.type === 'BUY') {
+    pos.qty += t.quantity
+    pos.cost += -totalWithFee
+    pos.costBGN += -totalWithFeeBGN
+  }
+
+  if (t.type === 'SELL') {
+
+    const avgCost = pos.cost / pos.qty
+    costBasis = avgCost * t.quantity
+    costBasisBGN = toBGN(costBasis, t.currency, t.date)
+
+    pos.qty -= t.quantity
+    pos.cost -= costBasis
+    pos.costBGN -= costBasisBGN
+  }
+
+  // taxable: null=BUY (no tax concept), true=taxable SELL, false=exempt SELL
+  const taxable = t.type !== 'SELL' ? null : exempt ? false : true
+
+  acc.rows.push({
+    ...t,
+    '#': i + 1,
+    taxable,
+    taxExemptLabel: t.type !== 'SELL'
+      ? ''
+      : exempt
+        ? 'Освободен'
+        : 'Облагаем',
+    rate,
+    totalWithFee,
+    totalWithFeeBGN,
+    costBasis,
+    costBasisBGN,
+  })
+
+  return acc
+}, {
+  positions: {},
+  rows: []
+})
+
+const enrichedRows = result.rows
+const positionsCostBasis = result.positions
+console.info('Open positions:', positionsCostBasis)
+  const holdings = parseOpenPositions(rows, instrumentInfo, positionsCostBasis);
+  
+    // ── Totals rows ────────────────────────────────────────────────────────────
+    const sumCols    = ['proceeds', 'comm', 'fee', 'totalWithFee']
+    const sumBgnCols = ['totalWithFeeBGN']
+  
+    const dataRows = [...enrichedRows];
+    ['EUR', 'USD'].forEach(cur => {
+      const subset = dataRows.filter(r => r.currency === cur)
+      if (subset.length === 0) return
+      const row = { _total: true, currency: cur }
+      sumCols.forEach(k    => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
+      sumBgnCols.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
+      enrichedRows.push(row)
+    })
     {
-      key: "proceedsBGN",
-      label: "Постъпления (лв)",
-      align: "right",
-      mono: true,
-      decimals: 2,
-      nullAs: "—",
-    },
-    {
-      key: "realizedPLBGN",
-      label: "П/З (лв)",
-      align: "right",
-      mono: true,
-      decimals: 2,
-      pnl: true,
-      zeroAs: "—",
-      nullAs: "—",
-    },
-  );
+      const row = { _total: true, currency: 'BGN' }
+      sumBgnCols.forEach(k => { row[k] = dataRows.reduce((s, r) => s + (r[k] ?? 0), 0) })
+      enrichedRows.push(row)
+    }
+  
+    // ── App5 / App13 ───────────────────────────────────────────────────────────
+    const sells         = dataRows.filter(r => r.type === 'SELL')
+    const taxableSells  = sells.filter(r => !isTaxExempt(r, instrumentInfo))
+    const exemptSells   = sells.filter(r =>  isTaxExempt(r, instrumentInfo))
+    const app5  = summarizeSells(taxableSells)
+    const app13 = summarizeSells(exemptSells)
+  
+    // ── Column definitions ─────────────────────────────────────────────────────
+    const numCol = { key: '#', label: '#', align: 'right', mono: true, decimals: 0 }
+    const extraCols = [
+      { key: 'totalWithFee',   label: 'Общо + такси (вал)', align: 'right', mono: true, decimals: 2 },
+      { key: 'rate',           label: 'Курс (лв)',          align: 'right', mono: true, decimals: 5, nullAs: '—' },
+      { key: 'totalWithFeeBGN',label: 'Общо + такси (лв)',  align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'costBasis',      label: 'Цена на придобиване (вал)', align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'costBasisBGN',   label: 'Цена на придобиване (лв)',  align: 'right', mono: true, decimals: 2, nullAs: '—' },
+    ]
+  
+    const trades = {
+      columns: [numCol, ...processedTrades.columns, ...extraCols],
+      rows: enrichedRows,
+    };
 
-  // ── App5 / App13 tax summaries ─────────────────────────────────────────────
-  const sellTrades = trades.rows.filter((t) => t.type === "SELL");
-  const taxableSells = sellTrades.filter(
-    (t) => !isEuEtf(t.symbol, instrumentInfo),
-  );
-  const euEtfSells = sellTrades.filter((t) =>
-    isEuEtf(t.symbol, instrumentInfo),
-  );
-
-  const app5 = summarizeSells(taxableSells);
-  const app13 = summarizeSells(euEtfSells);
-
-  // Last BUY date and net bought quantity per symbol (across aliases)
+  // Last BUY date and net bought quantity per symbol — derived from processed trades
   const lastBuyDate = {};
-  const netBuyQty = {};
-  trades.rows.forEach((t) => {
-    const aliases = instrumentInfo[t.symbol]?.aliases ?? [t.symbol];
-    aliases.forEach((sym) => {
-      if (t.type === "BUY") {
-        if (!lastBuyDate[sym] || t.date > lastBuyDate[sym])
-          lastBuyDate[sym] = t.date;
-        netBuyQty[sym] = (netBuyQty[sym] ?? 0) + t.quantity;
-      } else if (t.type === "SELL") {
-        netBuyQty[sym] = (netBuyQty[sym] ?? 0) - t.quantity;
-      }
-    });
-  });
+  const netBuyQty   = {};
+  enrichedRows.forEach(t => {
+    if (t.type === 'BUY') {
+      if (!lastBuyDate[t.symbol] || t.date > lastBuyDate[t.symbol]) lastBuyDate[t.symbol] = t.date
+      netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) + t.quantity
+    } else if (t.type === 'SELL') {
+      netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) - t.quantity
+    }
+  })
 
   // ── App8 Part I – holdings for declaration ────────────────────────────────
   const app8Holdings = {
@@ -287,6 +337,16 @@ export async function processFile(file) {
   // ── Enrich interest rows with BGN amounts ────────────────────────────────
   interest.rows.forEach((r) => {
     r.amountBGN = toBGN(r.amount, r.currency, r.date);
+  });
+
+  // ── Holdings totals rows ──────────────────────────────────────────────────
+  const holdingSumCols = ['quantity', 'costBasis', 'costPrice', 'value', 'unrealizedPL'];
+  ['EUR', 'USD'].forEach(cur => {
+    const subset = holdings.rows.filter(r => r.currency === cur);
+    if (subset.length === 0) return;
+    const row = { _total: true, currency: cur };
+    holdingSumCols.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0); });
+    holdings.rows.push(row);
   });
 
   return {

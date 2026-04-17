@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import {
-  Box, Button, Chip, Paper, Table, TableBody, TableCell,
+  Box, Button, Checkbox, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Tooltip, Typography,
 } from '@mui/material'
 import { Check, ContentCopyOutlined, ExpandLess, ExpandMore } from '@mui/icons-material'
@@ -15,7 +15,7 @@ function fmt(n, decimals = 2) {
 }
 
 function CellContent({ col, value, tooltipText }) {
-  if (col.chip) {
+  if (col.chip && value) {
     const color = col.chipColors?.[value] ?? 'default'
     return <Chip label={value} size="small" color={color} sx={{ fontWeight: 700, fontSize: 11 }} />
   }
@@ -116,11 +116,24 @@ function CopyExcelButton({ columns, rows }) {
   )
 }
 
-export default function DataTable({ title, data, countLabel, embedded = false, sx }) {
+export default function DataTable({ title, data, countLabel, embedded = false, sx, onCheckChange }) {
   const [expanded, setExpanded] = useState(false)
   const { columns, rows } = data
-  const visible = expanded ? rows : rows.slice(0, PREVIEW_ROWS)
-  const hidden = rows.length - PREVIEW_ROWS
+  const dataRows  = rows.filter(r => !r._total)
+  const totalRows = rows.filter(r =>  r._total)
+  const visible = expanded ? dataRows : dataRows.slice(0, PREVIEW_ROWS)
+  const hidden = dataRows.length - PREVIEW_ROWS
+
+  // Internal checkbox state — used only when onCheckChange is not provided
+  const checkCols = columns.filter(c => c.editable === 'checkbox')
+  const [checkState, setCheckState] = useState(() =>
+    Object.fromEntries(checkCols.map(col => [col.key, rows.map(r => r[col.key] ?? true)]))
+  )
+  const handleCheck = (colKey, rowIdx) =>
+    setCheckState(prev => ({
+      ...prev,
+      [colKey]: prev[colKey].map((v, i) => i === rowIdx ? !v : v),
+    }))
 
   return (
     <Box sx={{ mb: embedded ? 0 : 3, ...sx }}>
@@ -135,11 +148,11 @@ export default function DataTable({ title, data, countLabel, embedded = false, s
           {title && (
             <>
               <Typography variant="subtitle2" fontWeight={700}>{title}</Typography>
-              <Chip label={rows.length} size="small" color="primary" />
+              <Chip label={dataRows.length} size="small" color="primary" />
             </>
           )}
           <Box sx={{ ml: 'auto' }}>
-            <CopyExcelButton columns={columns} rows={rows} />
+            <CopyExcelButton columns={columns} rows={dataRows} />
           </Box>
         </Box>
 
@@ -158,11 +171,30 @@ export default function DataTable({ title, data, countLabel, embedded = false, s
             </TableRow>
           </TableHead>
           <TableBody>
-            {visible.map((row, i) => (
-              <TableRow key={i} hover>
+            {[...visible, ...totalRows].map((row, i) => (
+              <TableRow
+                key={i}
+                hover={!row._total}
+                sx={row._total ? {
+                  backgroundColor: 'grey.50',
+                  '& td': { fontWeight: 700, borderTop: '2px solid', borderTopColor: 'divider' },
+                } : undefined}
+              >
                 {columns.map(col => (
                   <TableCell key={col.key} align={col.align ?? 'left'}>
-                    <CellContent col={col} value={row[col.key]} tooltipText={col.tooltip ? row[col.tooltip] : undefined} />
+                    {col.editable === 'checkbox' && !row._total
+                      ? onCheckChange
+                        ? <Checkbox size="small" sx={{ p: 0 }}
+                            checked={row[col.key] === true}
+                            disabled={row[col.key] === null}
+                            onChange={() => onCheckChange(i)}
+                          />
+                        : <Checkbox size="small" sx={{ p: 0 }}
+                            checked={checkState[col.key]?.[i] ?? true}
+                            onChange={() => handleCheck(col.key, i)}
+                          />
+                      : <CellContent col={col} value={row[col.key]} tooltipText={col.tooltip ? row[col.tooltip] : undefined} />
+                    }
                   </TableCell>
                 ))}
               </TableRow>
