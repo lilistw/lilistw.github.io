@@ -5,7 +5,12 @@ import { parseFinancialInstrumentInfo } from '../domain/parser/parseFinancialIns
 import { parseDividends } from '../domain/parser/parseDividends.js'
 import { parseInterest } from '../domain/parser/parseInterest.js'
 import { parseCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
-import { toBGN, YEAR_END_DATE, PREV_YEAR_END_DATE, PREV_YEAR_DEFAULT_ACQ_DATE } from '../domain/fx/fxRates.js'
+import { parseTaxYear } from '../domain/parser/parseTaxYear.js'
+import {
+  toLocalCurrency, toBGN,
+  getLocalCurrencyCode, getLocalCurrencyLabel,
+  getYearEndDate, getPrevYearEndDate,
+} from '../domain/fx/fxRates.js'
 import { processHtmlFile } from './processHtmlFile.js'
 import { IBKR_EXCHANGES } from '../domain/constants.js'
 import { EU_COUNTRY_CODES } from '../domain/constants.js'
@@ -36,37 +41,44 @@ function summarizeSells(sells) {
 }
 
 /**
- * Parse both uploaded files into raw data structures without running any
- * tax calculations. Used for the preliminary parse that infers prior-year
- * positions before the user confirms them.
+ * Parse both uploaded files without running tax calculations.
+ * Used for the preliminary parse that infers prior-year positions.
  */
 export async function parseFilesData({ csvFile, htmlFile }) {
   const [processedTrades, text] = await Promise.all([
     processHtmlFile(htmlFile),
     csvFile.text(),
   ])
-  const rows = parseCSV(text)
+  const rows            = parseCSV(text)
+  const taxYear         = parseTaxYear(rows)
   const instrumentInfo  = parseFinancialInstrumentInfo(rows)
   const csvTradeBasis   = parseCsvTradeBasis(rows)
-
-  // Parse open positions without any calculated override yet
   const openPositions   = parseOpenPositions(rows, instrumentInfo, {})
 
-  return { processedTrades, rows, instrumentInfo, csvTradeBasis, openPositions }
+  return { processedTrades, rows, instrumentInfo, csvTradeBasis, openPositions, taxYear }
 }
 
 /**
  * Full tax calculation.
  *
- * @param {{ csvFile, htmlFile }} files
- * @param {Array|null} priorPositions  Confirmed prior-year positions from the
- *   PriorYearPositionsForm.  Each entry: { symbol, currency, qty, costUSD,
- *   costBGN, lastBuyDate }
+ * @param {{ csvFile, htmlFile, priorPositions? }} param0
+ *   priorPositions – confirmed prior-year positions from PriorYearPositionsForm.
+ *   Each entry: { symbol, currency, qty, costUSD, costBGN, lastBuyDate }
  */
 export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
   const processedTrades = await processHtmlFile(htmlFile)
   const text = await csvFile.text()
   const rows = parseCSV(text)
+
+  const taxYear            = parseTaxYear(rows)
+  const localCurrencyCode  = getLocalCurrencyCode(taxYear)
+  const localCurrencyLabel = getLocalCurrencyLabel(taxYear)
+  const lcl                = localCurrencyLabel   // short alias for column labels
+  const yearEndDate        = getYearEndDate(taxYear)
+  const prevYearEndDate    = getPrevYearEndDate(taxYear)
+
+  const toLcl = (amount, currency, dateStr) =>
+    toLocalCurrency(amount, currency, dateStr, taxYear)
 
   const instrumentInfo = parseFinancialInstrumentInfo(rows)
   const dividends      = parseDividends(rows, instrumentInfo)
@@ -100,18 +112,16 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
 
     const exempt = t.type === 'SELL' && isTaxExempt(t, instrumentInfo)
 
-    // All three source values are Decimal from the HTML parser
     const proceedsD = t.proceeds instanceof Decimal ? t.proceeds : new Decimal(String(t.proceeds ?? 0))
     const commD     = t.comm    instanceof Decimal ? t.comm    : new Decimal(String(t.comm    ?? 0))
     const feeD      = t.fee     instanceof Decimal ? t.fee     : new Decimal(String(t.fee     ?? 0))
 
     const totalWithFeeD    = proceedsD.plus(commD).plus(feeD)
-    const totalWithFeeBGND = toBGN(totalWithFeeD, t.currency, t.date)
+    const totalWithFeeBGND = toLcl(totalWithFeeD, t.currency, t.date)
+    const rateD            = toLcl(new Decimal(1), t.currency, t.date)
 
-    const rateD = toBGN(new Decimal(1), t.currency, t.date)
-
-    let costBasis    = null
-    let costBasisBGN = null
+    let costBasis          = null
+    let costBasisBGN       = null
     let costBasisBGNApprox = false
 
     if (t.type === 'BUY') {
@@ -122,20 +132,18 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
 
     if (t.type === 'SELL') {
       if (pos.qty.isZero()) {
-        // No BUY in current dataset (and no prior-year seed for this symbol).
-        // Fall back to IBKR's CSV Basis + previous year-end rate.
-        const csvKey = `${t.symbol}|${t.date}|${(t.quantity instanceof Decimal ? t.quantity : new Decimal(String(t.quantity))).toFixed(0)}`
+        // No BUY in current dataset — fall back to IBKR CSV Basis + prev year-end rate.
+        const qtyD  = t.quantity instanceof Decimal ? t.quantity : new Decimal(String(t.quantity))
+        const csvKey = `${t.symbol}|${t.date}|${qtyD.toFixed(0)}`
         const csvBasisD = csvTradeBasis.get(csvKey)
         if (csvBasisD) {
-          const bgnD = toBGN(csvBasisD, t.currency, PREV_YEAR_END_DATE)
-          costBasis    = csvBasisD.toNumber()
-          costBasisBGN = bgnD ? bgnD.toNumber() : null
+          const bgnD = toLcl(csvBasisD, t.currency, prevYearEndDate)
+          costBasis          = csvBasisD.toNumber()
+          costBasisBGN       = bgnD ? bgnD.toNumber() : null
           costBasisBGNApprox = true
         }
       } else {
-        // Normal path: weighted-average cost from accumulated BUYs (and any
-        // prior-year seed), preserving the historical BGN rates.
-        const qtyD      = t.quantity instanceof Decimal ? t.quantity : new Decimal(String(t.quantity))
+        const qtyD       = t.quantity instanceof Decimal ? t.quantity : new Decimal(String(t.quantity))
         const avgCost    = pos.cost.div(pos.qty)
         const avgCostBGN = pos.costBGN.div(pos.qty)
         const cbD        = avgCost.times(qtyD)
@@ -150,20 +158,18 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
       }
     }
 
-    const taxable = t.type !== 'SELL' ? null : exempt ? false : true
-
+    const taxable       = t.type !== 'SELL' ? null : exempt ? false : true
     const proceedsBGN   = t.type === 'SELL' && totalWithFeeBGND ? totalWithFeeBGND.toNumber() : null
     const realizedPLBGN = proceedsBGN != null && costBasisBGN != null
-      ? new Decimal(proceedsBGN).minus(costBasisBGN).toNumber()
-      : null
+      ? new Decimal(proceedsBGN).minus(costBasisBGN).toNumber() : null
 
     acc.rows.push({
       ...t,
       '#': i + 1,
       taxable,
       taxExemptLabel: t.type !== 'SELL' ? '' : exempt ? 'Освободен' : 'Облагаем',
-      rate:           rateD ? rateD.toNumber() : null,
-      totalWithFee:   totalWithFeeD.toNumber(),
+      rate:            rateD ? rateD.toNumber() : null,
+      totalWithFee:    totalWithFeeD.toNumber(),
       totalWithFeeBGN: totalWithFeeBGND ? totalWithFeeBGND.toNumber() : null,
       costBasis,
       costBasisBGN,
@@ -173,13 +179,10 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
     })
 
     return acc
-  }, {
-    positions: initialPositions,
-    rows: [],
-  })
+  }, { positions: initialPositions, rows: [] })
 
-  const enrichedRows        = result.rows
-  const positionsCostBasis  = {}
+  const enrichedRows       = result.rows
+  const positionsCostBasis = {}
   for (const [sym, pos] of Object.entries(result.positions)) {
     positionsCostBasis[sym] = {
       cost:    pos.cost.toNumber(),
@@ -190,7 +193,7 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
   console.info('Open positions:', positionsCostBasis)
   const holdings = parseOpenPositions(rows, instrumentInfo, positionsCostBasis)
 
-  // ── Totals rows ──────────────────────────────────────────────────────────
+  // ── Trade totals rows ────────────────────────────────────────────────────
   const sumCols    = ['proceeds', 'comm', 'fee', 'totalWithFee']
   const sumBgnCols = ['totalWithFeeBGN']
   const dataRows   = [...enrichedRows]
@@ -204,7 +207,7 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
     enrichedRows.push(row)
   })
   {
-    const row = { _total: true, currency: 'BGN' }
+    const row = { _total: true, currency: localCurrencyCode }
     sumBgnCols.forEach(k => { row[k] = dataRows.reduce((s, r) => s + (Number(r[k]) || 0), 0) })
     enrichedRows.push(row)
   }
@@ -219,11 +222,11 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
   // ── Column definitions ───────────────────────────────────────────────────
   const numCol    = { key: '#', label: '#', align: 'right', mono: true, decimals: 0 }
   const extraCols = [
-    { key: 'totalWithFee',    label: 'Общо + такси (вал)', align: 'right', mono: true, decimals: 2 },
-    { key: 'rate',            label: 'Курс (лв)',           align: 'right', mono: true, decimals: 5, nullAs: '—' },
-    { key: 'totalWithFeeBGN', label: 'Общо + такси (лв)',   align: 'right', mono: true, decimals: 2, nullAs: '—' },
-    { key: 'costBasis',       label: 'Цена на придобиване (вал)', align: 'right', mono: true, decimals: 2, nullAs: '—' },
-    { key: 'costBasisBGN',    label: 'Цена на придобиване (лв)',  align: 'right', mono: true, decimals: 2, nullAs: '—' },
+    { key: 'totalWithFee',    label: 'Общо + такси (вал)',           align: 'right', mono: true, decimals: 2 },
+    { key: 'rate',            label: `Курс (${lcl})`,                align: 'right', mono: true, decimals: 5, nullAs: '—' },
+    { key: 'totalWithFeeBGN', label: `Общо + такси (${lcl})`,        align: 'right', mono: true, decimals: 2, nullAs: '—' },
+    { key: 'costBasis',       label: 'Цена на придобиване (вал)',     align: 'right', mono: true, decimals: 2, nullAs: '—' },
+    { key: 'costBasisBGN',    label: `Цена на придобиване (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
   ]
 
   const trades = {
@@ -231,25 +234,23 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
     rows: enrichedRows,
   }
 
-  // ── Last BUY date per symbol (for App8 holdings declaration) ────────────
+  // ── Last BUY date per symbol ─────────────────────────────────────────────
   const lastBuyDate = {}
-
-  // Seed from confirmed prior-year positions
   for (const p of (priorPositions || [])) {
     if (p.symbol && p.lastBuyDate) lastBuyDate[p.symbol] = p.lastBuyDate
   }
-  // Override with any 2025 buys (later date wins)
   enrichedRows.forEach(t => {
     if (t.type === 'BUY' && (!lastBuyDate[t.symbol] || t.date > lastBuyDate[t.symbol])) {
       lastBuyDate[t.symbol] = t.date
     }
   })
 
-  // ── App8 Part I – holdings for declaration ───────────────────────────────
+  // ── App8 Part I – holdings ───────────────────────────────────────────────
   const netBuyQty = {}
   enrichedRows.forEach(t => {
-    if (t.type === 'BUY')  netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) + (t.quantity instanceof Decimal ? t.quantity.toNumber() : Number(t.quantity))
-    if (t.type === 'SELL') netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) - (t.quantity instanceof Decimal ? t.quantity.toNumber() : Number(t.quantity))
+    const q = t.quantity instanceof Decimal ? t.quantity.toNumber() : Number(t.quantity)
+    if (t.type === 'BUY')  netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) + q
+    if (t.type === 'SELL') netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) - q
   })
 
   const app8Holdings = {
@@ -258,22 +259,22 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
       { key: 'symbol',    label: 'Символ',  bold: true, tooltip: 'description' },
       { key: 'type',      label: 'Вид',     bold: true },
       { key: 'country',   label: 'Държава' },
-      { key: 'quantity',  label: 'Брой',        align: 'right', mono: true, decimals: 0 },
+      { key: 'quantity',  label: 'Брой',                        align: 'right', mono: true, decimals: 0 },
       { key: 'acquDate',  label: 'Дата и година на придобиване', shortLabel: 'Дата', mono: true, maxWidth: 80 },
       { key: 'costBasis', label: 'Обща цена в съответната валута', shortLabel: 'Обща цена', align: 'right', mono: true, decimals: 2 },
       { key: 'currency',  label: 'Валута' },
-      { key: 'costBGN',   label: 'Обща цена в лева', align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'costBGN',   label: `Обща цена в ${lcl}`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
     ],
     rows: holdings.rows
       .flatMap((h) => {
-        const info         = instrumentInfo[h.symbol] || {}
-        const type         = info.type === 'ETF' ? 'Дялове' : 'Акции'
-        const country      = info.countryName || h.currency
-        const description  = info.description ?? ''
-        const thisYearQty  = Math.max(0, Math.min(netBuyQty[h.symbol] ?? 0, h.quantity))
-        const priorQty     = h.quantity - thisYearQty
+        const info        = instrumentInfo[h.symbol] || {}
+        const type        = info.type === 'ETF' ? 'Дялове' : 'Акции'
+        const country     = info.countryName || h.currency
+        const description = info.description ?? ''
+        const thisYearQty = Math.max(0, Math.min(netBuyQty[h.symbol] ?? 0, h.quantity))
+        const priorQty    = h.quantity - thisYearQty
         const costPerShare = h.costBasis / h.quantity
-        const acquDateStr  = lastBuyDate[h.symbol]
+        const acquDateStr = lastBuyDate[h.symbol]
           ? lastBuyDate[h.symbol].split('-').reverse().join('.')
           : null
 
@@ -284,7 +285,7 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
             costBasis: cost, currency: h.currency,
             costBGN: acquDate === 'предходна година'
               ? null
-              : toBGN(cost, h.currency, YEAR_END_DATE)?.toNumber() ?? null,
+              : toLcl(cost, h.currency, yearEndDate)?.toNumber() ?? null,
           }
         }
 
@@ -302,21 +303,21 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
   // ── App8 Part III – dividends ─────────────────────────────────────────────
   const app8Dividends = {
     columns: [
-      { key: 'symbol',              label: 'Символ', bold: true, tooltip: 'description' },
-      { key: 'description',         label: 'Наименование на лицето, изплатило дохода', shortLabel: 'Наименование', mono: true, maxWidth: 200 },
-      { key: 'countryName',         label: 'Държава' },
-      { key: 'incomeCategoryCode',  label: 'Код вид доход',   shortLabel: 'Код доход' },
-      { key: 'methodCode',          label: 'Код за прилагане на метод за избягване на двойното данъчно облагане', shortLabel: 'Код метод' },
-      { key: 'grossAmountBGN',      label: 'Брутен размер на дохода, включително платения данък (за доходи с код 8141)', shortLabel: 'Брутен доход (лв)', align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'foreignTaxPaidBGN',   label: 'Платен данък в чужбина', shortLabel: 'Данък в чужбина (лв)', align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'allowableCreditBGN',  label: 'Допустим размер на данъчния кредит', shortLabel: 'Допустим кредит (лв)', align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'dueTaxBGN',           label: 'Дължим данък, подлежащ на внасяне по реда на чл. 67, ал. 4 от ЗДДФЛ', shortLabel: 'Дължим данък (лв)', align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'symbol',             label: 'Символ', bold: true, tooltip: 'description' },
+      { key: 'description',        label: 'Наименование на лицето, изплатило дохода', shortLabel: 'Наименование', mono: true, maxWidth: 200 },
+      { key: 'countryName',        label: 'Държава' },
+      { key: 'incomeCategoryCode', label: 'Код вид доход', shortLabel: 'Код доход' },
+      { key: 'methodCode',         label: 'Код за прилагане на метод за избягване на двойното данъчно облагане', shortLabel: 'Код метод' },
+      { key: 'grossAmountBGN',     label: 'Брутен размер на дохода, включително платения данък (за доходи с код 8141)', shortLabel: `Брутен доход (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'foreignTaxPaidBGN',  label: 'Платен данък в чужбина', shortLabel: `Данък в чужбина (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'allowableCreditBGN', label: 'Допустим размер на данъчния кредит', shortLabel: `Допустим кредит (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'dueTaxBGN',          label: 'Дължим данък, подлежащ на внасяне по реда на чл. 67, ал. 4 от ЗДДФЛ', shortLabel: `Дължим данък (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
     ],
     rows: dividends.rows.map((d) => {
-      const grossBGND    = toBGN(d.grossAmount, d.currency, d.date)
-      const withheldBGND = toBGN(d.withheldTax, d.currency, d.date)
-      const grossBGN     = grossBGND    ? grossBGND.toNumber()    : null
-      const withheldBGN  = withheldBGND ? withheldBGND.toNumber() : null
+      const grossD    = toLcl(d.grossAmount, d.currency, d.date)
+      const withheldD = toLcl(d.withheldTax, d.currency, d.date)
+      const grossBGN     = grossD    ? grossD.toNumber()    : null
+      const withheldBGN  = withheldD ? withheldD.toNumber() : null
       const bgTaxBGN     = grossBGN != null ? new Decimal(grossBGN).times(BG_DIVIDEND_TAX_RATE).toNumber() : null
 
       const partialCredit = bgTaxBGN != null && withheldBGN != null && withheldBGN < bgTaxBGN
@@ -335,13 +336,31 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
     }),
   }
 
-  // ── Enrich interest with BGN ─────────────────────────────────────────────
+  // ── Enrich interest with local currency + totals ─────────────────────────
+  const interestDataRows = [...interest.rows]
   interest.rows.forEach((r) => {
-    const d = toBGN(r.amount, r.currency, r.date)
+    const d = toLcl(r.amount, r.currency, r.date)
     r.amountBGN = d ? d.toNumber() : null
   })
+  // Update the amountBGN column label
+  const amtLclCol = interest.columns.find(c => c.key === 'amountBGN')
+  if (amtLclCol) amtLclCol.label = `Сума (${lcl})`
+  // Add totals per original currency, then local-currency grand total
+  ;['EUR', 'USD'].forEach(cur => {
+    const subset = interestDataRows.filter(r => r.currency === cur)
+    if (subset.length === 0) return
+    interest.rows.push({
+      _total: true, currency: cur, description: 'Общо',
+      amount:    subset.reduce((s, r) => s + (r.amount    ?? 0), 0),
+      amountBGN: subset.reduce((s, r) => s + (r.amountBGN ?? 0), 0),
+    })
+  })
+  interest.rows.push({
+    _total: true, currency: localCurrencyCode, description: 'Общо',
+    amountBGN: interestDataRows.reduce((s, r) => s + (r.amountBGN ?? 0), 0),
+  })
 
-  // ── Holdings totals rows ─────────────────────────────────────────────────
+  // ── Holdings totals ──────────────────────────────────────────────────────
   const holdingSumCols = ['quantity', 'costBasis', 'costPrice', 'value', 'unrealizedPL']
   ;['EUR', 'USD'].forEach(cur => {
     const subset = holdings.rows.filter(r => r.currency === cur)
@@ -357,5 +376,8 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
     dividends,
     interest,
     taxSummary: { app5, app13, app8Holdings, app8Dividends },
+    taxYear,
+    localCurrencyCode,
+    localCurrencyLabel,
   }
 }

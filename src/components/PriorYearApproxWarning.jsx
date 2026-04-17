@@ -1,6 +1,8 @@
 import { Box, Typography } from '@mui/material'
 import { WarningAmberOutlined } from '@mui/icons-material'
-import { PREV_YEAR_END_DATE, findUsdRate } from '../domain/fx/fxRates.js'
+import {
+  findUsdRate, getPrevYearEndDate, getLocalCurrencyLabel,
+} from '../domain/fx/fxRates.js'
 
 function fmtNum(n, decimals = 2) {
   return Number(n).toLocaleString('bg-BG', {
@@ -9,19 +11,19 @@ function fmtNum(n, decimals = 2) {
   })
 }
 
-const PREV_RATE_USD = findUsdRate(PREV_YEAR_END_DATE)
-
 function fmtDate(dateStr) {
-  // 'YYYY-MM-DD' → 'DD.MM.YYYY'
   if (!dateStr) return dateStr
   const [y, m, d] = dateStr.split('-')
   return `${d}.${m}.${y}`
 }
 
-export default function PriorYearApproxWarning({ rows }) {
+export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
   if (!rows || rows.length === 0) return null
 
-  const prevYearLabel = PREV_YEAR_END_DATE.slice(0, 4)  // '2024'
+  const lcl             = getLocalCurrencyLabel(taxYear)
+  const prevYearEndDate = getPrevYearEndDate(taxYear)
+  const prevRate        = findUsdRate(prevYearEndDate)
+  const prevYearLabel   = String(taxYear - 1)
 
   return (
     <Box sx={{
@@ -36,13 +38,13 @@ export default function PriorYearApproxWarning({ rows }) {
         <WarningAmberOutlined sx={{ color: 'warning.main', mt: 0.15, flexShrink: 0 }} />
         <Box>
           <Typography variant="subtitle2" fontWeight={700} color="warning.dark" gutterBottom>
-            Приблизителна цена на придобиване в лева — позиции от предходна година
+            Приблизителна цена на придобиване в {lcl} — позиции от предходна година
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.7, display: 'block' }}>
             За посочените по-долу сделки не са открити данни за покупка в текущата отчетна година.
-            Цената на придобиване в лева е изчислена по фиксирания курс на БНБ към края на {prevYearLabel} г.
-            ({fmtDate(PREV_YEAR_END_DATE)}
-            {PREV_RATE_USD != null ? ` — 1 USD = ${fmtNum(PREV_RATE_USD, 4)} лв` : ''}).
+            Цената на придобиване в {lcl} е изчислена по курса на БНБ към края на {prevYearLabel} г.
+            ({fmtDate(prevYearEndDate)}
+            {prevRate != null ? ` — 1 USD = ${fmtNum(prevRate, 4)} ${lcl}` : ''}).
             {' '}Действителната стойност може да се различава, ако акциите са придобити при различен курс
             в рамките на {prevYearLabel} г. Препоръчваме да проверите точния курс на придобиване
             в историята на сделките си и при необходимост да коригирате стойността ръчно.
@@ -63,7 +65,7 @@ export default function PriorYearApproxWarning({ rows }) {
                   {' · цена на придобиване: '}
                   <strong>{fmtNum(r.costBasis, 2)} {r.currency}</strong>
                   {r.costBasisBGN != null && (
-                    <> {' ≈ '}<strong>{fmtNum(r.costBasisBGN, 2)} лв</strong> <em>(приблизително)</em></>
+                    <> {' ≈ '}<strong>{fmtNum(r.costBasisBGN, 2)} {lcl}</strong> <em>(приблизително)</em></>
                   )}
                 </>
               )}
