@@ -1,7 +1,13 @@
 import { Box, Typography } from '@mui/material'
 import { WarningAmberOutlined } from '@mui/icons-material'
-import { fmt } from '../utils/fmt.js'
 import { PREV_YEAR_END_DATE, findUsdRate } from '../domain/fx/fxRates.js'
+
+function fmtNum(n, decimals = 2) {
+  return Number(n).toLocaleString('bg-BG', {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })
+}
 
 const PREV_RATE_USD = findUsdRate(PREV_YEAR_END_DATE)
 
@@ -36,7 +42,7 @@ export default function PriorYearApproxWarning({ rows }) {
             За посочените по-долу сделки не са открити данни за покупка в текущата отчетна година.
             Цената на придобиване в лева е изчислена по фиксирания курс на БНБ към края на {prevYearLabel} г.
             ({fmtDate(PREV_YEAR_END_DATE)}
-            {PREV_RATE_USD != null ? ` — 1 USD = ${fmt(PREV_RATE_USD, 4)} лв` : ''}).
+            {PREV_RATE_USD != null ? ` — 1 USD = ${fmtNum(PREV_RATE_USD, 4)} лв` : ''}).
             {' '}Действителната стойност може да се различава, ако акциите са придобити при различен курс
             в рамките на {prevYearLabel} г. Препоръчваме да проверите точния курс на придобиване
             в историята на сделките си и при необходимост да коригирате стойността ръчно.
@@ -49,15 +55,15 @@ export default function PriorYearApproxWarning({ rows }) {
           <Box component="li" key={i} sx={{ mb: 0.5 }}>
             <Typography variant="caption" color="text.primary" sx={{ lineHeight: 1.8 }}>
               <strong>{r.symbol}</strong>
-              {' — продажба на '}<strong>{r.quantity} бр.</strong>
-              {' @ '}{fmt(r.price, 2)} {r.currency}
+              {' — продажба на '}<strong>{r.quantityRaw} бр.</strong>
+              {' @ '}{r.priceRaw} {r.currency}
               {' на '}{fmtDate(r.date)}
               {r.costBasis != null && (
                 <>
                   {' · цена на придобиване: '}
-                  <strong>{fmt(r.costBasis, 2)} {r.currency}</strong>
+                  <strong>{fmtNum(r.costBasis, 2)} {r.currency}</strong>
                   {r.costBasisBGN != null && (
-                    <> {' ≈ '}<strong>{fmt(r.costBasisBGN, 2)} лв</strong> <em>(приблизително)</em></>
+                    <> {' ≈ '}<strong>{fmtNum(r.costBasisBGN, 2)} лв</strong> <em>(приблизително)</em></>
                   )}
                 </>
               )}

@@ -4,7 +4,8 @@ import {
   FormControlLabel, IconButton, Link, Tab, Tabs, Typography,
 } from '@mui/material'
 import { Check, Close, ContentCopy, GitHub, InfoOutlined, LinkedIn, ReceiptLongOutlined } from '@mui/icons-material'
-import { processFile } from './services/processFile.js'
+import { processFile, parseFilesData } from './services/processFile.js'
+import { inferPriorPositions } from './services/inferPriorPositions.js'
 import AboutSection from './content/AboutSection.jsx'
 import Disclaimer from './content/Disclaimer.jsx'
 import TermsContent from './content/TermsContent.jsx'
@@ -16,6 +17,7 @@ import TaxApp13 from './components/TaxApp13.jsx'
 import TaxApp8Holdings from './components/TaxApp8Holdings.jsx'
 import TaxApp8Dividends from './components/TaxApp8Dividends.jsx'
 import PriorYearApproxWarning from './components/PriorYearApproxWarning.jsx'
+import PriorYearPositionsForm from './components/PriorYearPositionsForm.jsx'
 import './App.css'
 
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true'
@@ -262,6 +264,12 @@ export default function App() {
   const [htmlFile, setHtmlFile] = useState(null)
   const [htmlFileUrl, setHtmlFileUrl] = useState('')
 
+  // ── Prior-year positions inference ───────────────────────────
+  // null = not yet parsed; [] = parsed, nothing to confirm; [...] = needs confirmation
+  const [inferredPositions, setInferredPositions]   = useState(null)
+  const [confirmedPositions, setConfirmedPositions] = useState(null)
+  const [parsing, setParsing] = useState(false)
+
   // ── Results and UI states ────────────────────────────────────
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -283,6 +291,36 @@ export default function App() {
     setHtmlFileUrl(url)
     return () => URL.revokeObjectURL(url)
   }, [htmlFile])
+
+  // ── Preliminary parse: infer prior-year positions when both files ready ─────
+  useEffect(() => {
+    if (!csvFile || !htmlFile) {
+      setInferredPositions(null)
+      setConfirmedPositions(null)
+      return
+    }
+    let cancelled = false
+    setParsing(true)
+    parseFilesData({ csvFile, htmlFile })
+      .then(data => {
+        if (cancelled) return
+        const prior = inferPriorPositions({
+          htmlTrades:    data.processedTrades.rows,
+          openPositions: data.openPositions.rows,
+          csvTradeBasis: data.csvTradeBasis,
+        })
+        setInferredPositions(prior)
+        if (prior.length === 0) setConfirmedPositions([])
+      })
+      .catch(e => {
+        if (cancelled) return
+        console.warn('Prior-year inference failed:', e)
+        setInferredPositions([])
+        setConfirmedPositions([])
+      })
+      .finally(() => { if (!cancelled) setParsing(false) })
+    return () => { cancelled = true }
+  }, [csvFile, htmlFile])
 
   // ── File selection handlers ──────────────────────────────────
   function selectCsvFile(f) {
@@ -313,13 +351,12 @@ export default function App() {
 
   // ── Process both files together ──────────────────────────────
   async function handleCalculate() {
-    if (!csvFile || !htmlFile || !agreed) return
+    if (!csvFile || !htmlFile || !agreed || confirmedPositions === null) return
     setError(null)
     setResult(null)
     setLoading(true)
     try {
-      // processFile should be updated to accept both files if needed
-      const res = await processFile({ csvFile, htmlFile })
+      const res = await processFile({ csvFile, htmlFile, priorPositions: confirmedPositions })
       setResult(res)
     } catch (e) {
       setError(e.message)
@@ -420,7 +457,7 @@ export default function App() {
                 />
                 <Button
                   variant="contained"
-                  disabled={!csvFile || !agreed || loading}
+                  disabled={!csvFile || !htmlFile || !agreed || loading || parsing || confirmedPositions === null}
                   onClick={handleCalculate}
                 >
                   {loading ? 'Изчислява се...' : 'Изчисли'}
@@ -429,6 +466,19 @@ export default function App() {
                   Зареди демо
                 </Button>
               </Box>
+
+          {/* Prior-year positions form — shown before first calculation */}
+          {inferredPositions !== null && inferredPositions.length > 0 && confirmedPositions === null && (
+            <PriorYearPositionsForm
+              positions={inferredPositions}
+              onConfirm={setConfirmedPositions}
+            />
+          )}
+          {inferredPositions !== null && inferredPositions.length > 0 && confirmedPositions !== null && !result && (
+            <Alert severity="success" sx={{ mt: 2 }}>
+              Потвърдени {confirmedPositions.length} позиции от предходна година. Натиснете <strong>Изчисли</strong>.
+            </Alert>
+          )}
 
           {error && (
             <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
