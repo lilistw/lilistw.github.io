@@ -1,5 +1,7 @@
 import Decimal from 'decimal.js'
-import { toBGN, PREV_YEAR_END_DATE, PREV_YEAR_DEFAULT_ACQ_DATE } from '../domain/fx/fxRates.js'
+import {
+  toLocalCurrency, getPrevYearEndDate, getPrevYearDefaultAcqDate,
+} from '../domain/fx/fxRates.js'
 
 const D0 = new Decimal(0)
 
@@ -25,7 +27,9 @@ function toD(v) {
  *
  * @returns {Array<{ symbol, currency, qty, costUSD, costBGN, lastBuyDate }>}
  */
-export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis }) {
+export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis, taxYear = 2025 }) {
+  const prevYearEndDate       = getPrevYearEndDate(taxYear)
+  const prevYearDefaultAcqDate = getPrevYearDefaultAcqDate(taxYear)
   // Aggregate per-symbol: qty bought/sold, cost of buys (positive), basis of sells (positive)
   const bySymbol = {}
 
@@ -83,7 +87,7 @@ export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis }
     if (priorQtyD.lte(0)) continue  // all shares were bought in current year
 
     const priorCostD   = openCostD.plus(sym.sellBasisUSD).minus(sym.buyCostUSD)
-    const priorCostBGN = toBGN(priorCostD, h.currency, PREV_YEAR_END_DATE)
+    const priorCostBGN = toLocalCurrency(priorCostD, h.currency, prevYearEndDate, taxYear)
 
     result.push({
       symbol:      h.symbol,
@@ -91,7 +95,7 @@ export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis }
       qty:         priorQtyD.toNumber(),
       costUSD:     priorCostD.toNumber(),
       costBGN:     priorCostBGN ? priorCostBGN.toNumber() : null,
-      lastBuyDate: PREV_YEAR_DEFAULT_ACQ_DATE,
+      lastBuyDate: prevYearDefaultAcqDate,
     })
   }
 
@@ -114,7 +118,7 @@ export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis }
       qty:         priorQtyD.toNumber(),
       costUSD:     priorCostD.toNumber(),
       costBGN:     priorCostBGN ? priorCostBGN.toNumber() : null,
-      lastBuyDate: PREV_YEAR_DEFAULT_ACQ_DATE,
+      lastBuyDate: prevYearDefaultAcqDate,
     })
   }
 

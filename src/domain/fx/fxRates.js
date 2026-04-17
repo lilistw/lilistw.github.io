@@ -1,18 +1,25 @@
 import Decimal from 'decimal.js'
 import rates2024 from './rates/2024.json'
 import rates2025 from './rates/2025.json'
+import rates2026 from './rates/2026.json'
 
-const EUR_BGN = new Decimal('1.95583')  // fixed peg
+export const EUR_BGN = new Decimal('1.95583')  // fixed peg
 
-// Build lookup: 'YYYY-MM-DD' → Decimal rate (merges all available years)
+// Unified rate map: 'YYYY-MM-DD' → Decimal USD/BGN.
+// 2024/2025 files hold USD/BGN directly.
+// 2026 file holds USD/EUR; normalised by × EUR_BGN so the map is always USD/BGN.
 const rateMap = new Map()
 for (const { date, rate } of [...rates2024, ...rates2025]) {
   const [d, m, y] = date.split('.')
   rateMap.set(`${y}-${m}-${d}`, new Decimal(String(rate)))
 }
+for (const { date, rate } of rates2026) {
+  const [d, m, y] = date.split('.')
+  rateMap.set(`${y}-${m}-${d}`, new Decimal(String(rate)).times(EUR_BGN))
+}
 const sortedDates = [...rateMap.keys()].sort()
 
-/** Returns the BNB USD/BGN Decimal rate for the nearest previous trading day. */
+/** Returns the USD/BGN Decimal rate for the nearest previous trading day. */
 export function findUsdRate(dateStr) {
   if (rateMap.has(dateStr)) return rateMap.get(dateStr)
   if (dateStr < sortedDates[0]) return null
@@ -26,7 +33,7 @@ export function findUsdRate(dateStr) {
 }
 
 /**
- * Convert amount to BGN using the BNB rate for dateStr.
+ * Convert amount to BGN.
  * Accepts number, string, or Decimal; returns Decimal or null.
  */
 export function toBGN(amount, currency, dateStr) {
@@ -40,14 +47,36 @@ export function toBGN(amount, currency, dateStr) {
   return null
 }
 
-/** Last trading day of the current tax year (for year-end BGN conversions). */
-export const YEAR_END_DATE = '2025-12-30'
-
-/** Last trading day of the previous year (for rate lookups). */
-export const PREV_YEAR_END_DATE = '2024-12-30'
-
 /**
- * Default acquisition date for prior-year positions where the exact
- * purchase date is unknown — 31 December of the previous year.
+ * Convert amount to the local reporting currency for taxYear.
+ *   2025 → BGN  (same as toBGN)
+ *   2026+ → EUR (EUR passes through; USD uses USD/BGN ÷ EUR_BGN)
+ *
+ * findUsdRate always returns USD/BGN, so USD→EUR = rate ÷ EUR_BGN.
  */
-export const PREV_YEAR_DEFAULT_ACQ_DATE = '2024-12-31'
+export function toLocalCurrency(amount, currency, dateStr, taxYear) {
+  if (amount == null || !currency) return null
+  const d = amount instanceof Decimal ? amount : new Decimal(String(amount))
+  if (taxYear >= 2026) {
+    if (currency === 'EUR') return d
+    if (currency === 'USD') {
+      const usdBgn = findUsdRate(dateStr)
+      return usdBgn != null ? d.times(usdBgn).div(EUR_BGN) : null
+    }
+    return null
+  }
+  return toBGN(amount, currency, dateStr)
+}
+
+// ── Tax-year helpers ──────────────────────────────────────────────────────────
+
+export function getLocalCurrencyCode(taxYear)      { return taxYear >= 2026 ? 'EUR' : 'BGN' }
+export function getLocalCurrencyLabel(taxYear)     { return taxYear >= 2026 ? 'евро' : 'лв' }
+export function getYearEndDate(taxYear)            { return `${taxYear}-12-30` }
+export function getPrevYearEndDate(taxYear)        { return `${taxYear - 1}-12-30` }
+export function getPrevYearDefaultAcqDate(taxYear) { return `${taxYear - 1}-12-31` }
+
+// ── Legacy 2025 constants ─────────────────────────────────────────────────────
+export const YEAR_END_DATE              = getYearEndDate(2025)
+export const PREV_YEAR_END_DATE         = getPrevYearEndDate(2025)
+export const PREV_YEAR_DEFAULT_ACQ_DATE = getPrevYearDefaultAcqDate(2025)

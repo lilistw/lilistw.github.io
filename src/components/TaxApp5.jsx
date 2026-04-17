@@ -3,8 +3,9 @@ import { InfoOutlined } from '@mui/icons-material'
 import { TaxFormSection, TaxRow } from './TaxFormSection.jsx'
 import { fmt } from '../utils/fmt.js'
 
-export default function TaxApp5({ summary }) {
+export default function TaxApp5({ summary, localCurrencyLabel = 'лв' }) {
   if (!summary) return null
+  const lcl = localCurrencyLabel
   const netTaxable = summary.profits - summary.losses
   const taxDue     = Math.max(netTaxable, 0) * 0.10
   return (
@@ -13,17 +14,17 @@ export default function TaxApp5({ summary }) {
       subtitle="Доходи от прехвърляне на финансови активи (акции, ETF извън ЕС и др.)"
     >
       <TaxRow label="Код" value="508" />
-      <TaxRow label="Общ размер на продажните цени при продажба или замяна на финансови активи (лв)"
+      <TaxRow label={`Общ размер на продажните цени при продажба или замяна на финансови активи (${lcl})`}
         value={fmt(summary.totalProceedsBGN)} />
-      <TaxRow label="Общ размер на цените на придобиване (лв)"
+      <TaxRow label={`Общ размер на цените на придобиване (${lcl})`}
         value={fmt(summary.totalCostBasisBGN)} />
-      <TaxRow label="Реализирани печалби (лв)"
+      <TaxRow label={`Реализирани печалби (${lcl})`}
         value={fmt(summary.profits)} color="success.main" />
-      <TaxRow label="Реализирани загуби (лв)"
+      <TaxRow label={`Реализирани загуби (${lcl})`}
         value={fmt(summary.losses)} color="error.main" />
-      <TaxRow label="Нетен облагаем доход (печалби − загуби) (лв)"
+      <TaxRow label={`Нетен облагаем доход (печалби − загуби) (${lcl})`}
         value={fmt(netTaxable)} color={netTaxable >= 0 ? 'success.main' : 'error.main'} />
-      <TaxRow label="Дължим данък 10% (лв)"
+      <TaxRow label={`Дължим данък 10% (${lcl})`}
         value={fmt(taxDue)} color="warning.dark" />
       <Box sx={{ display: 'flex', gap: 1, mt: 1.5, p: 1.5, bgcolor: '#EFF6FF', borderRadius: 1.5 }}>
         <InfoOutlined sx={{ fontSize: 15, color: 'primary.main', mt: 0.15, flexShrink: 0 }} />

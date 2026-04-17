@@ -6,6 +6,7 @@ import {
 import { Check, Close, ContentCopy, GitHub, InfoOutlined, LinkedIn, ReceiptLongOutlined } from '@mui/icons-material'
 import { processFile, parseFilesData } from './services/processFile.js'
 import { inferPriorPositions } from './services/inferPriorPositions.js'
+import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
 import AboutSection from './content/AboutSection.jsx'
 import Disclaimer from './content/Disclaimer.jsx'
 import TermsContent from './content/TermsContent.jsx'
@@ -63,7 +64,7 @@ function TabPanel({ children, value, index }) {
 const TRADE_SUM_COLS     = ['proceeds', 'comm', 'fee', 'totalWithFee']
 const TRADE_SUM_BGN_COLS = ['totalWithFeeBGN', 'costBasisBGN']
 
-function buildTradeTotals(dataRows) {
+function buildTradeTotals(dataRows, localCurrencyCode = 'BGN') {
   const totals = []
   for (const label of ['Облагаем', 'Освободен']) {
     const group = dataRows.filter(r => r.taxExemptLabel === label)
@@ -76,9 +77,9 @@ function buildTradeTotals(dataRows) {
       TRADE_SUM_BGN_COLS.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
       totals.push(row)
     }
-    const bgnRow = { _total: true, taxExemptLabel: label, currency: 'BGN' }
-    TRADE_SUM_BGN_COLS.forEach(k => { bgnRow[k] = group.reduce((s, r) => s + (r[k] ?? 0), 0) })
-    totals.push(bgnRow)
+    const lclRow = { _total: true, taxExemptLabel: label, currency: localCurrencyCode }
+    TRADE_SUM_BGN_COLS.forEach(k => { lclRow[k] = group.reduce((s, r) => s + (r[k] ?? 0), 0) })
+    totals.push(lclRow)
   }
   return totals
 }
@@ -106,7 +107,9 @@ function buildTaxSummary(dataRows) {
 function ResultTabs({ result, jsonText }) {
   const [tab, setTab] = useState(0)
   const hasDividends = result.dividends.rows.length > 0
-  const hasInterest  = result.interest.rows.length > 0
+  const hasInterest  = result.interest.rows.filter(r => !r._total).length > 0
+
+  const { taxYear, localCurrencyCode, localCurrencyLabel } = result
 
   // Mutable trades data rows (user can toggle taxable status)
   const [tradesDataRows, setTradesDataRows] = useState(() =>
@@ -115,8 +118,8 @@ function ResultTabs({ result, jsonText }) {
 
   const trades = useMemo(() => ({
     columns: result.trades.columns,
-    rows: [...tradesDataRows, ...buildTradeTotals(tradesDataRows)],
-  }), [result.trades.columns, tradesDataRows])
+    rows: [...tradesDataRows, ...buildTradeTotals(tradesDataRows, localCurrencyCode)],
+  }), [result.trades.columns, tradesDataRows, localCurrencyCode])
 
   const taxSummary = useMemo(() => buildTaxSummary(tradesDataRows), [tradesDataRows])
   const approxRows = useMemo(
@@ -170,27 +173,28 @@ function ResultTabs({ result, jsonText }) {
         {tabs.map((t, i) => <Tab key={i} label={t.label} />)}
       </Tabs>
 
-      {/* Сделки: Trade Confirmation table + Прил. №5 (taxable) + Прил. №13 (EU ETF) */}
+      {/* Сделки */}
       <TabPanel value={tab} index={TAB_TRADES}>
         <DataTable title="Trade Confirmation – Сделки" data={trades} countLabel="сделки" onCheckChange={handleTaxableToggle} />
-        <PriorYearApproxWarning rows={approxRows} />
-        <TaxApp5  summary={taxSummary.app5} />
-        <TaxApp13 summary={taxSummary.app13} />
+        <PriorYearApproxWarning rows={approxRows} taxYear={taxYear} />
+        <TaxApp5  summary={taxSummary.app5}  localCurrencyLabel={localCurrencyLabel} />
+        <TaxApp13 summary={taxSummary.app13} localCurrencyLabel={localCurrencyLabel} />
       </TabPanel>
 
-      {/* Позиции: holdings table + Прил. №8 Part I */}
+      {/* Позиции */}
       <TabPanel value={tab} index={TAB_HOLDINGS}>
         <DataTable title="Open Positions – IBKR" data={result.holdings} countLabel="позиции" />
         <TaxApp8Holdings data={result.taxSummary.app8Holdings} />
       </TabPanel>
 
-      {/* Дивиденти: dividends table + Прил. №8 Part III */}
+      {/* Дивиденти */}
       {hasDividends && (
         <TabPanel value={tab} index={TAB_DIVIDENDS}>
           <TaxApp8Dividends data={result.taxSummary.app8Dividends} />
         </TabPanel>
       )}
 
+      {/* Лихви */}
       {hasInterest && (
         <TabPanel value={tab} index={TAB_INTEREST}>
           <Box sx={{
@@ -210,7 +214,8 @@ function ResultTabs({ result, jsonText }) {
                 Лихвите от IBKR се декларират в <strong>Приложение №6</strong>, Ред 6,{' '}
                 <strong>Код 606</strong>: „Обща сума на доходите с код 606, платците на които не са
                 предприятия или самоосигуряващи се лица". В поле <em>Размер на дохода</em> въведете
-                общата сума в левове (BGN), изчислена по курс на БНБ за датата на всяко плащане.
+                общата сума в {localCurrencyLabel} ({localCurrencyCode}), изчислена по курс на БНБ
+                за датата на всяко плащане.
               </Typography>
             </Box>
           </Box>
@@ -218,7 +223,7 @@ function ResultTabs({ result, jsonText }) {
         </TabPanel>
       )}
 
-      {/* Dev: raw JSON */}
+      {/* Dev */}
       {DEV_MODE && (
         <TabPanel value={tab} index={TAB_DEV}>
           <div className="output">
@@ -267,10 +272,12 @@ export default function App() {
   const [htmlFile, setHtmlFile] = useState(null)
   const [htmlFileUrl, setHtmlFileUrl] = useState('')
 
-  // ── Prior-year positions inference ───────────────────────────
-  // null = not yet parsed; [] = parsed, nothing to confirm; [...] = needs confirmation
-  const [inferredPositions, setInferredPositions]   = useState(null)
-  const [confirmedPositions, setConfirmedPositions] = useState(null)
+  // ── Prior-year positions (controlled form state, lifted here) ────────────
+  // null  = not yet inferred / files not both loaded
+  // []    = inferred, no prior positions found
+  // [...] = editable prior positions (form shown above button row)
+  const [pendingPositions, setPendingPositions] = useState(null)
+  const [taxYear, setTaxYear] = useState(2025)
   const [parsing, setParsing] = useState(false)
 
   // ── Results and UI states ────────────────────────────────────
@@ -295,11 +302,10 @@ export default function App() {
     return () => URL.revokeObjectURL(url)
   }, [htmlFile])
 
-  // ── Preliminary parse: infer prior-year positions when both files ready ─────
+  // ── Preliminary parse: infer prior-year positions when both files ready ──
   useEffect(() => {
     if (!csvFile || !htmlFile) {
-      setInferredPositions(null)
-      setConfirmedPositions(null)
+      setPendingPositions(null)
       return
     }
     let cancelled = false
@@ -307,19 +313,26 @@ export default function App() {
     parseFilesData({ csvFile, htmlFile })
       .then(data => {
         if (cancelled) return
+        const yr = data.taxYear ?? 2025
+        setTaxYear(yr)
         const prior = inferPriorPositions({
           htmlTrades:    data.processedTrades.rows,
           openPositions: data.openPositions.rows,
           csvTradeBasis: data.csvTradeBasis,
+          taxYear:       yr,
         })
-        setInferredPositions(prior)
-        if (prior.length === 0) setConfirmedPositions([])
+        // Convert inferred positions to editable form objects
+        const defaultAcqDate = getPrevYearDefaultAcqDate(yr)
+        setPendingPositions(prior.map(p => ({
+          ...p,
+          costBGNInput:    p.costBGN != null ? String(Number(p.costBGN).toFixed(2)) : '',
+          lastBuyDateInput: p.lastBuyDate ?? defaultAcqDate,
+        })))
       })
       .catch(e => {
         if (cancelled) return
         console.warn('Prior-year inference failed:', e)
-        setInferredPositions([])
-        setConfirmedPositions([])
+        setPendingPositions([])
       })
       .finally(() => { if (!cancelled) setParsing(false) })
     return () => { cancelled = true }
@@ -332,34 +345,39 @@ export default function App() {
     setResult(null)
     setError(null)
   }
-
   function clearCsvFile() {
     setCsvFile(null)
     setResult(null)
     setError(null)
   }
-
   function selectHtmlFile(f) {
     setHtmlFile(f)
     setResult(null)
     setError(null)
   }
-
   function clearHtmlFile() {
     setHtmlFile(null)
     setResult(null)
     setError(null)
   }
 
-
-  // ── Process both files together ──────────────────────────────
+  // ── Calculate ────────────────────────────────────────────────
   async function handleCalculate() {
-    if (!csvFile || !htmlFile || !agreed || confirmedPositions === null) return
+    if (!csvFile || !htmlFile || !agreed || parsing) return
     setError(null)
     setResult(null)
     setLoading(true)
     try {
-      const res = await processFile({ csvFile, htmlFile, priorPositions: confirmedPositions })
+      // Convert form editable objects to processFile format
+      const priorPositions = (pendingPositions ?? []).map(p => ({
+        symbol:      p.symbol,
+        currency:    p.currency,
+        qty:         p.qty,
+        costUSD:     p.costUSD,
+        costBGN:     parseFloat(String(p.costBGNInput).replace(',', '.')) || 0,
+        lastBuyDate: p.lastBuyDateInput || getPrevYearDefaultAcqDate(taxYear),
+      }))
+      const res = await processFile({ csvFile, htmlFile, priorPositions })
       setResult(res)
     } catch (e) {
       setError(e.message)
@@ -375,8 +393,8 @@ export default function App() {
       fetch('/demo/U0_2025_trades_demo.htm'),
     ])
     const [csvText, htmText] = await Promise.all([csvResp.text(), htmResp.text()])
-    selectCsvFile(new File([new Blob([csvText], { type: 'text/csv' })],    'U0_2025_activity_demo.csv',  { type: 'text/csv' }))
-    setHtmlFile(  new File([new Blob([htmText], { type: 'text/html' })],   'U0_2025_trades_demo.htm',   { type: 'text/html' }))
+    selectCsvFile(new File([new Blob([csvText], { type: 'text/csv' })],  'U0_2025_activity_demo.csv', { type: 'text/csv' }))
+    setHtmlFile(  new File([new Blob([htmText], { type: 'text/html' })], 'U0_2025_trades_demo.htm',  { type: 'text/html' }))
   }
 
   async function handleLoadDemo() {
@@ -384,8 +402,7 @@ export default function App() {
     catch (e) { setError('Неуспешно зареждане на демо файл: ' + e.message) }
   }
 
-
- const jsonText = result ? JSON.stringify(result, null, 2) : ''
+  const jsonText = result ? JSON.stringify(result, null, 2) : ''
 
   return (
     <div className="app">
@@ -399,20 +416,14 @@ export default function App() {
       </header>
 
       <div className="app-content">
-
         <main>
-          {/* ── Two dropzones ───────────────────────────────────────────── */}
+          {/* ── Two dropzones ──────────────────────────────────────── */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
-
-            {/* Activity Statement CSV */}
             <Box>
               <Dropzone
-                file={csvFile}
-                fileUrl={csvFileUrl}
-                onFileSelect={selectCsvFile}
-                onClearFile={clearCsvFile}
-                accept=".csv"
-                label="Activity Statement CSV тук"
+                file={csvFile} fileUrl={csvFileUrl}
+                onFileSelect={selectCsvFile} onClearFile={clearCsvFile}
+                accept=".csv" label="Activity Statement CSV тук"
               />
               <Typography variant="caption" color="text.secondary"
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
@@ -420,16 +431,11 @@ export default function App() {
                 IBKR Portal → Reports → Statements → Activity (формат CSV)
               </Typography>
             </Box>
-
-            {/* Trade Confirmation HTML */}
             <Box>
               <Dropzone
-                file={htmlFile}
-                fileUrl={htmlFileUrl}
-                onFileSelect={selectHtmlFile}
-                onClearFile={clearHtmlFile}
-                accept=".htm,.html"
-                label="Trade Confirmation HTML тук"
+                file={htmlFile} fileUrl={htmlFileUrl}
+                onFileSelect={selectHtmlFile} onClearFile={clearHtmlFile}
+                accept=".htm,.html" label="Trade Confirmation HTML тук"
                 infoContent={HTM_INFO}
               />
               <Typography variant="caption" color="text.secondary"
@@ -439,56 +445,53 @@ export default function App() {
               </Typography>
             </Box>
           </Box>
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-                <FormControlLabel
-                  control={
-                    <Checkbox
-                      checked={agreed}
-                      onChange={e => setAgreed(e.target.checked)}
-                      size="small"
-                      color="primary"
-                    />
-                  }
-                  label={
-                    <Typography variant="body2">
-                      Съгласен/на съм с{' '}
-                      <Link component="button" variant="body2" onClick={() => setShowTerms(true)}
-                        sx={{ verticalAlign: 'baseline' }}>
-                        условията за ползване
-                      </Link>
-                    </Typography>
-                  }
-                />
-                <Button
-                  variant="contained"
-                  disabled={!csvFile || !htmlFile || !agreed || loading || parsing || confirmedPositions === null}
-                  onClick={handleCalculate}
-                >
-                  {loading ? 'Изчислява се...' : 'Изчисли'}
-                </Button>
-                <Button variant="outlined" onClick={handleLoadDemo}>
-                  Зареди демо
-                </Button>
-              </Box>
 
-          {/* Prior-year positions form — shown before first calculation */}
-          {inferredPositions !== null && inferredPositions.length > 0 && confirmedPositions === null && (
+          {/* ── Prior-year positions form (above button row) ────────── */}
+          {pendingPositions !== null && pendingPositions.length > 0 && (
             <PriorYearPositionsForm
-              positions={inferredPositions}
-              onConfirm={setConfirmedPositions}
+              positions={pendingPositions}
+              onPositionChange={(i, field, value) =>
+                setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
+              }
+              taxYear={taxYear}
             />
           )}
-          {inferredPositions !== null && inferredPositions.length > 0 && confirmedPositions !== null && !result && (
-            <Alert severity="success" sx={{ mt: 2 }}>
-              Потвърдени {confirmedPositions.length} позиции от предходна година. Натиснете <strong>Изчисли</strong>.
-            </Alert>
-          )}
 
-          {error && (
-            <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>
-          )}
+          {/* ── Checkbox + Изчисли + демо ────────────────────────────── */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={agreed}
+                  onChange={e => setAgreed(e.target.checked)}
+                  size="small"
+                  color="primary"
+                />
+              }
+              label={
+                <Typography variant="body2">
+                  Съгласен/на съм с{' '}
+                  <Link component="button" variant="body2" onClick={() => setShowTerms(true)}
+                    sx={{ verticalAlign: 'baseline' }}>
+                    условията за ползване
+                  </Link>
+                </Typography>
+              }
+            />
+            <Button
+              variant="contained"
+              disabled={!csvFile || !htmlFile || !agreed || loading || parsing}
+              onClick={handleCalculate}
+            >
+              {loading ? 'Изчислява се...' : parsing ? 'Зарежда се...' : 'Изчисли'}
+            </Button>
+            <Button variant="outlined" onClick={handleLoadDemo}>
+              Зареди демо
+            </Button>
+          </Box>
 
-          {/* Activity Statement result */}
+          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
+
           {result && (
             <>
               <Disclaimer />
