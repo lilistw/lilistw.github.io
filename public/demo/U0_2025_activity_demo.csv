@@ -84,6 +84,7 @@ Open Positions,Data,Summary,Stocks,EUR,SAP,12,1,148.00,1776.00,157.50,1890.00,11
 Open Positions,Data,Summary,Stocks,EUR,IWDA,8,1,189.00,1512.00,196.00,1568.00,56.00,
 Open Positions,Total,,Stocks,EUR,,,,,6148.00,6428.00,280.00,
 Open Positions,Data,Summary,Stocks,USD,GOOG,3,1,2480.00,7440.00,2560.00,7680.00,240.00,
+Open Positions,Data,Summary,Stocks,USD,META,15,1,175.00,2625.00,186.50,2797.50,172.50,
 Open Positions,Data,Summary,Stocks,USD,AAPL,15,1,175.00,2625.00,186.50,2797.50,172.50,
 Open Positions,Data,Summary,Stocks,USD,NFLX,8,1,520.00,4160.00,535.00,4280.00,120.00,
 Open Positions,Data,Summary,Stocks,USD,AMZN,5,1,520.00,2600.00,535.00,2675.00,75.00,
@@ -126,8 +127,10 @@ Deposits & Withdrawals,Data,Total,,,5000.00
 Deposits & Withdrawals,Data,Total in EUR,,,4365.00
 Deposits & Withdrawals,Data,Total Deposits & Withdrawals in EUR,,,19365.00
 Dividends,Header,Currency,Date,Description,Amount
-Dividends,Data,EUR,2025-12-15,VWCE Cash Dividend EUR 0.25 per Share,5.00
+Dividends,Data,EUR,2025-08-15,VWCE Cash Dividend EUR 0.25 per Share,15.00
+Dividends,Data,EUR,2025-10-15,VWCE Cash Dividend EUR 0.25 per Share,5.00
 Dividends,Data,EUR,2025-12-20,SAP Cash Dividend EUR 3.00 per Share,36.00
+Dividends,Data,EUR,2025-12-15,VWCE Cash Dividend EUR 0.25 per Share,5.00
 Dividends,Data,EUR,2025-12-28,IWDA Distribution EUR 1.40 per Share,14.00
 Dividends,Data,USD,2025-12-01,AAPL Cash Dividend USD 0.35 per Share,52.50
 Dividends,Data,USD,2025-12-10,NFLX Preferred Dividend,0.00
