@@ -7,9 +7,8 @@ export default function TaxApp13({ summary, localCurrencyLabel = 'лв' }) {
   return (
     <TaxFormSection
       title="Приложение №13 – Част II"
-      subtitle="Необлагаеми доходи от продажба на дялове от ETF на регулирани пазари в ЕС"
+      subtitle="Необлагаеми доходи от продажба на дялове от ETF на регулирани пазари в ЕС. Код – 508"
     >
-      <TaxRow label="Код" value="508" />
       <TaxRow label={`Брутен размер на дохода (продажни цени) (${lcl})`} value={fmt(summary.totalProceedsBGN)} />
       <TaxRow label={`Цена на придобиване (${lcl})`}                      value={fmt(summary.totalCostBasisBGN)} />
     </TaxFormSection>

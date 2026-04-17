@@ -127,13 +127,12 @@ Deposits & Withdrawals,Data,Total,,,5000.00
 Deposits & Withdrawals,Data,Total in EUR,,,4365.00
 Deposits & Withdrawals,Data,Total Deposits & Withdrawals in EUR,,,19365.00
 Dividends,Header,Currency,Date,Description,Amount
-Dividends,Data,EUR,2025-08-15,VWCE Cash Dividend EUR 0.25 per Share,15.00
-Dividends,Data,EUR,2025-10-15,VWCE Cash Dividend EUR 0.25 per Share,5.00
-Dividends,Data,EUR,2025-12-20,SAP Cash Dividend EUR 3.00 per Share,36.00
-Dividends,Data,EUR,2025-12-15,VWCE Cash Dividend EUR 0.25 per Share,5.00
-Dividends,Data,EUR,2025-12-28,IWDA Distribution EUR 1.40 per Share,14.00
-Dividends,Data,USD,2025-12-01,AAPL Cash Dividend USD 0.35 per Share,52.50
-Dividends,Data,USD,2025-12-10,NFLX Preferred Dividend,0.00
+Dividends,Data,EUR,2025-08-15,VWCE(IE00BK5BQT80) Cash Dividend EUR 0.25 per Share,15.00
+Dividends,Data,EUR,2025-12-20,SAP(DE0007164600) Cash Dividend EUR 3.00 per Share,36.00
+Dividends,Data,EUR,2025-12-15,VWCE(IE00BK5BQT80) Cash Dividend EUR 0.25 per Share,5.00
+Dividends,Data,EUR,2025-12-28,IWDA(IE00B4L5Y983) Distribution EUR 1.40 per Share,14.00
+Dividends,Data,USD,2025-12-01,AAPL(US0378331005) Cash Dividend USD 0.35 per Share,52.50
+Dividends,Data,USD,2025-12-10,NFLX(US64110L1061) Preferred Dividend,0.00
 Dividends,Data,Total,,,55.00
 Dividends,Data,Total,,,52.50
 Dividends,Data,Total in EUR,,,45.00

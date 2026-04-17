@@ -11,9 +11,8 @@ export default function TaxApp5({ summary, localCurrencyLabel = 'лв' }) {
   return (
     <TaxFormSection
       title="Приложение №5 – Таблица 2"
-      subtitle="Доходи от прехвърляне на финансови активи (акции, ETF извън ЕС и др.)"
+      subtitle="Доходи от прехвърляне на финансови активи (акции, ETF извън ЕС и др.). Код – 508"
     >
-      <TaxRow label="Код" value="508" />
       <TaxRow label={`Общ размер на продажните цени при продажба или замяна на финансови активи (${lcl})`}
         value={fmt(summary.totalProceedsBGN)} />
       <TaxRow label={`Общ размер на цените на придобиване (${lcl})`}

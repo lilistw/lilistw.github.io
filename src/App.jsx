@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
-  FormControlLabel, IconButton, Link, Tab, Tabs, Typography,
+  FormControlLabel, IconButton, Link, Tab, Tabs, Typography, Tooltip
 } from '@mui/material'
 import { Check, Close, ContentCopy, FavoriteOutlined, GitHub, InfoOutlined, Favorite, ReceiptLongOutlined } from '@mui/icons-material'
 import { processFile, parseFilesData } from './services/processFile.js'
@@ -524,10 +524,12 @@ export default function App() {
             Условия&nbsp;за&nbsp;ползване
           </button>
           <span className="footer-sep">·</span>
+          <Tooltip title="Подкрепи фондация „Дивите животни“" arrow>
           <a href="https://dmsbg.com/7997/dms-divite/" target="_blank" rel="noopener noreferrer" className="footer-link footer-btn">
             <Favorite sx={{ fontSize: 16 }} />
             Подкрепи кауза
           </a>
+          </Tooltip>
         </div>
         <div className="footer-copy">
           © 2026 IBKR Данъчен калкулатор. Всички права запазени.

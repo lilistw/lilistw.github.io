@@ -7,7 +7,7 @@ import { parseInterest } from '../domain/parser/parseInterest.js'
 import { parseCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
 import { parseTaxYear } from '../domain/parser/parseTaxYear.js'
 import {
-  toLocalCurrency, toBGN,
+  toLocalCurrency,
   getLocalCurrencyCode, getLocalCurrencyLabel,
   getYearEndDate, getPrevYearEndDate,
 } from '../domain/fx/fxRates.js'
