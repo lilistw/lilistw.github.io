@@ -1,10 +1,11 @@
-import rates from './rates/2025.json'
+import rates2024 from './rates/2024.json'
+import rates2025 from './rates/2025.json'
 
 const EUR_BGN = 1.95583  // fixed peg
 
-// Build lookup: 'YYYY-MM-DD' → rate
+// Build lookup: 'YYYY-MM-DD' → rate (merges all available years)
 const rateMap = new Map()
-for (const { date, rate } of rates) {
+for (const { date, rate } of [...rates2024, ...rates2025]) {
   const [d, m, y] = date.split('.')
   rateMap.set(`${y}-${m}-${d}`, rate)
 }
@@ -33,4 +34,5 @@ export function toBGN(amount, currency, dateStr) {
   return null  // unsupported currency
 }
 
-export const YEAR_END_DATE = '2025-12-30'
+export const YEAR_END_DATE      = '2025-12-30'
+export const PREV_YEAR_END_DATE = '2024-12-30'

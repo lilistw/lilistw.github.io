@@ -3,7 +3,8 @@ import { parseOpenPositions } from "../domain/parser/parseOpenPositions.js";
 import { parseFinancialInstrumentInfo } from "../domain/parser/parseFinancialInstrumentInfo.js";
 import { parseDividends } from "../domain/parser/parseDividends.js";
 import { parseInterest } from "../domain/parser/parseInterest.js";
-import { toBGN, YEAR_END_DATE } from "../domain/fx/fxRates.js";
+import { parseCsvTradeBasis } from "../domain/parser/parseCsvTrades.js";
+import { toBGN, YEAR_END_DATE, PREV_YEAR_END_DATE } from "../domain/fx/fxRates.js";
 import { processHtmlFile } from "./processHtmlFile.js";
 import { IBKR_EXCHANGES } from '../domain/constants.js'
 import { EU_COUNTRY_CODES } from "../domain/constants.js";
@@ -35,6 +36,7 @@ export async function processFile({csvFile, htmlFile}) {
   const instrumentInfo = parseFinancialInstrumentInfo(rows);
   const dividends = parseDividends(rows, instrumentInfo);
   const interest = parseInterest(rows);
+  const csvTradeBasis = parseCsvTradeBasis(rows);
 
 const sortedTrades = [...processedTrades.rows].sort((a, b) => {
   // first by symbol
@@ -63,6 +65,7 @@ const result = sortedTrades.reduce((acc, t, i) => {
 
   let costBasis = null
   let costBasisBGN = null
+  let costBasisBGNApprox = false
 
   if (t.type === 'BUY') {
     pos.qty += t.quantity
@@ -71,24 +74,37 @@ const result = sortedTrades.reduce((acc, t, i) => {
   }
 
   if (t.type === 'SELL') {
+    if (pos.qty === 0) {
+      // No BUY in current dataset — position opened in a prior year.
+      // Fall back to the cost basis recorded by IBKR in the CSV Trades section.
+      // Convert to BGN using the previous year-end rate (best available approximation).
+      const csvKey = `${t.symbol}|${t.date}|${t.quantity}`
+      const csvBasis = csvTradeBasis.get(csvKey)
+      if (csvBasis != null) {
+        costBasis    = csvBasis
+        costBasisBGN = toBGN(costBasis, t.currency, PREV_YEAR_END_DATE)
+        costBasisBGNApprox = true
+      }
+      // pos stays at qty=0; don't decrement to avoid going negative
+    } else {
+      // Normal case: use weighted-average BGN cost accumulated at BUY time.
+      // This correctly reflects historical exchange rates for all BUYs in the dataset.
+      const avgCost    = pos.cost    / pos.qty
+      const avgCostBGN = pos.costBGN / pos.qty
+      costBasis    = avgCost    * t.quantity
+      costBasisBGN = avgCostBGN * t.quantity
 
-    const avgCost = pos.cost / pos.qty
-    costBasis = avgCost * t.quantity
-    // Use the weighted-average BGN cost accumulated at BUY time, not the sell-date rate.
-    // This correctly handles trades bought in prior years at different exchange rates.
-    const avgCostBGN = pos.costBGN / pos.qty
-    costBasisBGN = avgCostBGN * t.quantity
-
-    pos.qty -= t.quantity
-    pos.cost -= costBasis
-    pos.costBGN -= costBasisBGN
+      pos.qty    -= t.quantity
+      pos.cost   -= costBasis
+      pos.costBGN -= costBasisBGN
+    }
   }
 
   // taxable: null=BUY (no tax concept), true=taxable SELL, false=exempt SELL
   const taxable = t.type !== 'SELL' ? null : exempt ? false : true
 
-  const proceedsBGN    = t.type === 'SELL' ? totalWithFeeBGN : null
-  const realizedPLBGN  = t.type === 'SELL' && costBasisBGN != null ? totalWithFeeBGN - costBasisBGN : null
+  const proceedsBGN   = t.type === 'SELL' ? totalWithFeeBGN : null
+  const realizedPLBGN = t.type === 'SELL' && costBasisBGN != null ? totalWithFeeBGN - costBasisBGN : null
 
   acc.rows.push({
     ...t,
@@ -104,6 +120,7 @@ const result = sortedTrades.reduce((acc, t, i) => {
     totalWithFeeBGN,
     costBasis,
     costBasisBGN,
+    costBasisBGNApprox,
     proceedsBGN,
     realizedPLBGN,
   })
