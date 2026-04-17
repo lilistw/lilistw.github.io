@@ -46,8 +46,11 @@ function TermsModal({ onClose }) {
         </IconButton>
       </DialogTitle>
       <DialogContent dividers>
-        <TermsContent onClose={onClose} />
+        <TermsContent />
       </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Затвори</Button>
+      </DialogActions>
     </Dialog>
   )
 }
@@ -388,13 +391,14 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-inner">
-          <h1>IBKR Данъчен Калкулатор</h1>
-          <p>Изчислява данъчните задължения от сделки с ценни книжа, дивиденти и лихви за годишна данъчна декларация</p>
+          <Typography variant="title" component="h1" sx={{ fontSize: 40, fontWeight: 700 }}>
+            IBKR Данъчен калкулатор
+          </Typography>
+          <AboutSection />
         </div>
       </header>
 
       <div className="app-content">
-        <AboutSection />
 
         <main>
           {/* ── Two dropzones ───────────────────────────────────────────── */}
@@ -501,17 +505,11 @@ export default function App() {
             GitHub
           </a>
           <span className="footer-sep">·</span>
-          <a href="https://www.linkedin.com/in/lili-stoyanova/" className="footer-link">
-            <LinkedIn sx={{ fontSize: 16 }} />
-            LinkedIn
-          </a>
-          <span className="footer-sep">·</span>
           <button className="footer-link footer-btn" onClick={() => setShowTerms(true)}>
             <InfoOutlined sx={{ fontSize: 16 }} />
             Условия&nbsp;за&nbsp;ползване
           </button>
         </div>
-        <hr />
         <div className="footer-copy">
           © 2026 IBKR Данъчен калкулатор. Всички права запазени.
         </div>

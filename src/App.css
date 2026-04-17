@@ -16,8 +16,7 @@
     ),
     /* Deep navy-to-blue diagonal base */
     linear-gradient(150deg, #04111E 0%, #0A2240 45%, #1353A0 100%);
-  padding: 52px 40px 48px;
-  text-align: center;
+  padding: 40px 40px 40px;
   position: relative;
   overflow: hidden;
 }
@@ -66,7 +65,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  /* gap: 10px; */
 }
 
 .app-header h1 {
@@ -76,7 +75,7 @@
 }
 
 .app-header p {
-  color: rgba(255,255,255,0.60);
+  color: var(--text);
   font-size: 14px;
   letter-spacing: 0.25px;
 }
@@ -714,7 +713,7 @@
   justify-content: center;
   gap: 14px;
   margin-top: auto;
-  padding: 28px 40px;
+  padding: 10px 40px 0px;
   border-top: 1px solid var(--md-outline-variant);
   font-size: 13px;
   color: var(--text-muted);
@@ -744,7 +743,7 @@
 }
 
 .footer-copy {
-  margin-top: 4px;
+  /* margin-top: 4px; */
   font-size: 11px;
   color: var(--text-muted);
   opacity: 0.65;
