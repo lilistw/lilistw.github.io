@@ -3,7 +3,7 @@ import {
   Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControlLabel, IconButton, Link, Tab, Tabs, Typography,
 } from '@mui/material'
-import { Check, Close, ContentCopy, GitHub, InfoOutlined, LinkedIn, ReceiptLongOutlined } from '@mui/icons-material'
+import { Check, Close, ContentCopy, FavoriteOutlined, GitHub, InfoOutlined, Favorite, ReceiptLongOutlined } from '@mui/icons-material'
 import { processFile, parseFilesData } from './services/processFile.js'
 import { inferPriorPositions } from './services/inferPriorPositions.js'
 import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
@@ -183,7 +183,6 @@ function ResultTabs({ result, jsonText }) {
 
       {/* Позиции */}
       <TabPanel value={tab} index={TAB_HOLDINGS}>
-        <DataTable title="Open Positions – IBKR" data={result.holdings} countLabel="позиции" />
         <TaxApp8Holdings data={result.taxSummary.app8Holdings} />
       </TabPanel>
 
@@ -316,10 +315,11 @@ export default function App() {
         const yr = data.taxYear ?? 2025
         setTaxYear(yr)
         const prior = inferPriorPositions({
-          htmlTrades:    data.processedTrades.rows,
-          openPositions: data.openPositions.rows,
-          csvTradeBasis: data.csvTradeBasis,
-          taxYear:       yr,
+          htmlTrades:     data.processedTrades.rows,
+          openPositions:  data.openPositions.rows,
+          csvTradeBasis:  data.csvTradeBasis,
+          instrumentInfo: data.instrumentInfo,
+          taxYear:        yr,
         })
         // Convert inferred positions to editable form objects
         const defaultAcqDate = getPrevYearDefaultAcqDate(yr)
@@ -447,7 +447,7 @@ export default function App() {
           </Box>
 
           {/* ── Prior-year positions form (above button row) ────────── */}
-          {pendingPositions !== null && pendingPositions.length > 0 && (
+          {!result && pendingPositions !== null && pendingPositions.length > 0 && (
             <PriorYearPositionsForm
               positions={pendingPositions}
               onPositionChange={(i, field, value) =>
@@ -457,7 +457,9 @@ export default function App() {
             />
           )}
 
-          {/* ── Checkbox + Изчисли + демо ────────────────────────────── */}
+          {/* ── Checkbox + Изчисли ────────────────────────────── */}
+          {csvFile && htmlFile && !result
+            && (
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
             <FormControlLabel
               control={
@@ -485,10 +487,19 @@ export default function App() {
             >
               {loading ? 'Изчислява се...' : parsing ? 'Зарежда се...' : 'Изчисли'}
             </Button>
-            <Button variant="outlined" onClick={handleLoadDemo}>
-              Зареди демо
-            </Button>
           </Box>
+          )}
+
+          {/* ── Демо ──────────────────────────────*/}
+          
+          {(!csvFile || !htmlFile) && !loading && !parsing
+            && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+              <Button variant="outlined" onClick={handleLoadDemo}>
+                Зареди демо
+              </Button>
+            </Box>
+          )}
 
           {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
@@ -512,6 +523,11 @@ export default function App() {
             <InfoOutlined sx={{ fontSize: 16 }} />
             Условия&nbsp;за&nbsp;ползване
           </button>
+          <span className="footer-sep">·</span>
+          <a href="https://dmsbg.com/7997/dms-divite/" target="_blank" rel="noopener noreferrer" className="footer-link footer-btn">
+            <Favorite sx={{ fontSize: 16 }} />
+            Подкрепи кауза
+          </a>
         </div>
         <div className="footer-copy">
           © 2026 IBKR Данъчен калкулатор. Всички права запазени.

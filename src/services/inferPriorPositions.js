@@ -27,7 +27,7 @@ function toD(v) {
  *
  * @returns {Array<{ symbol, currency, qty, costUSD, costBGN, lastBuyDate }>}
  */
-export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis, taxYear = 2025 }) {
+export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis, instrumentInfo = {}, taxYear = 2025 }) {
   const prevYearEndDate       = getPrevYearEndDate(taxYear)
   const prevYearDefaultAcqDate = getPrevYearDefaultAcqDate(taxYear)
   // Aggregate per-symbol: qty bought/sold, cost of buys (positive), basis of sells (positive)
@@ -75,10 +75,10 @@ export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis, 
   for (const h of openPositions) {
     if (!h.symbol || !(h.quantity > 0)) continue
 
-    const sym = bySymbol[h.symbol] ?? {
-      currency: h.currency, buyQty: D0, buyCostUSD: D0,
-      sellQty: D0, sellBasisUSD: D0, lastBuyDate: null,
-    }
+    const aliases = instrumentInfo[h.symbol]?.aliases ?? []
+    const sym = bySymbol[h.symbol]
+      ?? aliases.map(a => bySymbol[a]).find(Boolean)
+      ?? { currency: h.currency, buyQty: D0, buyCostUSD: D0, sellQty: D0, sellBasisUSD: D0, lastBuyDate: null }
 
     const openQtyD  = toD(h.quantity)
     const openCostD = toD(h.costBasis)
@@ -101,7 +101,8 @@ export function inferPriorPositions({ htmlTrades, openPositions, csvTradeBasis, 
 
   // Symbols fully sold this year (not in open positions)
   for (const [symbol, sym] of Object.entries(bySymbol)) {
-    if (openPositions.some(h => h.symbol === symbol)) continue
+    const symAliases = new Set([symbol, ...(instrumentInfo[symbol]?.aliases ?? [])])
+    if (openPositions.some(h => symAliases.has(h.symbol))) continue
     if (sym.sellQty.lte(0)) continue
 
     const priorQtyD = sym.sellQty.minus(sym.buyQty)

@@ -40,3 +40,24 @@ export function parseFinancialInstrumentInfo(rows) {
 
   return result
 }
+
+/**
+ * Expands a symbol-keyed dictionary to also be accessible by all known aliases.
+ * Useful when one section of the IBKR report uses an alternate ticker (e.g. "EXS1d")
+ * while another uses the primary ticker ("EXS1") — both should resolve to the same entry.
+ *
+ * Does not overwrite existing keys; only fills in missing aliases.
+ *
+ * @param {{ [symbol: string]: any }} dict
+ * @param {{ [symbol: string]: { aliases: string[] } }} instrumentInfo
+ * @returns {{ [symbol: string]: any }} new dict with aliases added
+ */
+export function expandByAliases(dict, instrumentInfo) {
+  const result = { ...dict }
+  for (const [sym, value] of Object.entries(dict)) {
+    for (const alias of (instrumentInfo[sym]?.aliases ?? [])) {
+      if (!(alias in result)) result[alias] = value
+    }
+  }
+  return result
+}

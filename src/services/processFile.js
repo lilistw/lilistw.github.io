@@ -1,7 +1,7 @@
 import Decimal from 'decimal.js'
 import { parseCSV } from '../infra/csvReader.js'
 import { parseOpenPositions } from '../domain/parser/parseOpenPositions.js'
-import { parseFinancialInstrumentInfo } from '../domain/parser/parseFinancialInstrumentInfo.js'
+import { parseFinancialInstrumentInfo, expandByAliases } from '../domain/parser/parseFinancialInstrumentInfo.js'
 import { parseDividends } from '../domain/parser/parseDividends.js'
 import { parseInterest } from '../domain/parser/parseInterest.js'
 import { parseCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
@@ -182,14 +182,16 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
   }, { positions: initialPositions, rows: [] })
 
   const enrichedRows       = result.rows
-  const positionsCostBasis = {}
-  for (const [sym, pos] of Object.entries(result.positions)) {
-    positionsCostBasis[sym] = {
-      cost:    pos.cost.toNumber(),
-      qty:     pos.qty.toNumber(),
-      costBGN: pos.costBGN.toNumber(),
-    }
-  }
+  const positionsCostBasis = expandByAliases(
+    Object.fromEntries(
+      Object.entries(result.positions).map(([sym, pos]) => [sym, {
+        cost:    pos.cost.toNumber(),
+        qty:     pos.qty.toNumber(),
+        costBGN: pos.costBGN.toNumber(),
+      }])
+    ),
+    instrumentInfo
+  )
   console.info('Open positions:', positionsCostBasis)
   const holdings = parseOpenPositions(rows, instrumentInfo, positionsCostBasis)
 
@@ -244,6 +246,7 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
       lastBuyDate[t.symbol] = t.date
     }
   })
+  const lastBuyDateExpanded = expandByAliases(lastBuyDate, instrumentInfo)
 
   // ── App8 Part I – holdings ───────────────────────────────────────────────
   const netBuyQty = {}
@@ -252,6 +255,7 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
     if (t.type === 'BUY')  netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) + q
     if (t.type === 'SELL') netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) - q
   })
+  const netBuyQtyExpanded = expandByAliases(netBuyQty, instrumentInfo)
 
   const app8Holdings = {
     title: '',
@@ -271,11 +275,11 @@ export async function processFile({ csvFile, htmlFile, priorPositions = [] }) {
         const type        = info.type === 'ETF' ? 'Дялове' : 'Акции'
         const country     = info.countryName || h.currency
         const description = info.description ?? ''
-        const thisYearQty = Math.max(0, Math.min(netBuyQty[h.symbol] ?? 0, h.quantity))
+        const thisYearQty = Math.max(0, Math.min(netBuyQtyExpanded[h.symbol] ?? 0, h.quantity))
         const priorQty    = h.quantity - thisYearQty
         const costPerShare = h.costBasis / h.quantity
-        const acquDateStr = lastBuyDate[h.symbol]
-          ? lastBuyDate[h.symbol].split('-').reverse().join('.')
+        const acquDateStr = lastBuyDateExpanded[h.symbol]
+          ? lastBuyDateExpanded[h.symbol].split('-').reverse().join('.')
           : null
 
         const makeRow = (qty, acquDate) => {
