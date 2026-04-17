@@ -3,7 +3,7 @@ import {
   Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControlLabel, IconButton, Link, Tab, Tabs, Typography,
 } from '@mui/material'
-import { Check, Close, ContentCopy, GitHub, InfoOutlined, LinkedIn } from '@mui/icons-material'
+import { Check, Close, ContentCopy, GitHub, InfoOutlined, LinkedIn, ReceiptLongOutlined } from '@mui/icons-material'
 import { processFile } from './services/processFile.js'
 import AboutSection from './content/AboutSection.jsx'
 import Disclaimer from './content/Disclaimer.jsx'
@@ -180,16 +180,29 @@ function ResultTabs({ result, jsonText }) {
         </TabPanel>
       )}
 
-      {/* Лихви: interest payments table */}
-      {/* TODO: add info: 
-      
-      Приложение № 6 доходи от други източници по чл. 35 от ЗДДФЛ 
-      Попълва се ред 6 (кодът е 606)
-      6 Обща сума на доходите с код 606, платците на които не са предприятия или самоосигуряващи се лица
-      Размер на дохода
-      */}
       {hasInterest && (
         <TabPanel value={tab} index={TAB_INTEREST}>
+          <Box sx={{
+            display: 'flex', alignItems: 'flex-start', gap: 1.5,
+            p: 2, mb: 2,
+            bgcolor: '#FFFBEB',
+            border: '1px solid',
+            borderColor: '#FCD34D',
+            borderRadius: 2,
+          }}>
+            <ReceiptLongOutlined sx={{ fontSize: 20, color: 'warning.main', mt: 0.1, flexShrink: 0 }} />
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} color="warning.dark" gutterBottom>
+                Приложение №6 – Доходи от други източници (чл. 35 ЗДДФЛ)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                Лихвите от IBKR се декларират в <strong>Приложение №6</strong>, Ред 6,{' '}
+                <strong>Код 606</strong>: „Обща сума на доходите с код 606, платците на които не са
+                предприятия или самоосигуряващи се лица". В поле <em>Размер на дохода</em> въведете
+                общата сума в левове (BGN), изчислена по курс на БНБ за датата на всяко плащане.
+              </Typography>
+            </Box>
+          </Box>
           <DataTable title="Лихви" data={result.interest} countLabel="плащания" />
         </TabPanel>
       )}
@@ -333,7 +346,7 @@ export default function App() {
       <header className="app-header">
         <div className="header-inner">
           <h1>IBKR Данъчен Калкулатор</h1>
-          <p>Качете файловете от Interactive Brokers</p>
+          <p>Изчислява данъчните задължения от сделки с ценни книжа, дивиденти и лихви за годишна данъчна декларация</p>
         </div>
       </header>
 
@@ -354,9 +367,14 @@ export default function App() {
                 accept=".csv"
                 label="Activity Statement CSV тук"
               />
+              <Typography variant="caption" color="text.secondary"
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
+                <InfoOutlined sx={{ fontSize: 13 }} />
+                IBKR Portal → Reports → Statements → Activity (формат CSV)
+              </Typography>
             </Box>
 
-                       {/* Trade Confirmation HTML */}
+            {/* Trade Confirmation HTML */}
             <Box>
               <Dropzone
                 file={htmlFile}
@@ -367,6 +385,11 @@ export default function App() {
                 label="Trade Confirmation HTML тук"
                 infoContent={HTM_INFO}
               />
+              <Typography variant="caption" color="text.secondary"
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
+                <InfoOutlined sx={{ fontSize: 13 }} />
+                IBKR Portal → Reports → Trade Confirmation (формат HTML)
+              </Typography>
             </Box>
           </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>

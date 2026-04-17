@@ -3,7 +3,7 @@ import {
   Box, Button, Checkbox, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Tooltip, Typography,
 } from '@mui/material'
-import { Check, ContentCopyOutlined, ExpandLess, ExpandMore } from '@mui/icons-material'
+import { Check, ContentCopyOutlined, ExpandLess, ExpandMore, InfoOutlined } from '@mui/icons-material'
 
 const PREVIEW_ROWS = 5
 
@@ -155,6 +155,24 @@ export default function DataTable({ title, data, countLabel, embedded = false, s
             <CopyExcelButton columns={columns} rows={dataRows} />
           </Box>
         </Box>
+
+        {/* Checkbox hint — only for trades table */}
+        {onCheckChange && (
+          <Box sx={{
+            display: 'flex', alignItems: 'flex-start', gap: 1,
+            px: 2, py: 1,
+            bgcolor: '#EFF6FF',
+            borderBottom: '1px solid', borderColor: 'divider',
+          }}>
+            <InfoOutlined sx={{ fontSize: 15, color: 'primary.main', mt: 0.2, flexShrink: 0 }} />
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+              <strong>Управление на данъчен статус:</strong> Отметката в колона <em>Облагаем</em> определя третирането на сделката.{' '}
+              <strong>✓ Поставена</strong> – облагаема продажба, включва се в <strong>Приложение №5</strong>.{' '}
+              <strong>□ Премахната</strong> – освободена по чл.&nbsp;13, ал.&nbsp;1, т.&nbsp;3 ЗДДФЛ (регулиран пазар в ЕС/ЕИП), включва се в <strong>Приложение №13</strong>.{' '}
+              Кликнете върху отметката, за да промените статуса – ще бъдете помолени за потвърждение.
+            </Typography>
+          </Box>
+        )}
 
         <TableContainer>
         <Table size="small">
