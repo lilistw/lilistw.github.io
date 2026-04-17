@@ -1,3 +1,5 @@
+import { parseToDecimal } from '../../utils/numStr.js'
+
 /**
  * Parses the "Trades" section of an IBKR Activity Statement CSV to extract
  * the cost basis (Basis column) for SELL trades.
@@ -6,7 +8,7 @@
  * exists in the current dataset. IBKR records the weighted-average cost basis
  * of the sold shares in the "Basis" column (negative value for sells).
  *
- * Returns a Map keyed by "SYMBOL|YYYY-MM-DD|QTY" → cost basis (positive number).
+ * Returns a Map keyed by "SYMBOL|YYYY-MM-DD|QTY" → Decimal cost basis (positive).
  */
 export function parseCsvTradeBasis(rows) {
   const headerRow = rows.find(
@@ -20,29 +22,24 @@ export function parseCsvTradeBasis(rows) {
     if (name) colIndex[name] = i
   }
 
-  const parseNum = s => {
-    const n = parseFloat((s || '').replace(/,/g, ''))
-    return isNaN(n) ? null : n
-  }
-
   const result = new Map()
 
   rows
     .filter(r => r[0] === 'Trades' && r[1] === 'Data' && r[2] === 'Order')
     .forEach(r => {
-      const qty = parseNum(r[colIndex['Quantity']])
-      if (qty == null || qty >= 0) return  // only SELL trades have negative quantity
+      const qtyD = parseToDecimal(r[colIndex['Quantity']])
+      if (!qtyD || qtyD.gte(0)) return  // only SELL trades have negative quantity
 
       const symbol   = (r[colIndex['Symbol']] || '').trim()
       const dateTime = (r[colIndex['Date/Time']] || '').replace(/"/g, '')
       const date     = dateTime.split(',')[0].trim()   // 'YYYY-MM-DD'
-      const basis    = parseNum(r[colIndex['Basis']])  // negative in CSV for sells
+      const basisD   = parseToDecimal(r[colIndex['Basis']])  // negative in CSV for sells
 
-      if (!symbol || !date || basis == null) return
+      if (!symbol || !date || !basisD) return
 
       // Basis is negative (a cost); store as positive cost basis
-      const key = `${symbol}|${date}|${Math.round(Math.abs(qty))}`
-      result.set(key, -basis)
+      const key = `${symbol}|${date}|${qtyD.abs().toFixed(0)}`
+      result.set(key, basisD.neg())
     })
 
   return result
