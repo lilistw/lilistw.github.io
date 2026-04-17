@@ -28,15 +28,6 @@ const cards = [
     actions: [],
   },
   {
-    icon: <TrendingUp fontSize="small" />,
-    title: 'Метод',
-    text:
-      'Среднопретеглена цена на придобиване по символ с конвертиране в BGN по курс на БНБ за датата на всяка сделка.',
-    color: 'secondary.main',
-    bg: 'rgba(79,70,229,0.07)',
-    actions: [{ type: 'info', label: 'Още информация' }],
-  },
-  {
     icon: <ShieldOutlined fontSize="small" />,
     title: 'Поверителност',
     text:
@@ -44,6 +35,15 @@ const cards = [
     color: 'warning.main',
     bg: 'rgba(217,119,6,0.07)',
     actions: [],
+  },
+  {
+    icon: <TrendingUp fontSize="small" />,
+    title: 'Метод',
+    text:
+      'Среднопретеглена цена на придобиване по символ с конвертиране в BGN по курс на БНБ за датата на всяка сделка.',
+    color: 'secondary.main',
+    bg: 'rgba(79,70,229,0.07)',
+    actions: [{ type: 'info', label: 'Още информация' }],
   },
 ]
 
