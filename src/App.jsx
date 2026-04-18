@@ -1,12 +1,15 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation, Trans } from 'react-i18next'
+import { ThemeProvider, CssBaseline } from '@mui/material'
 import {
   Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControlLabel, IconButton, Link, Tab, Tabs, Tooltip, Typography,
 } from '@mui/material'
 import {
-  Check, Close, ContentCopy, Favorite, GitHub, InfoOutlined, ReceiptLongOutlined,
+  Check, Close, ContentCopy, DarkModeOutlined, Favorite, GitHub,
+  InfoOutlined, LightModeOutlined, ReceiptLongOutlined,
 } from '@mui/icons-material'
+import { dayTheme, nightTheme } from './theme.js'
 import { readInput } from './pipeline/readInput.js'
 import { calculate } from './pipeline/calculate.js'
 import { buildTradeTotals, buildTaxSummary } from './domain/tradeSummary.js'
@@ -23,7 +26,6 @@ import TaxApp8Holdings from './components/TaxApp8Holdings.jsx'
 import TaxApp8Dividends from './components/TaxApp8Dividends.jsx'
 import PriorYearApproxWarning from './components/PriorYearApproxWarning.jsx'
 import PriorYearPositionsForm from './components/PriorYearPositionsForm.jsx'
-import './App.css'
 
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true'
 
@@ -234,6 +236,12 @@ function ResultTabs({ result, inputJsonText, outputJsonText }) {
 
 export default function App() {
   const { t } = useTranslation()
+  const [nightMode, setNightMode] = useState(false)
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', nightMode ? 'night' : 'day')
+  }, [nightMode])
+
   const [csvFile,     setCsvFile]     = useState(null)
   const [csvFileUrl,  setCsvFileUrl]  = useState('')
   const [htmlFile,    setHtmlFile]    = useState(null)
@@ -372,8 +380,23 @@ export default function App() {
   const outputJsonText = result    ? JSON.stringify(result,    null, 2) : ''
 
   return (
+    <ThemeProvider theme={nightMode ? nightTheme : dayTheme}>
+      <CssBaseline />
     <div className="app">
       <header className="app-header">
+        <Tooltip title={nightMode ? t('theme.switchDay') : t('theme.switchNight')} arrow>
+          <IconButton
+            onClick={() => setNightMode(n => !n)}
+            size="small"
+            sx={{
+              position: 'absolute', top: 12, right: 16, zIndex: 2,
+              color: 'rgba(255,255,255,0.7)',
+              '&:hover': { color: '#fff', background: 'rgba(255,255,255,0.1)' },
+            }}
+          >
+            {nightMode ? <LightModeOutlined fontSize="small" /> : <DarkModeOutlined fontSize="small" />}
+          </IconButton>
+        </Tooltip>
         <div className="header-inner">
           <Typography variant="title" component="h1" sx={{ fontSize: 40, fontWeight: 700 }}>
             {t('app.title')}
@@ -516,5 +539,6 @@ export default function App() {
 
       {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
     </div>
+    </ThemeProvider>
   )
 }
