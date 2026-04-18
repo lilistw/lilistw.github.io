@@ -453,7 +453,7 @@ export default function App() {
           )}
 
           {/* Demo load button — shown until files are selected */}
-          {!csvFile && !htmlFile && (
+          {(!csvFile || !htmlFile) && (
             <Box
               sx={{
                 mb: 1,

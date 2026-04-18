@@ -221,7 +221,7 @@ export default function DataTable({ title, data, countLabel, embedded = false, s
         </Table>
         </TableContainer>
 
-        {rows.length > PREVIEW_ROWS && (
+        {hidden > 0 && (
           <Box sx={{ textAlign: 'center', py: 0.5, borderTop: '1px solid', borderColor: 'divider' }}>
             <Button
               size="small"

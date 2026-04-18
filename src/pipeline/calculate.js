@@ -12,6 +12,12 @@ import { IBKR_EXCHANGES, EU_COUNTRY_CODES } from '../domain/constants.js'
 const D0 = new Decimal(0)
 const BG_DIVIDEND_TAX_RATE = new Decimal('0.05')
 
+function toD(v) {
+  if (v instanceof Decimal) return v
+  const s = String(v ?? 0).replace(/,/g, '').trim()
+  try { return new Decimal(s) } catch { return D0 }
+}
+
 function isTaxExempt(trade, instrumentInfo) {
   if (instrumentInfo[trade.symbol]?.type !== 'ETF') return false
   const exch = IBKR_EXCHANGES[trade.exchange]
@@ -121,10 +127,10 @@ export function calculate(input, priorPositions = []) {
 
       const date      = t.datetime.split(/[,\s]/)[0]
       const exempt    = t.side === 'SELL' && isTaxExempt(t, instrumentInfo)
-      const proceedsD = new Decimal(t.proceeds   || '0')
-      const commD     = new Decimal(t.commission || '0')
-      const feeD      = new Decimal(t.fee        || '0')
-      const rawQtyD   = new Decimal(t.quantity   || '0')
+      const proceedsD = toD(t.proceeds)
+      const commD     = toD(t.commission)
+      const feeD      = toD(t.fee)
+      const rawQtyD   = toD(t.quantity)
       const qtyD      = rawQtyD.abs()
       const totalD    = proceedsD.plus(commD).plus(feeD)
       const totalLclD = toLcl(totalD, t.currency, date)
@@ -370,7 +376,7 @@ export function calculate(input, priorPositions = []) {
   const dataInterestRows = input.interest.map(r => ({
     ...r,
     amount:    parseFloat(r.amount) || 0,
-    amountBGN: toLcl(new Decimal(r.amount || '0'), r.currency, r.date)?.toNumber() ?? null,
+    amountBGN: toLcl(toD(r.amount), r.currency, r.date)?.toNumber() ?? null,
   }))
   const enrichedInterestRows = [...dataInterestRows]
   for (const cur of ['EUR', 'USD']) {
