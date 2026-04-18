@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { InfoOutlined } from '@mui/icons-material'
 import { TaxFormSection, TaxRow } from './TaxFormSection.jsx'
-import { fmt } from '../utils/fmt.js'
+import { fmt } from '../../utils/fmt.js'
 
 export default function TaxApp5({ summary, localCurrencyLabel = 'лв' }) {
   const { t } = useTranslation()
