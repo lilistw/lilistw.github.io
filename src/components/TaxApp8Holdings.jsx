@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
 import { ReceiptLongOutlined } from '@mui/icons-material'
 import DataTable from './DataTable.jsx'
@@ -11,16 +12,17 @@ function addRowNumbers(rows) {
 
 const NUM_COL = { key: '#', label: '#', align: 'right', mono: true, decimals: 0 }
 
-function HoldingsSubTable({ label, data, type }) {
+function HoldingsSubTable({ label, data, type, countLabel }) {
   const rows = data.rows.filter(r => r.type === type)
   if (rows.length === 0) return null
   const columns = [NUM_COL, ...COLUMNS_WITHOUT_TYPE(data.columns)]
   return (
-    <DataTable title={label} data={{ columns, rows: addRowNumbers(rows) }} countLabel="позиции" embedded sx={{ mb: 2 }} />
+    <DataTable title={label} data={{ columns, rows: addRowNumbers(rows) }} countLabel={countLabel} embedded sx={{ mb: 2 }} />
   )
 }
 
 export default function TaxApp8Holdings({ data }) {
+  const { t } = useTranslation()
   if (!data || data.rows.length === 0) return null
   return (
     <Box>
@@ -35,18 +37,16 @@ export default function TaxApp8Holdings({ data }) {
         <ReceiptLongOutlined sx={{ fontSize: 20, color: 'warning.main', mt: 0.1, flexShrink: 0 }} />
         <Box>
           <Typography variant="subtitle2" fontWeight={700} color="warning.dark" gutterBottom>
-            Приложение №8 – Част I Притежавани акции и дялове в чуждестранни дружества към 31.12
+            {t('taxApp8Holdings.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-            Съгласно <strong>чл. 50, ал. 1, т. 2 ЗДДФЛ</strong> всички чуждестранни акции и дялове, притежавани
-            към 31 декември, <strong>трябва да се декларират</strong> независимо дали е реализиран доход.
-            Вписват се в Приложение №8, Част I — по един ред за всяка позиция.
-            Данните се базират на отворените позиции от IBKR към края на годината.
+            Съгласно <strong>{t('taxApp8Holdings.legalRef')}</strong> {t('taxApp8Holdings.bodyLine1')}{' '}
+            <strong>{t('taxApp8Holdings.bodyMustDeclare')}</strong> {t('taxApp8Holdings.bodyLine2')}
           </Typography>
         </Box>
       </Box>
-      <HoldingsSubTable label="Акции" data={data} type="Акции" />
-      <HoldingsSubTable label="Дялове" data={data} type="Дялове" />
+      <HoldingsSubTable label={t('taxApp8Holdings.shares')} data={data} type="Акции" countLabel={t('taxApp8Holdings.countLabel')} />
+      <HoldingsSubTable label={t('taxApp8Holdings.funds')}  data={data} type="Дялове" countLabel={t('taxApp8Holdings.countLabel')} />
     </Box>
   )
 }

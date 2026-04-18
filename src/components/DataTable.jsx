@@ -1,4 +1,5 @@
 import { useState } from 'react'
+import { useTranslation } from 'react-i18next'
 import {
   Box, Button, Checkbox, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Tooltip, Typography,
@@ -95,6 +96,7 @@ function buildTsv(columns, rows) {
 }
 
 function CopyExcelButton({ columns, rows }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   async function handleCopy() {
     await navigator.clipboard.writeText(buildTsv(columns, rows))
@@ -111,12 +113,13 @@ function CopyExcelButton({ columns, rows }) {
       sx={{ fontWeight: 400, fontSize: 12, textDecoration: 'underline', textUnderlineOffset: 3,
             '&:hover': { textDecoration: 'underline' }, minWidth: 0, px: 0.5 }}
     >
-      {copied ? 'Копирано!' : 'Копирай в Excel'}
+      {copied ? t('dataTable.copied') : t('dataTable.copyToExcel')}
     </Button>
   )
 }
 
 export default function DataTable({ title, data, countLabel, embedded = false, sx, onCheckChange }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const { columns, rows } = data
   const dataRows  = rows.filter(r => !r._total)
@@ -166,10 +169,15 @@ export default function DataTable({ title, data, countLabel, embedded = false, s
           }}>
             <InfoOutlined sx={{ fontSize: 15, color: 'primary.main', mt: 0.2, flexShrink: 0 }} />
             <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-              <strong>Управление на данъчен статус:</strong> Отметката в колона <em>Облагаем</em> определя третирането на сделката.{' '}
-              <strong>✓ Поставена</strong> – облагаема продажба, включва се в <strong>Приложение №5</strong>.{' '}
-              <strong>□ Премахната</strong> – освободена по чл.&nbsp;13, ал.&nbsp;1, т.&nbsp;3 ЗДДФЛ (регулиран пазар в ЕС/ЕИП), включва се в <strong>Приложение №13</strong>.{' '}
-              Кликнете върху отметката, за да промените статуса – ще бъдете помолени за потвърждение.
+              <strong>{t('dataTable.hint.label')}</strong>{' '}
+              {t('dataTable.hint.column') /* "Облагаем" */ && (
+                <>Отметката в колона <em>{t('dataTable.hint.column')}</em> определя третирането на сделката.{' '}</>
+              )}
+              <strong>{t('dataTable.hint.checked')}</strong>{' '}
+              – {t('dataTable.hint.checkedDesc')} <strong>{t('dataTable.hint.app5Ref')}</strong>.{' '}
+              <strong>{t('dataTable.hint.unchecked')}</strong>{' '}
+              – {t('dataTable.hint.uncheckedDesc')} <strong>{t('dataTable.hint.app13Ref')}</strong>.{' '}
+              {t('dataTable.hint.clickInstruction')}
             </Typography>
           </Box>
         )}
@@ -229,7 +237,7 @@ export default function DataTable({ title, data, countLabel, embedded = false, s
               onClick={() => setExpanded(e => !e)}
               endIcon={expanded ? <ExpandLess /> : <ExpandMore />}
             >
-              {expanded ? 'Скрий' : `Покажи всички ${hidden} скрити ${countLabel}`}
+              {expanded ? t('dataTable.hide') : t('dataTable.showAll', { hidden, countLabel })}
             </Button>
           </Box>
         )}

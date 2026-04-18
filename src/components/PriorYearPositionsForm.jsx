@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Typography,
@@ -31,10 +32,15 @@ function fmtDate(dateStr) {
  *   taxYear         – current tax year (determines currency label and prev-year date)
  */
 export default function PriorYearPositionsForm({ positions, onPositionChange, taxYear = 2025 }) {
+  const { t } = useTranslation()
   const lcl             = getLocalCurrencyLabel(taxYear)
   const prevYearEndDate = getPrevYearEndDate(taxYear)
   const prevRate        = findUsdRate(prevYearEndDate)
   const prevYearLabel   = String(taxYear - 1)
+
+  const rateInfo = prevRate != null
+    ? t('priorYearForm.rateInfo', { rate: fmtNum(prevRate, 4), lcl })
+    : ''
 
   return (
     <Box sx={{ mt: 2, mb: 1 }}>
@@ -49,15 +55,11 @@ export default function PriorYearPositionsForm({ positions, onPositionChange, ta
           <InfoOutlined sx={{ color: 'warning.main', mt: 0.15, flexShrink: 0 }} />
           <Box>
             <Typography variant="subtitle2" fontWeight={700} color="warning.dark" gutterBottom>
-              Позиции от предходна година ({prevYearLabel}) — прегледайте и коригирайте при нужда
+              {t('priorYearForm.title', { prevYearLabel })}
             </Typography>
             <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.7, display: 'block' }}>
-              Установени са позиции, придобити преди текущата данъчна година.
-              Цената на придобиване в {lcl} е изчислена по курса на БНБ към края на {prevYearLabel}&nbsp;г.
-              ({fmtDate(prevYearEndDate)}
-              {prevRate != null ? ` — 1\u00a0USD\u00a0=\u00a0${fmtNum(prevRate, 4)}\u00a0${lcl}` : ''}).
-              {' '}Можете да коригирате стойностите спрямо действителния курс на придобиване и
-              датата на последна покупка, след което натиснете <strong>Изчисли</strong>.
+              {t('priorYearForm.bodyLine1', { lcl, prevYearLabel, prevYearEndDate: fmtDate(prevYearEndDate), rateInfo })}{' '}
+              <strong>{t('priorYearForm.calculateButton')}</strong>.
             </Typography>
           </Box>
         </Box>
@@ -67,12 +69,12 @@ export default function PriorYearPositionsForm({ positions, onPositionChange, ta
           <Table size="small">
             <TableHead>
               <TableRow>
-                <TableCell sx={{ fontWeight: 700 }}>Символ</TableCell>
-                <TableCell sx={{ fontWeight: 700 }}>Валута</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Брой</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700 }}>Цена придобиване (вал)</TableCell>
-                <TableCell align="right" sx={{ fontWeight: 700, minWidth: 160 }}>Цена придобиване ({lcl})</TableCell>
-                <TableCell sx={{ fontWeight: 700, minWidth: 140 }}>Дата последна покупка</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t('priorYearForm.colSymbol')}</TableCell>
+                <TableCell sx={{ fontWeight: 700 }}>{t('priorYearForm.colCurrency')}</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700 }}>{t('priorYearForm.colQty')}</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700 }}>{t('priorYearForm.colCostCurrency')}</TableCell>
+                <TableCell align="right" sx={{ fontWeight: 700, minWidth: 160 }}>{t('priorYearForm.colCostLocal', { lcl })}</TableCell>
+                <TableCell sx={{ fontWeight: 700, minWidth: 140 }}>{t('priorYearForm.colLastBuyDate')}</TableCell>
               </TableRow>
             </TableHead>
             <TableBody>

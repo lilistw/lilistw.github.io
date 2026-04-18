@@ -1,3 +1,4 @@
+import { useTranslation } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
 import { WarningAmberOutlined } from '@mui/icons-material'
 import {
@@ -18,12 +19,17 @@ function fmtDate(dateStr) {
 }
 
 export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
+  const { t } = useTranslation()
   if (!rows || rows.length === 0) return null
 
   const lcl             = getLocalCurrencyLabel(taxYear)
   const prevYearEndDate = getPrevYearEndDate(taxYear)
   const prevRate        = findUsdRate(prevYearEndDate)
   const prevYearLabel   = String(taxYear - 1)
+
+  const rateInfo = prevRate != null
+    ? t('priorYearWarning.rateInfo', { rate: fmtNum(prevRate, 4), lcl })
+    : ''
 
   return (
     <Box sx={{
@@ -38,16 +44,10 @@ export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
         <WarningAmberOutlined sx={{ color: 'warning.main', mt: 0.15, flexShrink: 0 }} />
         <Box>
           <Typography variant="subtitle2" fontWeight={700} color="warning.dark" gutterBottom>
-            Приблизителна цена на придобиване в {lcl} — позиции от предходна година
+            {t('priorYearWarning.title', { lcl })}
           </Typography>
           <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.7, display: 'block' }}>
-            За посочените по-долу сделки не са открити данни за покупка в текущата отчетна година.
-            Цената на придобиване в {lcl} е изчислена по курса на БНБ към края на {prevYearLabel} г.
-            ({fmtDate(prevYearEndDate)}
-            {prevRate != null ? ` — 1 USD = ${fmtNum(prevRate, 4)} ${lcl}` : ''}).
-            {' '}Действителната стойност може да се различава, ако акциите са придобити при различен курс
-            в рамките на {prevYearLabel} г. Препоръчваме да проверите точния курс на придобиване
-            в историята на сделките си и при необходимост да коригирате стойността ръчно.
+            {t('priorYearWarning.bodyLine1', { lcl, prevYearLabel, prevYearEndDate: fmtDate(prevYearEndDate), rateInfo })}
           </Typography>
         </Box>
       </Box>
@@ -57,15 +57,15 @@ export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
           <Box component="li" key={i} sx={{ mb: 0.5 }}>
             <Typography variant="caption" color="text.primary" sx={{ lineHeight: 1.8 }}>
               <strong>{r.symbol}</strong>
-              {' — продажба на '}<strong>{r.quantityRaw} бр.</strong>
-              {' @ '}{r.priceRaw} {r.currency}
-              {' на '}{fmtDate(r.date)}
+              {' \u2014 '}{t('priorYearWarning.salePart')} <strong>{r.quantityRaw} {t('priorYearWarning.units')}</strong>
+              {' '}{t('priorYearWarning.at')}{' '}{r.priceRaw} {r.currency}
+              {' '}{t('priorYearWarning.on')}{' '}{fmtDate(r.date)}
               {r.costBasis != null && (
                 <>
-                  {' · цена на придобиване: '}
+                  {' \u00b7 '}{t('priorYearWarning.acquisitionCost')}{' '}
                   <strong>{fmtNum(r.costBasis, 2)} {r.currency}</strong>
                   {r.costBasisBGN != null && (
-                    <> {' ≈ '}<strong>{fmtNum(r.costBasisBGN, 2)} {lcl}</strong> <em>(приблизително)</em></>
+                    <> {' \u2248 '}<strong>{fmtNum(r.costBasisBGN, 2)} {lcl}</strong> <em>{t('priorYearWarning.approx')}</em></>
                   )}
                 </>
               )}

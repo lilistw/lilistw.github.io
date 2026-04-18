@@ -1,4 +1,5 @@
 import { useState, useEffect, useMemo } from 'react'
+import { useTranslation, Trans } from 'react-i18next'
 import {
   Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControlLabel, IconButton, Link, Tab, Tabs, Tooltip, Typography,
@@ -15,7 +16,6 @@ import AboutSection from './components/AboutSection.jsx'
 import Disclaimer from './components/Disclaimer.jsx'
 import TermsContent from './components/TermsContent.jsx'
 import Dropzone from './components/Dropzone.jsx'
-import { HTM_INFO } from './components/dropzoneInfo.js'
 import DataTable from './components/DataTable.jsx'
 import TaxApp5 from './components/TaxApp5.jsx'
 import TaxApp13 from './components/TaxApp13.jsx'
@@ -30,6 +30,7 @@ const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true'
 // ── Small UI helpers ──────────────────────────────────────────────────────────
 
 function CopyButton({ text }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   async function handleCopy() {
     await navigator.clipboard.writeText(text)
@@ -37,18 +38,19 @@ function CopyButton({ text }) {
     setTimeout(() => setCopied(false), 1500)
   }
   return (
-    <IconButton size="small" onClick={handleCopy} title="Копирай JSON" color={copied ? 'success' : 'default'}>
+    <IconButton size="small" onClick={handleCopy} title={t('app.copyJson')} color={copied ? 'success' : 'default'}>
       {copied ? <Check fontSize="small" /> : <ContentCopy fontSize="small" />}
     </IconButton>
   )
 }
 
 function TermsModal({ onClose }) {
+  const { t } = useTranslation()
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth scroll="paper">
       <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        Условия за ползване
-        <IconButton size="small" onClick={onClose} aria-label="Затвори">
+        {t('terms.title')}
+        <IconButton size="small" onClick={onClose} aria-label={t('common.close')}>
           <Close fontSize="small" />
         </IconButton>
       </DialogTitle>
@@ -56,7 +58,7 @@ function TermsModal({ onClose }) {
         <TermsContent />
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose}>Затвори</Button>
+        <Button onClick={onClose}>{t('common.close')}</Button>
       </DialogActions>
     </Dialog>
   )
@@ -69,6 +71,7 @@ function TabPanel({ children, value, index }) {
 // ── Result display ────────────────────────────────────────────────────────────
 
 function ResultTabs({ result, inputJsonText, outputJsonText }) {
+  const { t } = useTranslation()
   const [tab, setTab] = useState(0)
 
   const { taxYear, localCurrencyCode, localCurrencyLabel } = result
@@ -98,7 +101,7 @@ function ResultTabs({ result, inputJsonText, outputJsonText }) {
     const row = tradesDataRows[rowIdx]
     if (row.taxable === null) return
     const newTaxable = !row.taxable
-    const newLabel   = newTaxable ? 'Облагаем' : 'Освободен'
+    const newLabel   = newTaxable ? t('app.taxStatus.taxable') : t('app.taxStatus.exempt')
     setPendingToggle({ rowIdx, row, newTaxable, newLabel })
   }
 
@@ -111,11 +114,11 @@ function ResultTabs({ result, inputJsonText, outputJsonText }) {
   }
 
   const tabs = [
-    { label: 'Сделки' },
-    { label: 'Позиции' },
-    ...(hasDividends ? [{ label: 'Дивиденти' }] : []),
-    ...(hasInterest  ? [{ label: 'Лихви' }]     : []),
-    ...(DEV_MODE     ? [{ label: 'Dev' }]        : []),
+    { label: t('app.tabs.trades') },
+    { label: t('app.tabs.positions') },
+    ...(hasDividends ? [{ label: t('app.tabs.dividends') }] : []),
+    ...(hasInterest  ? [{ label: t('app.tabs.interest') }] : []),
+    ...(DEV_MODE     ? [{ label: t('app.tabs.dev') }]      : []),
   ]
 
   let idx = 0
@@ -138,7 +141,7 @@ function ResultTabs({ result, inputJsonText, outputJsonText }) {
       </Tabs>
 
       <TabPanel value={tab} index={TAB_TRADES}>
-        <DataTable title="Trade Confirmation – Сделки" data={trades} countLabel="сделки" onCheckChange={handleTaxableToggle} />
+        <DataTable title={t('app.tradesTableTitle')} data={trades} countLabel={t('app.countLabel.trades')} onCheckChange={handleTaxableToggle} />
         <PriorYearApproxWarning rows={approxRows} taxYear={taxYear} />
         <TaxApp5  summary={taxSummary.app5}  localCurrencyLabel={localCurrencyLabel} />
         <TaxApp13 summary={taxSummary.app13} localCurrencyLabel={localCurrencyLabel} />
@@ -167,18 +170,18 @@ function ResultTabs({ result, inputJsonText, outputJsonText }) {
             <ReceiptLongOutlined sx={{ fontSize: 20, color: 'warning.main', mt: 0.1, flexShrink: 0 }} />
             <Box>
               <Typography variant="subtitle2" fontWeight={700} color="warning.dark" gutterBottom>
-                Приложение №6 – Доходи от други източници (чл. 35 ЗДДФЛ)
+                {t('app.interest.title')}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-                Лихвите от IBKR се декларират в <strong>Приложение №6</strong>, Ред 6,{' '}
-                <strong>Код 606</strong>: „Обща сума на доходите с код 606, платците на които не са
-                предприятия или самоосигуряващи се лица". В поле <em>Размер на дохода</em> въведете
-                общата сума в {localCurrencyLabel} ({localCurrencyCode}), изчислена по курс на БНБ
-                за датата на всяко плащане.
+                <Trans
+                  i18nKey="app.interest.body"
+                  values={{ localCurrencyLabel, localCurrencyCode }}
+                  components={{ app6: <strong />, code: <strong />, em: <em /> }}
+                />
               </Typography>
             </Box>
           </Box>
-          <DataTable title="Лихви" data={result.interest} countLabel="плащания" />
+          <DataTable title={t('app.tabs.interest')} data={result.interest} countLabel={t('app.countLabel.payments')} />
         </TabPanel>
       )}
 
@@ -204,8 +207,8 @@ function ResultTabs({ result, inputJsonText, outputJsonText }) {
       {pendingToggle && (
         <Dialog open onClose={() => setPendingToggle(null)} maxWidth="xs" fullWidth>
           <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-            Промяна на данъчен статус
-            <IconButton size="small" onClick={() => setPendingToggle(null)} aria-label="Затвори">
+            {t('app.changeStatusDialog.title')}
+            <IconButton size="small" onClick={() => setPendingToggle(null)} aria-label={t('common.close')}>
               <Close fontSize="small" />
             </IconButton>
           </DialogTitle>
@@ -218,8 +221,8 @@ function ResultTabs({ result, inputJsonText, outputJsonText }) {
             </Typography>
           </DialogContent>
           <DialogActions>
-            <Button onClick={() => setPendingToggle(null)}>Откажи</Button>
-            <Button variant="contained" onClick={confirmToggle}>Потвърди</Button>
+            <Button onClick={() => setPendingToggle(null)}>{t('common.cancel')}</Button>
+            <Button variant="contained" onClick={confirmToggle}>{t('common.confirm')}</Button>
           </DialogActions>
         </Dialog>
       )}
@@ -230,6 +233,7 @@ function ResultTabs({ result, inputJsonText, outputJsonText }) {
 // ── Main application ──────────────────────────────────────────────────────────
 
 export default function App() {
+  const { t } = useTranslation()
   const [csvFile,     setCsvFile]     = useState(null)
   const [csvFileUrl,  setCsvFileUrl]  = useState('')
   const [htmlFile,    setHtmlFile]    = useState(null)
@@ -360,7 +364,7 @@ export default function App() {
       selectCsvFile(new File([csvText], 'U0_2025_activity_demo.csv', { type: 'text/csv' }))
       setHtmlFile(  new File([htmText], 'U0_2025_trades_demo.htm',   { type: 'text/html' }))
     } catch (e) {
-      setError('Неуспешно зареждане на демо файл: ' + e.message)
+      setError(t('app.demoLoadError') + ' ' + e.message)
     }
   }
 
@@ -372,7 +376,7 @@ export default function App() {
       <header className="app-header">
         <div className="header-inner">
           <Typography variant="title" component="h1" sx={{ fontSize: 40, fontWeight: 700 }}>
-            IBKR Данъчен калкулатор
+            {t('app.title')}
           </Typography>
           <AboutSection />
         </div>
@@ -386,25 +390,24 @@ export default function App() {
               <Dropzone
                 file={csvFile} fileUrl={csvFileUrl}
                 onFileSelect={selectCsvFile} onClearFile={clearCsvFile}
-                accept=".csv" label="Activity Statement CSV тук"
+                accept=".csv" label={t('dropzone.csvLabel')} infoKey="csv"
               />
               <Typography variant="caption" color="text.secondary"
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
                 <InfoOutlined sx={{ fontSize: 13 }} />
-                IBKR Portal → Reports → Statements → Activity (формат CSV)
+                {t('app.csvHint')}
               </Typography>
             </Box>
             <Box>
               <Dropzone
                 file={htmlFile} fileUrl={htmlFileUrl}
                 onFileSelect={selectHtmlFile} onClearFile={clearHtmlFile}
-                accept=".htm,.html" label="Trade Confirmation HTML тук"
-                infoContent={HTM_INFO}
+                accept=".htm,.html" label={t('dropzone.htmlLabel')} infoKey="htm"
               />
               <Typography variant="caption" color="text.secondary"
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
                 <InfoOutlined sx={{ fontSize: 13 }} />
-                IBKR Portal → Reports → Trade Confirmation (формат HTML)
+                {t('app.htmlHint')}
               </Typography>
             </Box>
           </Box>
@@ -434,10 +437,10 @@ export default function App() {
                 }
                 label={
                   <Typography variant="body2">
-                    Съгласен/на съм с{' '}
+                    {t('app.termsAgree')}{' '}
                     <Link component="button" variant="body2" onClick={() => setShowTerms(true)}
                       sx={{ verticalAlign: 'baseline' }}>
-                      условията за ползване
+                      {t('app.termsAgreeLink')}
                     </Link>
                   </Typography>
                 }
@@ -447,7 +450,7 @@ export default function App() {
                 disabled={!inputData || !agreed || parsing}
                 onClick={handleCalculate}
               >
-                {parsing ? 'Зарежда се...' : 'Изчисли'}
+                {parsing ? t('app.calculating') : t('app.calculate')}
               </Button>
             </Box>
           )}
@@ -464,14 +467,14 @@ export default function App() {
                 justifyContent: 'center',
                 gap: 1,
                 borderRadius: 1,
-                bgcolor: 'rgba(255,255,255,0.04)', // subtle, not a heavy banner
+                bgcolor: 'rgba(255,255,255,0.04)',
               }}
             >
               <Typography variant="body2" color="text.secondary">
-                Нямате наличен файл?
+                {t('app.noFileQuestion')}
               </Typography>
                 <Button variant="outlined" onClick={handleLoadDemo}>
-                  Заредете демо
+                  {t('app.loadDemo')}
                 </Button>
             </Box>
           )}
@@ -496,18 +499,18 @@ export default function App() {
           <span className="footer-sep">·</span>
           <button className="footer-link footer-btn" onClick={() => setShowTerms(true)}>
             <InfoOutlined sx={{ fontSize: 16 }} />
-            Условия&nbsp;за&nbsp;ползване
+            {t('app.footer.termsLink')}
           </button>
           <span className="footer-sep">·</span>
-          <Tooltip title={'Подкрепи фондация \u201e\u0414\u0438\u0432\u0438\u0442\u0435 \u0436\u0438\u0432\u043e\u0442\u043d\u0438\u201c'} arrow>
+          <Tooltip title={t('app.footer.supportTooltip')} arrow>
             <a href="https://dmsbg.com/7997/dms-divite/" target="_blank" rel="noopener noreferrer" className="footer-link footer-btn">
               <Favorite sx={{ fontSize: 16 }} />
-              Подкрепи кауза
+              {t('app.footer.supportLink')}
             </a>
           </Tooltip>
         </div>
         <div className="footer-copy">
-          © 2026 IBKR Данъчен калкулатор. Всички права запазени.
+          {t('app.copyright')}
         </div>
       </footer>
 
