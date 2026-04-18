@@ -22,7 +22,8 @@ function HoldingsSubTable({ label, data, type, countLabel }) {
   )
 }
 
-export default function TaxApp8Holdings({ data }) {
+export default function TaxApp8Holdings({ result }) {
+  const data = result.taxSummary.app8Holdings;
   const { t } = useTranslation()
   if (!data || data.rows.length === 0) return null
   return (

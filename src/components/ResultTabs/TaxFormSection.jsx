@@ -1,7 +1,6 @@
 import { Box, Paper, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ArticleOutlined } from '@mui/icons-material'
-import { fmt } from '../utils/fmt.js'
 
 export function TaxFormSection({ title, subtitle, children }) {
   return (
