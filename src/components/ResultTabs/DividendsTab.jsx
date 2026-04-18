@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
-import DataTable from './DataTable.jsx'
+import DataTable from '../DataTable.jsx'
 
 export default function DividendsTab({ result }) {
   const data = result.taxSummary.app8Dividends

@@ -1,6 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { TaxFormSection, TaxRow } from './TaxFormSection.jsx'
-import { fmt } from '../utils/fmt.js'
+import { fmt } from '../../utils/fmt.js'
 
 export default function TaxApp13({ summary, localCurrencyLabel = 'лв' }) {
   const { t } = useTranslation()

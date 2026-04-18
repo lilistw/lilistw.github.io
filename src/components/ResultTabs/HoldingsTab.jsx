@@ -2,7 +2,7 @@ import { useTranslation } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
-import DataTable from './DataTable.jsx'
+import DataTable from '../DataTable.jsx'
 
 const COLUMNS_WITHOUT_TYPE = (columns) =>
   columns.filter(c => c.key !== 'type')
