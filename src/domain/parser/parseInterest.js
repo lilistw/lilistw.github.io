@@ -52,11 +52,10 @@ export function parseInterest(rows) {
 
   return {
     columns: [
-      { key: 'date',        label: 'Дата',        mono: true },
+      { key: 'date',        label: 'Дата',    mono: true },
       { key: 'currency',    label: 'Валута' },
       { key: 'description', label: 'Описание' },
-      { key: 'amount',      label: 'Сума',         align: 'right', mono: true, decimals: 2 },
-      { key: 'amountBGN',   label: 'Сума (лв)',    align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'amount',      label: 'Сума',    align: 'right', mono: true, decimals: 2 },
     ],
     rows: dataRows,
     accruals,
