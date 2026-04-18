@@ -1,74 +1,26 @@
-/* ── Material Design 3 token system ── */
+/* ── Design tokens (day) ─────────────────────────────────────────────────── */
 :root {
-  /* Primary (M3 blue) */
-  --md-primary:            #1A6DC8;
-  --md-on-primary:         #FFFFFF;
-  --md-primary-container:  #D3E4FF;
-  --md-on-primary-container: #001C41;
+  --md-primary:              #1A6DC8;
+  --md-on-primary:           #FFFFFF;
+  --md-primary-container:    #D3E4FF;
+  --md-surface-container:    #ECF0FA;
+  --md-on-surface:           #191C20;
+  --md-on-surface-variant:   #43474E;
+  --md-outline-variant:      #C3C6CF;
 
-  /* Secondary */
-  --md-secondary:          #535F70;
-  --md-secondary-container: #D7E3F7;
+  --text:       var(--md-on-surface-variant);
+  --text-h:     var(--md-on-surface);
+  --text-muted: #73777F;
+  --bg-surface: #FFFFFF;
+  --shadow:     0 1px 2px rgba(0,28,90,0.12), 0 2px 8px rgba(0,28,90,0.06);
 
-  /* Surface system */
-  --md-surface:            #F7F9FF;
-  --md-surface-container:  #ECF0FA;
-  --md-surface-variant:    #DFE2EB;
-  --md-on-surface:         #191C20;
-  --md-on-surface-variant: #43474E;
-
-  /* Outline */
-  --md-outline:            #73777F;
-  --md-outline-variant:    #C3C6CF;
-
-  /* Semantic colours */
-  --green:         #1B7A4E;
-  --green-light:   #A0E6C4;
-  --green-bg:      #E9F7EF;
-  --green-border:  #6ECBA0;
-
-  --amber:         #C17000;
-  --amber-light:   #FDDFA0;
-  --amber-bg:      #FFF8E7;
-  --amber-border:  #F5C842;
-
-  --indigo:        #4F46E5;
-  --indigo-light:  #C7D2FE;
-  --indigo-bg:     #EEF2FF;
-  --indigo-border: #A5B4FC;
-
-  --teal:          #0891B2;
-  --teal-bg:       #ECFEFF;
-  --teal-border:   #A5F3FC;
-
-  /* Legacy aliases — keep working without touching JSX */
-  --navy:          var(--md-primary);
-  --navy-mid:      #155EA8;
-  --navy-light:    #93B8E8;
-  --navy-bg:       var(--md-primary-container);
-  --navy-border:   #93B8E8;
-  --text:          var(--md-on-surface-variant);
-  --text-h:        var(--md-on-surface);
-  --text-muted:    var(--md-outline);
-  --bg:            var(--md-surface);
-  --bg-surface:    #FFFFFF;
-  --border:        var(--md-outline-variant);
-  --code-bg:       var(--md-surface-container);
-
-  /* M3 elevation shadows */
-  --shadow:    0 1px 2px rgba(0,28,90,0.12), 0 2px 8px rgba(0,28,90,0.06);
-  --shadow-md: 0 2px 6px rgba(0,28,90,0.12), 0 8px 20px rgba(0,28,90,0.08);
-  --shadow-lg: 0 4px 12px rgba(0,28,90,0.14), 0 20px 48px rgba(0,28,90,0.12);
-
-  --sans:    Roboto, system-ui, 'Segoe UI', sans-serif;
-  --heading: Roboto, system-ui, 'Segoe UI', sans-serif;
-  --mono:    'Roboto Mono', ui-monospace, Consolas, monospace;
+  --sans: Roboto, system-ui, 'Segoe UI', sans-serif;
+  --mono: 'Roboto Mono', ui-monospace, Consolas, monospace;
 
   font: 16px/150% var(--sans);
   letter-spacing: 0.15px;
   color-scheme: light;
   color: var(--text);
-  background: var(--bg);
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -77,11 +29,28 @@
   @media (max-width: 1024px) { font-size: 15px; }
 }
 
-/* Dark page background — shows in side gutters on wide screens */
-body {
-  margin: 0;
-  background: #C8D0DC;
+/* ── Night-mode token overrides ─────────────────────────────────────────── */
+[data-theme="night"] {
+  --md-primary:           #9B6DE3;
+  --md-on-primary:        #FFFFFF;
+  --md-primary-container: #3C2370;
+  --md-surface-container: #1D1A2C;
+  --md-on-surface:        #E6E0F0;
+  --md-on-surface-variant:#C7BDE0;
+  --md-outline-variant:   #3A3450;
+
+  --text:       #C7BDE0;
+  --text-h:     #E6E0F0;
+  --text-muted: #9389A8;
+  --bg-surface: #1D1A2C;
+  --shadow:     0 1px 3px rgba(0,0,0,0.4), 0 2px 8px rgba(0,0,0,0.3);
+
+  color-scheme: dark;
 }
+
+/* ── Global ─────────────────────────────────────────────────────────────── */
+body { margin: 0; background: #C8D0DC; }
+[data-theme="night"] body { background: #08061A; }
 
 #root {
   width: 1126px;
@@ -91,29 +60,206 @@ body {
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  background-color: var(--md-surface);
-  /* Subtle graph-paper grid */
+  background-color: #F7F9FF;
   background-image:
     linear-gradient(rgba(26,109,200,0.05) 1px, transparent 1px),
     linear-gradient(90deg, rgba(26,109,200,0.05) 1px, transparent 1px);
   background-size: 32px 32px;
-  /* Floating card effect against dark body */
   box-shadow: 0 0 0 1px rgba(0,0,0,0.18), 0 32px 80px rgba(0,0,0,0.45);
 }
 
-h1, h2, h3 {
-  font-family: var(--heading);
-  font-weight: 500;
+[data-theme="night"] #root {
+  background-color: #12101E;
+  background-image:
+    linear-gradient(rgba(155,109,227,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(155,109,227,0.05) 1px, transparent 1px);
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.5), 0 32px 80px rgba(0,0,0,0.7);
+}
+
+h1, h2, h3 { font-family: var(--sans); font-weight: 500; color: var(--text-h); }
+h1 { font-size: 42px; letter-spacing: -0.5px; font-weight: 400; margin: 0; @media (max-width: 1024px) { font-size: 30px; } }
+h2 { font-size: 20px; letter-spacing: 0; margin: 0 0 8px; }
+p  { margin: 0; }
+
+/* ── App layout ─────────────────────────────────────────────────────────── */
+.app { display: flex; flex-direction: column; min-height: 100svh; }
+
+/* ── Header ─────────────────────────────────────────────────────────────── */
+.app-header {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent, transparent 39px,
+      rgba(255,255,255,0.05) 39px, rgba(255,255,255,0.05) 40px
+    ),
+    linear-gradient(150deg, #04111E 0%, #0A2240 45%, #1353A0 100%);
+  padding: 40px;
+  position: relative;
+  overflow: hidden;
+}
+
+.app-header::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(to bottom, rgba(96,165,250,0.42) 0%, rgba(37,99,235,0.07) 100%);
+  clip-path: polygon(
+    0% 100%, 0% 78%, 3% 74%, 6% 77%, 9% 71%, 12% 66%,
+    15% 69%, 18% 63%, 21% 58%, 24% 61%, 27% 55%, 30% 51%,
+    33% 55%, 36% 47%, 39% 43%, 42% 47%, 45% 40%, 48% 35%,
+    51% 39%, 54% 32%, 57% 27%, 60% 31%, 63% 24%, 66% 19%,
+    69% 23%, 72% 15%, 75% 11%, 78% 15%, 81% 8%,  84% 5%,
+    87% 9%,  90% 3%,  93% 1%,  96% 5%,  100% 0%, 100% 100%
+  );
+  pointer-events: none;
+}
+
+.app-header::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse 45% 55% at 88% 18%, rgba(96,165,250,0.28) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 10% 90%, rgba(10,34,64,0.45)  0%, transparent 60%);
+  pointer-events: none;
+}
+
+/* Night header — purple tones */
+[data-theme="night"] .app-header {
+  background:
+    repeating-linear-gradient(
+      0deg,
+      transparent, transparent 39px,
+      rgba(155,109,227,0.07) 39px, rgba(155,109,227,0.07) 40px
+    ),
+    linear-gradient(150deg, #060210 0%, #130830 45%, #2D1266 100%);
+}
+
+[data-theme="night"] .app-header::before {
+  background: linear-gradient(to bottom, rgba(155,109,227,0.50) 0%, rgba(95,38,198,0.08) 100%);
+}
+
+[data-theme="night"] .app-header::after {
+  background:
+    radial-gradient(ellipse 45% 55% at 88% 18%, rgba(155,109,227,0.40) 0%, transparent 60%),
+    radial-gradient(ellipse 50% 40% at 10% 90%, rgba(19,8,48,0.50)  0%, transparent 60%);
+}
+
+.header-inner {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.app-header h1 { color: #ffffff; font-weight: 400; letter-spacing: -0.5px; }
+.app-header p  { color: var(--text); font-size: 14px; letter-spacing: 0.25px; }
+
+/* ── Content ─────────────────────────────────────────────────────────────── */
+.app-content {
+  padding: 32px 40px 10px;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  @media (max-width: 768px) { padding: 20px 16px 0; }
+}
+
+/* ── Dropzone ────────────────────────────────────────────────────────────── */
+.dropzone {
+  border: 1.5px dashed var(--md-outline-variant);
+  border-radius: 16px;
+  padding: 36px 24px;
+  background: var(--bg-surface);
+  transition: background 0.15s, border-color 0.15s;
+  margin-bottom: 20px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  color: var(--text);
+  box-shadow: var(--shadow);
+}
+
+.dropzone:hover {
+  background: var(--md-primary-container);
+  border-color: var(--md-primary);
+}
+
+.dropzone-icon { color: var(--md-primary); opacity: 0.85; }
+
+/* ── Dev output panel ────────────────────────────────────────────────────── */
+.output {
+  border: 1px solid var(--md-outline-variant);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: var(--shadow);
+  background: var(--bg-surface);
+}
+
+.output-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 12px 8px 16px;
+  background: var(--md-surface-container);
+  border-bottom: 1px solid var(--md-outline-variant);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.4px;
   color: var(--text-h);
 }
 
-h1 {
-  font-size: 42px;
-  letter-spacing: -0.5px;
-  font-weight: 400;
+.output-count { display: inline-flex; align-items: center; gap: 8px; }
+
+.json-output {
   margin: 0;
-  @media (max-width: 1024px) { font-size: 30px; }
+  padding: 16px;
+  font-family: var(--mono);
+  font-size: 13px;
+  line-height: 1.6;
+  overflow: auto;
+  max-height: 70vh;
+  background: var(--bg-surface);
+  color: var(--text-h);
 }
 
-h2 { font-size: 20px; letter-spacing: 0; margin: 0 0 8px; }
-p  { margin: 0; }
+/* ── Footer ──────────────────────────────────────────────────────────────── */
+.app-footer {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-top: auto;
+  padding: 10px 40px 0;
+  border-top: 1px solid var(--md-outline-variant);
+  font-size: 13px;
+  color: var(--text-muted);
+  background: var(--md-surface-container);
+}
+
+.footer-links { display: flex; gap: 8px; align-items: center; }
+.footer-sep   { color: var(--md-outline-variant); }
+
+.footer-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  color: var(--text-muted);
+  text-decoration: none;
+  transition: color 0.15s;
+  border-radius: 4px;
+}
+.footer-link:hover { color: var(--md-primary); }
+
+.footer-btn {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-size: inherit;
+  font-family: inherit;
+}
+
+.footer-copy { font-size: 11px; color: var(--text-muted); opacity: 0.65; }
