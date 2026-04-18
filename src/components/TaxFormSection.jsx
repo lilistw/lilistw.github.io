@@ -1,4 +1,5 @@
 import { Box, Paper, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { ArticleOutlined } from '@mui/icons-material'
 import { fmt } from '../utils/fmt.js'
 
@@ -11,7 +12,9 @@ export function TaxFormSection({ title, subtitle, children }) {
       <Box
         sx={{
           px: 2, py: 1.5,
-          bgcolor: 'rgba(217,119,6,0.06)',
+          bgcolor: (theme) => theme.palette.mode === 'dark'
+            ? alpha(theme.palette.warning.main, 0.10)
+            : 'rgba(217,119,6,0.06)',
           borderBottom: '1px solid',
           borderColor: 'warning.light',
           display: 'flex',

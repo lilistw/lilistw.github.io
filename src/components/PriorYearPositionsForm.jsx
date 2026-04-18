@@ -1,4 +1,5 @@
 import { useTranslation } from 'react-i18next'
+import { alpha } from '@mui/material/styles'
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer,
   TableHead, TableRow, TextField, Typography,
@@ -49,7 +50,9 @@ export default function PriorYearPositionsForm({ positions, onPositionChange, ta
         <Box sx={{
           px: 2, py: 1.5,
           borderBottom: '1px solid', borderColor: 'divider',
-          bgcolor: '#FFF8E1',
+          bgcolor: (theme) => theme.palette.mode === 'dark'
+            ? alpha(theme.palette.warning.main, 0.10)
+            : '#FFF8E1',
           display: 'flex', alignItems: 'flex-start', gap: 1.5,
         }}>
           <InfoOutlined sx={{ color: 'warning.main', mt: 0.15, flexShrink: 0 }} />

@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
 import DataTable from './DataTable.jsx'
 
@@ -29,9 +30,13 @@ export default function TaxApp8Holdings({ data }) {
       <Box sx={{
         display: 'flex', alignItems: 'flex-start', gap: 1.5,
         p: 2, mb: 2,
-        bgcolor: '#FFFBEB',
+        bgcolor: (theme) => theme.palette.mode === 'dark'
+          ? alpha(theme.palette.warning.main, 0.10)
+          : '#FFFBEB',
         border: '1px solid',
-        borderColor: '#FCD34D',
+        borderColor: (theme) => theme.palette.mode === 'dark'
+          ? alpha(theme.palette.warning.main, 0.25)
+          : '#FCD34D',
         borderRadius: 2,
       }}>
         <ReceiptLongOutlined sx={{ fontSize: 20, color: 'warning.main', mt: 0.1, flexShrink: 0 }} />

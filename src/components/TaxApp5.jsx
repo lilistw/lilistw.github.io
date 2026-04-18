@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { InfoOutlined } from '@mui/icons-material'
 import { TaxFormSection, TaxRow } from './TaxFormSection.jsx'
 import { fmt } from '../utils/fmt.js'
@@ -27,7 +28,11 @@ export default function TaxApp5({ summary, localCurrencyLabel = 'лв' }) {
         value={fmt(netTaxable)} color={netTaxable >= 0 ? 'success.main' : 'error.main'} />
       <TaxRow label={t('taxApp5.taxDue', { lcl })}
         value={fmt(taxDue)} color="warning.dark" />
-      <Box sx={{ display: 'flex', gap: 1, mt: 1.5, p: 1.5, bgcolor: '#EFF6FF', borderRadius: 1.5 }}>
+      <Box sx={{ display: 'flex', gap: 1, mt: 1.5, p: 1.5, borderRadius: 1.5,
+        bgcolor: (theme) => theme.palette.mode === 'dark'
+          ? alpha(theme.palette.primary.main, 0.10)
+          : '#EFF6FF',
+      }}>
         <InfoOutlined sx={{ fontSize: 15, color: 'primary.main', mt: 0.15, flexShrink: 0 }} />
         <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6 }}>
           {t('taxApp5.infoLine1')} <strong>{t('taxApp5.infoFormula')}</strong>

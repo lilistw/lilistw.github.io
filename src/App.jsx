@@ -1,6 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useTranslation, Trans } from 'react-i18next'
 import { ThemeProvider, CssBaseline } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import {
   Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
   FormControlLabel, IconButton, Link, Tab, Tabs, Tooltip, Typography,
@@ -164,9 +165,13 @@ function ResultTabs({ result, inputJsonText, outputJsonText }) {
           <Box sx={{
             display: 'flex', alignItems: 'flex-start', gap: 1.5,
             p: 2, mb: 2,
-            bgcolor: '#FFFBEB',
+            bgcolor: (theme) => theme.palette.mode === 'dark'
+              ? alpha(theme.palette.warning.main, 0.10)
+              : '#FFFBEB',
             border: '1px solid',
-            borderColor: '#FCD34D',
+            borderColor: (theme) => theme.palette.mode === 'dark'
+              ? alpha(theme.palette.warning.main, 0.25)
+              : '#FCD34D',
             borderRadius: 2,
           }}>
             <ReceiptLongOutlined sx={{ fontSize: 20, color: 'warning.main', mt: 0.1, flexShrink: 0 }} />

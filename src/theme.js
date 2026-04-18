@@ -16,7 +16,10 @@ function makeTheme(isDark) {
       mode: isDark ? 'dark' : 'light',
       primary:   { main: primary, contrastText: '#FFFFFF' },
       secondary: { main: isDark ? '#C9BAFF' : '#535F70', contrastText: isDark ? '#12101E' : '#FFFFFF' },
-      warning:   { main: isDark ? '#FFB74D' : '#C17000' },
+      warning:   {
+        main:  isDark ? '#FFB74D' : '#C17000',
+        dark:  isDark ? '#FFD082' : undefined,   // readable amber on dark bg; day auto-calculated
+      },
       error:     { main: isDark ? '#F28B82' : '#BA1A1A' },
       success:   { main: isDark ? '#81C995' : '#1B7A4E' },
       background: {

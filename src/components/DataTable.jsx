@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
+import { alpha } from '@mui/material/styles'
 import {
   Box, Button, Checkbox, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Tooltip, Typography,
@@ -164,7 +165,9 @@ export default function DataTable({ title, data, countLabel, embedded = false, s
           <Box sx={{
             display: 'flex', alignItems: 'flex-start', gap: 1,
             px: 2, py: 1,
-            bgcolor: '#EFF6FF',
+            bgcolor: (theme) => theme.palette.mode === 'dark'
+              ? alpha(theme.palette.primary.main, 0.10)
+              : '#EFF6FF',
             borderBottom: '1px solid', borderColor: 'divider',
           }}>
             <InfoOutlined sx={{ fontSize: 15, color: 'primary.main', mt: 0.2, flexShrink: 0 }} />

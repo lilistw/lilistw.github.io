@@ -1,5 +1,6 @@
 import { useTranslation } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
 import {
   findUsdRate, getPrevYearEndDate, getLocalCurrencyLabel,
@@ -35,9 +36,13 @@ export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
     <Box sx={{
       mt: 2, mb: 1,
       p: 2,
-      bgcolor: '#FFFBEB',
+      bgcolor: (theme) => theme.palette.mode === 'dark'
+        ? alpha(theme.palette.warning.main, 0.10)
+        : '#FFFBEB',
       border: '1px solid',
-      borderColor: 'warning.light',
+      borderColor: (theme) => theme.palette.mode === 'dark'
+        ? alpha(theme.palette.warning.main, 0.25)
+        : 'warning.light',
       borderRadius: 2,
     }}>
       <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1.5, mb: 1 }}>
