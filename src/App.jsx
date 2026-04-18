@@ -1,10 +1,27 @@
-import { useState, useRef, useEffect } from 'react'
-import { processFile } from './services/processFile.js'
+import { useState, useEffect, useMemo } from 'react'
+import {
+  Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
+  FormControlLabel, IconButton, Link, Tab, Tabs, Typography, Tooltip
+} from '@mui/material'
+import { Check, Close, ContentCopy, FavoriteOutlined, GitHub, InfoOutlined, Favorite, ReceiptLongOutlined } from '@mui/icons-material'
+import { processFile, parseFilesData } from './services/processFile.js'
+import { inferPriorPositions } from './services/inferPriorPositions.js'
+import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
+import AboutSection from './content/AboutSection.jsx'
+import Disclaimer from './content/Disclaimer.jsx'
 import TermsContent from './content/TermsContent.jsx'
-import TradesTable from './components/TradesTable.jsx'
+import Dropzone from './components/Dropzone.jsx'
+import { HTM_INFO } from './components/dropzoneInfo.js'
+import DataTable from './components/DataTable.jsx'
+import TaxApp5 from './components/TaxApp5.jsx'
+import TaxApp13 from './components/TaxApp13.jsx'
+import TaxApp8Holdings from './components/TaxApp8Holdings.jsx'
+import TaxApp8Dividends from './components/TaxApp8Dividends.jsx'
+import PriorYearApproxWarning from './components/PriorYearApproxWarning.jsx'
+import PriorYearPositionsForm from './components/PriorYearPositionsForm.jsx'
 import './App.css'
 
-const DEV_MODE = false
+const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true'
 
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false)
@@ -14,84 +31,376 @@ function CopyButton({ text }) {
     setTimeout(() => setCopied(false), 1500)
   }
   return (
-    <button className={`copy-btn${copied ? ' copied' : ''}`} onClick={handleCopy} title="Копирай JSON">
-      {copied ? (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M3 8l3.5 3.5L13 4.5" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"/>
-        </svg>
-      ) : (
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <rect x="5" y="5" width="8" height="9" rx="1.5" stroke="currentColor" strokeWidth="1.5"/>
-          <path d="M11 5V3.5A1.5 1.5 0 0 0 9.5 2h-6A1.5 1.5 0 0 0 2 3.5v7A1.5 1.5 0 0 0 3.5 12H5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/>
-        </svg>
-      )}
-    </button>
+    <IconButton size="small" onClick={handleCopy} title="Копирай JSON" color={copied ? 'success' : 'default'}>
+      {copied ? <Check fontSize="small" /> : <ContentCopy fontSize="small" />}
+    </IconButton>
   )
 }
 
-function Modal({ onClose }) {
-  useEffect(() => {
-    function onKey(e) { if (e.key === 'Escape') onClose() }
-    document.addEventListener('keydown', onKey)
-    return () => document.removeEventListener('keydown', onKey)
-  }, [onClose])
+function TermsModal({ onClose }) {
+  return (
+    <Dialog open onClose={onClose} maxWidth="sm" fullWidth scroll="paper">
+      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        Условия за ползване
+        <IconButton size="small" onClick={onClose} aria-label="Затвори">
+          <Close fontSize="small" />
+        </IconButton>
+      </DialogTitle>
+      <DialogContent dividers>
+        <TermsContent />
+      </DialogContent>
+      <DialogActions>
+        <Button onClick={onClose}>Затвори</Button>
+      </DialogActions>
+    </Dialog>
+  )
+}
+
+function TabPanel({ children, value, index }) {
+  return value === index ? <Box sx={{ pt: 2 }}>{children}</Box> : null
+}
+
+// ── Helpers for dynamic trades totals & tax summary ──────────────────────────
+const TRADE_SUM_COLS     = ['proceeds', 'comm', 'fee', 'totalWithFee']
+const TRADE_SUM_BGN_COLS = ['totalWithFeeBGN', 'costBasisBGN']
+
+function buildTradeTotals(dataRows, localCurrencyCode = 'BGN') {
+  const totals = []
+  for (const label of ['Облагаем', 'Освободен']) {
+    const group = dataRows.filter(r => r.taxExemptLabel === label)
+    if (group.length === 0) continue
+    for (const cur of ['EUR', 'USD']) {
+      const subset = group.filter(r => r.currency === cur)
+      if (subset.length === 0) continue
+      const row = { _total: true, taxExemptLabel: label, currency: cur }
+      TRADE_SUM_COLS.forEach(k     => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
+      TRADE_SUM_BGN_COLS.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
+      totals.push(row)
+    }
+    const lclRow = { _total: true, taxExemptLabel: label, currency: localCurrencyCode }
+    TRADE_SUM_BGN_COLS.forEach(k => { lclRow[k] = group.reduce((s, r) => s + (r[k] ?? 0), 0) })
+    totals.push(lclRow)
+  }
+  return totals
+}
+
+function buildTaxSummary(dataRows) {
+  const sells   = dataRows.filter(r => r.type === 'SELL')
+  const taxable = sells.filter(r => r.taxable === true)
+  const exempt  = sells.filter(r => r.taxable === false)
+  const summarize = group => {
+    const totalProceedsBGN  = group.reduce((s, r) => s + (r.totalWithFeeBGN ?? 0), 0)
+    const totalCostBasisBGN = group.reduce((s, r) => s + (r.costBasisBGN ?? 0), 0)
+    const profits = group.reduce((s, r) => {
+      const pl = (r.totalWithFeeBGN ?? 0) - (r.costBasisBGN ?? 0)
+      return pl > 0 ? s + pl : s
+    }, 0)
+    const losses = group.reduce((s, r) => {
+      const pl = (r.totalWithFeeBGN ?? 0) - (r.costBasisBGN ?? 0)
+      return pl < 0 ? s + Math.abs(pl) : s
+    }, 0)
+    return { totalProceedsBGN, totalCostBasisBGN, profits, losses }
+  }
+  return { app5: summarize(taxable), app13: summarize(exempt) }
+}
+
+function ResultTabs({ result, jsonText }) {
+  const [tab, setTab] = useState(0)
+  const hasDividends = result.dividends.rows.length > 0
+  const hasInterest  = result.interest.rows.filter(r => !r._total).length > 0
+
+  const { taxYear, localCurrencyCode, localCurrencyLabel } = result
+
+  // Mutable trades data rows (user can toggle taxable status)
+  const [tradesDataRows, setTradesDataRows] = useState(() =>
+    result.trades.rows.filter(r => !r._total)
+  )
+
+  const trades = useMemo(() => ({
+    columns: result.trades.columns,
+    rows: [...tradesDataRows, ...buildTradeTotals(tradesDataRows, localCurrencyCode)],
+  }), [result.trades.columns, tradesDataRows, localCurrencyCode])
+
+  const taxSummary = useMemo(() => buildTaxSummary(tradesDataRows), [tradesDataRows])
+  const approxRows = useMemo(
+    () => tradesDataRows.filter(r => r.type === 'SELL' && r.costBasisBGNApprox),
+    [tradesDataRows]
+  )
+
+  // Pending toggle — holds { rowIdx, row, newTaxable, newLabel } while dialog is open
+  const [pendingToggle, setPendingToggle] = useState(null)
+
+  function handleTaxableToggle(rowIdx) {
+    const row = tradesDataRows[rowIdx]
+    if (row.taxable === null) return
+    const newTaxable = !row.taxable
+    const newLabel   = newTaxable ? 'Облагаем' : 'Освободен'
+    setPendingToggle({ rowIdx, row, newTaxable, newLabel })
+  }
+
+  function confirmToggle() {
+    const { rowIdx, newTaxable, newLabel } = pendingToggle
+    setTradesDataRows(prev =>
+      prev.map((r, i) => i === rowIdx ? { ...r, taxable: newTaxable, taxExemptLabel: newLabel } : r)
+    )
+    setPendingToggle(null)
+  }
+
+  const tabs = [
+    { label: 'Сделки' },
+    { label: 'Позиции' },
+    ...(hasDividends ? [{ label: 'Дивиденти' }]  : []),
+    ...(hasInterest  ? [{ label: 'Лихви' }]       : []),
+    ...(DEV_MODE     ? [{ label: 'Dev' }]          : []),
+  ]
+
+  let idx = 0
+  const TAB_TRADES    = idx++
+  const TAB_HOLDINGS  = idx++
+  const TAB_DIVIDENDS = hasDividends ? idx++ : -1
+  const TAB_INTEREST  = hasInterest  ? idx++ : -1
+  const TAB_DEV       = DEV_MODE     ? idx++ : -1
 
   return (
-    <div className="modal-overlay" onClick={onClose}>
-      <div className="modal" onClick={e => e.stopPropagation()} role="dialog" aria-modal="true" aria-labelledby="modal-title">
-        <div className="modal-header">
-          <h2 id="modal-title">Условия за ползване</h2>
-          <button className="modal-close" onClick={onClose} aria-label="Затвори">
-            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-              <path d="M3 3l10 10M13 3L3 13" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>
-            </svg>
-          </button>
-        </div>
-        <div className="modal-body">
-          <TermsContent />
-        </div>
-      </div>
-    </div>
+    <Box sx={{ mt: 2 }}>
+      <Tabs
+        value={tab}
+        onChange={(_, v) => setTab(v)}
+        variant="scrollable"
+        scrollButtons="auto"
+        sx={{ borderBottom: 1, borderColor: 'divider', mb: 0 }}
+      >
+        {tabs.map((t, i) => <Tab key={i} label={t.label} />)}
+      </Tabs>
+
+      {/* Сделки */}
+      <TabPanel value={tab} index={TAB_TRADES}>
+        <DataTable title="Trade Confirmation – Сделки" data={trades} countLabel="сделки" onCheckChange={handleTaxableToggle} />
+        <PriorYearApproxWarning rows={approxRows} taxYear={taxYear} />
+        <TaxApp5  summary={taxSummary.app5}  localCurrencyLabel={localCurrencyLabel} />
+        <TaxApp13 summary={taxSummary.app13} localCurrencyLabel={localCurrencyLabel} />
+      </TabPanel>
+
+      {/* Позиции */}
+      <TabPanel value={tab} index={TAB_HOLDINGS}>
+        <TaxApp8Holdings data={result.taxSummary.app8Holdings} />
+      </TabPanel>
+
+      {/* Дивиденти */}
+      {hasDividends && (
+        <TabPanel value={tab} index={TAB_DIVIDENDS}>
+          <TaxApp8Dividends data={result.taxSummary.app8Dividends} />
+        </TabPanel>
+      )}
+
+      {/* Лихви */}
+      {hasInterest && (
+        <TabPanel value={tab} index={TAB_INTEREST}>
+          <Box sx={{
+            display: 'flex', alignItems: 'flex-start', gap: 1.5,
+            p: 2, mb: 2,
+            bgcolor: '#FFFBEB',
+            border: '1px solid',
+            borderColor: '#FCD34D',
+            borderRadius: 2,
+          }}>
+            <ReceiptLongOutlined sx={{ fontSize: 20, color: 'warning.main', mt: 0.1, flexShrink: 0 }} />
+            <Box>
+              <Typography variant="subtitle2" fontWeight={700} color="warning.dark" gutterBottom>
+                Приложение №6 – Доходи от други източници (чл. 35 ЗДДФЛ)
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+                Лихвите от IBKR се декларират в <strong>Приложение №6</strong>, Ред 6,{' '}
+                <strong>Код 606</strong>: „Обща сума на доходите с код 606, платците на които не са
+                предприятия или самоосигуряващи се лица". В поле <em>Размер на дохода</em> въведете
+                общата сума в {localCurrencyLabel} ({localCurrencyCode}), изчислена по курс на БНБ
+                за датата на всяко плащане.
+              </Typography>
+            </Box>
+          </Box>
+          <DataTable title="Лихви" data={result.interest} countLabel="плащания" />
+        </TabPanel>
+      )}
+
+      {/* Dev */}
+      {DEV_MODE && (
+        <TabPanel value={tab} index={TAB_DEV}>
+          <div className="output">
+            <div className="output-header">
+              <span className="output-count">
+                JSON <span className="output-pill">{result.holdings.rows.length}</span>
+              </span>
+              <CopyButton text={jsonText} />
+            </div>
+            <pre className="json-output">{jsonText}</pre>
+          </div>
+        </TabPanel>
+      )}
+
+      {/* Confirmation dialog for taxable status toggle */}
+      {pendingToggle && (
+        <Dialog open onClose={() => setPendingToggle(null)} maxWidth="xs" fullWidth>
+          <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+            Промяна на данъчен статус
+            <IconButton size="small" onClick={() => setPendingToggle(null)} aria-label="Затвори">
+              <Close fontSize="small" />
+            </IconButton>
+          </DialogTitle>
+          <DialogContent>
+            <Typography variant="body2" gutterBottom>
+              <strong>{pendingToggle.row.symbol}</strong> &nbsp;·&nbsp; {pendingToggle.row.dateTime}
+            </Typography>
+            <Typography variant="body2">
+              {pendingToggle.row.taxExemptLabel} → <strong>{pendingToggle.newLabel}</strong>
+            </Typography>
+          </DialogContent>
+          <DialogActions>
+            <Button onClick={() => setPendingToggle(null)}>Откажи</Button>
+            <Button variant="contained" onClick={confirmToggle}>Потвърди</Button>
+          </DialogActions>
+        </Dialog>
+      )}
+    </Box>
   )
 }
 
 export default function App() {
-  const [file, setFile] = useState(null)
+  // ── File states ──────────────────────────────────────────────
+  const [csvFile, setCsvFile] = useState(null)
+  const [csvFileUrl, setCsvFileUrl] = useState('')
+  const [htmlFile, setHtmlFile] = useState(null)
+  const [htmlFileUrl, setHtmlFileUrl] = useState('')
+
+  // ── Prior-year positions (controlled form state, lifted here) ────────────
+  // null  = not yet inferred / files not both loaded
+  // []    = inferred, no prior positions found
+  // [...] = editable prior positions (form shown above button row)
+  const [pendingPositions, setPendingPositions] = useState(null)
+  const [taxYear, setTaxYear] = useState(2025)
+  const [parsing, setParsing] = useState(false)
+
+  // ── Results and UI states ────────────────────────────────────
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const [agreed, setAgreed] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
-  const inputRef = useRef(null)
 
-  function selectFile(f) {
+  // ── File URL effects ─────────────────────────────────────────
+  useEffect(() => {
+    if (!csvFile) { setCsvFileUrl(''); return }
+    const url = URL.createObjectURL(csvFile)
+    setCsvFileUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [csvFile])
+
+  useEffect(() => {
+    if (!htmlFile) { setHtmlFileUrl(''); return }
+    const url = URL.createObjectURL(htmlFile)
+    setHtmlFileUrl(url)
+    return () => URL.revokeObjectURL(url)
+  }, [htmlFile])
+
+  // ── Preliminary parse: infer prior-year positions when both files ready ──
+  useEffect(() => {
+    if (!csvFile || !htmlFile) {
+      setPendingPositions(null)
+      return
+    }
+    let cancelled = false
+    setParsing(true)
+    parseFilesData({ csvFile, htmlFile })
+      .then(data => {
+        if (cancelled) return
+        const yr = data.taxYear ?? 2025
+        setTaxYear(yr)
+        const prior = inferPriorPositions({
+          htmlTrades:     data.processedTrades.rows,
+          openPositions:  data.openPositions.rows,
+          csvTradeBasis:  data.csvTradeBasis,
+          instrumentInfo: data.instrumentInfo,
+          taxYear:        yr,
+        })
+        // Convert inferred positions to editable form objects
+        const defaultAcqDate = getPrevYearDefaultAcqDate(yr)
+        setPendingPositions(prior.map(p => ({
+          ...p,
+          costBGNInput:    p.costBGN != null ? String(Number(p.costBGN).toFixed(2)) : '',
+          lastBuyDateInput: p.lastBuyDate ?? defaultAcqDate,
+        })))
+      })
+      .catch(e => {
+        if (cancelled) return
+        console.warn('Prior-year inference failed:', e)
+        setPendingPositions([])
+      })
+      .finally(() => { if (!cancelled) setParsing(false) })
+    return () => { cancelled = true }
+  }, [csvFile, htmlFile])
+
+  // ── File selection handlers ──────────────────────────────────
+  function selectCsvFile(f) {
     if (!f) return
-    setFile(f)
+    setCsvFile(f)
+    setResult(null)
+    setError(null)
+  }
+  function clearCsvFile() {
+    setCsvFile(null)
+    setResult(null)
+    setError(null)
+  }
+  function selectHtmlFile(f) {
+    setHtmlFile(f)
+    setResult(null)
+    setError(null)
+  }
+  function clearHtmlFile() {
+    setHtmlFile(null)
     setResult(null)
     setError(null)
   }
 
+  // ── Calculate ────────────────────────────────────────────────
   async function handleCalculate() {
-    if (!file || !agreed) return
+    if (!csvFile || !htmlFile || !agreed || parsing) return
     setError(null)
     setResult(null)
     setLoading(true)
     try {
-      const data = await processFile(file)
-      setResult(data)
+      // Convert form editable objects to processFile format
+      const priorPositions = (pendingPositions ?? []).map(p => ({
+        symbol:      p.symbol,
+        currency:    p.currency,
+        qty:         p.qty,
+        costUSD:     p.costUSD,
+        costBGN:     parseFloat(String(p.costBGNInput).replace(',', '.')) || 0,
+        lastBuyDate: p.lastBuyDateInput || getPrevYearDefaultAcqDate(taxYear),
+      }))
+      const res = await processFile({ csvFile, htmlFile, priorPositions })
+      setResult(res)
     } catch (e) {
       setError(e.message)
+      console.error(e)
     } finally {
       setLoading(false)
     }
   }
 
-  function handleInputChange(e) { selectFile(e.target.files[0]) }
-  function handleDrop(e) {
-    e.preventDefault()
-    selectFile(e.dataTransfer.files[0])
+  async function loadBothDemoFiles() {
+    const [csvResp, htmResp] = await Promise.all([
+      fetch('/demo/U0_2025_activity_demo.csv'),
+      fetch('/demo/U0_2025_trades_demo.htm'),
+    ])
+    const [csvText, htmText] = await Promise.all([csvResp.text(), htmResp.text()])
+    selectCsvFile(new File([new Blob([csvText], { type: 'text/csv' })],  'U0_2025_activity_demo.csv', { type: 'text/csv' }))
+    setHtmlFile(  new File([new Blob([htmText], { type: 'text/html' })], 'U0_2025_trades_demo.htm',  { type: 'text/html' }))
   }
-  function handleDragOver(e) { e.preventDefault() }
+
+  async function handleLoadDemo() {
+    try { await loadBothDemoFiles() }
+    catch (e) { setError('Неуспешно зареждане на демо файл: ' + e.message) }
+  }
 
   const jsonText = result ? JSON.stringify(result, null, 2) : ''
 
@@ -99,139 +408,135 @@ export default function App() {
     <div className="app">
       <header className="app-header">
         <div className="header-inner">
-          <h1>IBKR Данъчен Калкулатор</h1>
-          <p>Качете Activity Statement CSV от Interactive Brokers</p>
+          <Typography variant="title" component="h1" sx={{ fontSize: 40, fontWeight: 700 }}>
+            IBKR Данъчен калкулатор
+          </Typography>
+          <AboutSection />
         </div>
       </header>
 
       <div className="app-content">
-        <section className="about">
-          <div className="about-card about-card--green">
-            <div className="about-card-icon">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M4 4h8l4 4v8a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V5a1 1 0 0 1 1-1z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
-                <path d="M12 4v4h4M7 11h6M7 14h4" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-              </svg>
-            </div>
-            <h2>За какво служи</h2>
-            <p>Обработва Activity Statement от IBKR и изчислява облагаемите доходи от акции за годишната данъчна декларация.</p>
-          </div>
-
-          <div className="about-card about-card--indigo">
-            <div className="about-card-icon">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <rect x="2" y="2" width="16" height="16" rx="2" stroke="currentColor" strokeWidth="1.6"/>
-                <path d="M6 14l3-4 2.5 2L15 7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <h2>Метод</h2>
-            <p>Среднопретеглена цена на придобиване по символ с конвертиране в BGN по курс на БНБ за датата на всяка сделка.</p>
-          </div>
-
-          <div className="about-card about-card--amber">
-            <div className="about-card-icon">
-              <svg width="18" height="18" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-                <path d="M10 2l1.8 5.4H17l-4.5 3.3 1.7 5.3L10 13l-4.2 3 1.7-5.3L3 7.4h5.2L10 2z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round"/>
-              </svg>
-            </div>
-            <h2>Поверителност</h2>
-            <p>Всичко се изпълнява в браузъра ви. Никакви данни не се качват или съхраняват.</p>
-          </div>
-        </section>
-
         <main>
-          <div
-            className="dropzone"
-            onClick={() => inputRef.current.click()}
-            onDrop={handleDrop}
-            onDragOver={handleDragOver}
-          >
-            <input
-              ref={inputRef}
-              type="file"
-              accept=".csv"
-              onChange={handleInputChange}
-              style={{ display: 'none' }}
-            />
-            {file ? (
-              <span className="file-name">{file.name}</span>
-            ) : (
-              <>
-                <svg className="dropzone-icon" width="32" height="32" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-                  <path d="M12 16V8M8 12l4-4 4 4" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                  <path d="M20 16.5A3.5 3.5 0 0 0 16.5 13H15a5 5 0 1 0-9.9 1A4 4 0 1 0 6 21h13a3 3 0 0 0 1-5.5z" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/>
-                </svg>
-                <span className="dropzone-label">Пуснете CSV тук или кликнете за избор</span>
-              </>
-            )}
-          </div>
-
-          <div className="action-bar">
-            <label className="agree-label">
-              <input
-                type="checkbox"
-                checked={agreed}
-                onChange={e => setAgreed(e.target.checked)}
+          {/* ── Two dropzones ──────────────────────────────────────── */}
+          <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
+            <Box>
+              <Dropzone
+                file={csvFile} fileUrl={csvFileUrl}
+                onFileSelect={selectCsvFile} onClearFile={clearCsvFile}
+                accept=".csv" label="Activity Statement CSV тук"
               />
-              Съгласен/на съм с{' '}
-              <button className="terms-inline-btn" onClick={() => setShowTerms(true)}>
-                условията за ползване
-              </button>
-            </label>
-            <button
-              className="calc-btn"
-              disabled={!file || !agreed || loading}
+              <Typography variant="caption" color="text.secondary"
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
+                <InfoOutlined sx={{ fontSize: 13 }} />
+                IBKR Portal → Reports → Statements → Activity (формат CSV)
+              </Typography>
+            </Box>
+            <Box>
+              <Dropzone
+                file={htmlFile} fileUrl={htmlFileUrl}
+                onFileSelect={selectHtmlFile} onClearFile={clearHtmlFile}
+                accept=".htm,.html" label="Trade Confirmation HTML тук"
+                infoContent={HTM_INFO}
+              />
+              <Typography variant="caption" color="text.secondary"
+                sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
+                <InfoOutlined sx={{ fontSize: 13 }} />
+                IBKR Portal → Reports → Trade Confirmation (формат HTML)
+              </Typography>
+            </Box>
+          </Box>
+
+          {/* ── Prior-year positions form (above button row) ────────── */}
+          {!result && pendingPositions !== null && pendingPositions.length > 0 && (
+            <PriorYearPositionsForm
+              positions={pendingPositions}
+              onPositionChange={(i, field, value) =>
+                setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
+              }
+              taxYear={taxYear}
+            />
+          )}
+
+          {/* ── Checkbox + Изчисли ────────────────────────────── */}
+          {csvFile && htmlFile && !result
+            && (
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={agreed}
+                  onChange={e => setAgreed(e.target.checked)}
+                  size="small"
+                  color="primary"
+                />
+              }
+              label={
+                <Typography variant="body2">
+                  Съгласен/на съм с{' '}
+                  <Link component="button" variant="body2" onClick={() => setShowTerms(true)}
+                    sx={{ verticalAlign: 'baseline' }}>
+                    условията за ползване
+                  </Link>
+                </Typography>
+              }
+            />
+            <Button
+              variant="contained"
+              disabled={!csvFile || !htmlFile || !agreed || loading || parsing}
               onClick={handleCalculate}
             >
-              {loading ? 'Изчислява се...' : 'Изчисли'}
-            </button>
-          </div>
+              {loading ? 'Изчислява се...' : parsing ? 'Зарежда се...' : 'Изчисли'}
+            </Button>
+          </Box>
+          )}
 
-          {error && <p className="status error">Грешка: {error}</p>}
+          {/* ── Демо ──────────────────────────────*/}
+          
+          {(!csvFile || !htmlFile) && !loading && !parsing
+            && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+              <Button variant="outlined" onClick={handleLoadDemo}>
+                Зареди демо
+              </Button>
+            </Box>
+          )}
+
+          {error && <Alert severity="error" sx={{ mt: 2 }}>{error}</Alert>}
 
           {result && (
             <>
-              <TradesTable trades={result.trades} />
-              {DEV_MODE && (
-                <div className="output">
-                  <div className="output-header">
-                    <span className="output-count">
-                      JSON <span className="output-pill">{result.trades.length}</span>
-                    </span>
-                    <CopyButton text={jsonText} />
-                  </div>
-                  <pre className="json-output">{jsonText}</pre>
-                </div>
-              )}
+              <Disclaimer />
+              <ResultTabs result={result} jsonText={jsonText} />
             </>
           )}
         </main>
       </div>
 
       <footer className="app-footer">
-        <a href="https://github.com/" target="_blank" rel="noopener noreferrer" className="footer-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-            <path d="M12 2C6.477 2 2 6.477 2 12c0 4.418 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.009-.868-.013-1.703-2.782.604-3.369-1.342-3.369-1.342-.454-1.155-1.11-1.462-1.11-1.462-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836a9.59 9.59 0 0 1 2.504.337c1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.203 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/>
-          </svg>
-          GitHub
-        </a>
-        <span className="footer-sep">·</span>
-        <a href="mailto:lili.st.work@gmail.com" className="footer-link">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" aria-hidden="true">
-            <rect x="2" y="4" width="20" height="16" rx="2" stroke="currentColor" strokeWidth="1.6"/>
-            <path d="M2 7l10 7 10-7" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round"/>
-          </svg>
-          Контакти
-        </a>
-        <span className="footer-sep">·</span>
-        <button className="footer-link footer-btn" onClick={() => setShowTerms(true)}>
-          Условия за ползване
-        </button>
-        <hr></hr>
-        © 2026 IBKR Данъчен калкулатор. Всички права запазени.
+        <div className="footer-links">
+          <a href="https://github.com/lilistw/lilistw.github.io" target="_blank" rel="noopener noreferrer" className="footer-link">
+            <GitHub sx={{ fontSize: 16 }} />
+            GitHub
+          </a>
+          <span className="footer-sep">·</span>
+          <button className="footer-link footer-btn" onClick={() => setShowTerms(true)}>
+            <InfoOutlined sx={{ fontSize: 16 }} />
+            Условия&nbsp;за&nbsp;ползване
+          </button>
+          <span className="footer-sep">·</span>
+          <Tooltip title="Подкрепи фондация „Дивите животни“" arrow>
+          <a href="https://dmsbg.com/7997/dms-divite/" target="_blank" rel="noopener noreferrer" className="footer-link footer-btn">
+            <Favorite sx={{ fontSize: 16 }} />
+            Подкрепи кауза
+          </a>
+          </Tooltip>
+        </div>
+        <div className="footer-copy">
+          © 2026 IBKR Данъчен калкулатор. Всички права запазени.
+        </div>
       </footer>
 
-      {showTerms && <Modal onClose={() => setShowTerms(false)} />}
+      {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
     </div>
   )
 }

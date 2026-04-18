@@ -1,18 +1,56 @@
-# React + Vite
+# IBKR Данъчен Калкулатор
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Уеб приложение за изчисляване на данъци от Interactive Brokers Statements (CSV+HTML).
 
-Currently, two official plugins are available:
+## 🚀 Стартиране
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+```bash
+npm install
+npm run dev
+```
 
-## React Compiler
+## 🏗️ Build
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+```bash
+npm run build
+```
 
-Note: This will impact Vite dev & build performances.
+## 🧰 Технически детайли
 
-## Expanding the ESLint configuration
+- Стек: React + Vite + MUI
+- Изчисленията се извършват с висока точност чрез `decimal.js`, за да се избегнат грешки от плаваща запетая в JavaScript.
 
-If you are developing a production application, we recommend using TypeScript with type-aware lint rules enabled. Check out the [TS template](https://github.com/vitejs/vite/tree/main/packages/create-vite/template-react-ts) for information on how to integrate TypeScript and [`typescript-eslint`](https://typescript-eslint.io) in your project.
+## 🌐 Deploy
+
+Проектът използва GitHub Actions за автоматичен deploy към GitHub Pages при push към основния branch.
+
+## 🧪 Демо
+
+* Използвайте бутона **„Зареди демо“** в приложението
+* Или качете собствен IBKR Activity Statement (CSV)
+
+## ⚠️ Важно
+
+Приложението е с информативен характер и не представлява данъчен съвет.
+Проверете резултатите преди подаване към НАП.
+
+## 🔒 Поверителност
+
+* Данните се обработват локално в браузъра
+* Не се съхраняват и не се изпращат към сървър
+* Не се използват cookies или проследяване
+
+## 📄 License
+
+Shield: [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
+
+This work is licensed under a
+[Creative Commons Attribution-NonCommercial-ShareAlike 4.0 International License][cc-by-nc-sa].
+
+[![CC BY-NC-SA 4.0][cc-by-nc-sa-image]][cc-by-nc-sa]
+
+[cc-by-nc-sa]: http://creativecommons.org/licenses/by-nc-sa/4.0/
+[cc-by-nc-sa-image]: https://licensebuttons.net/l/by-nc-sa/4.0/88x31.png
+[cc-by-nc-sa-shield]: https://img.shields.io/badge/License-CC%20BY--NC--SA%204.0-lightgrey.svg
+
+Свободно за ползване и промяна с посочване на автора, но не и за печалба.

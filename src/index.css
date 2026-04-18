@@ -1,49 +1,71 @@
+/* ── Material Design 3 token system ── */
 :root {
-  --text:          #475569;
-  --text-h:        #0f172a;
-  --bg:            #f1f5f9;
-  --bg-surface:    #ffffff;
-  --border:        #e2e8f0;
-  --code-bg:       #f8fafc;
+  /* Primary (M3 blue) */
+  --md-primary:            #1A6DC8;
+  --md-on-primary:         #FFFFFF;
+  --md-primary-container:  #D3E4FF;
+  --md-on-primary-container: #001C41;
 
-  /* Green */
-  --green:         #16a34a;
-  --green-light:   #bbf7d0;
-  --green-bg:      #f0fdf4;
-  --green-border:  #86efac;
+  /* Secondary */
+  --md-secondary:          #535F70;
+  --md-secondary-container: #D7E3F7;
 
-  /* Indigo */
-  --indigo:        #4f46e5;
-  --indigo-light:  #c7d2fe;
-  --indigo-bg:     #eef2ff;
-  --indigo-border: #a5b4fc;
+  /* Surface system */
+  --md-surface:            #F7F9FF;
+  --md-surface-container:  #ECF0FA;
+  --md-surface-variant:    #DFE2EB;
+  --md-on-surface:         #191C20;
+  --md-on-surface-variant: #43474E;
 
-  /* Amber */
-  --amber:         #d97706;
-  --amber-light:   #fde68a;
-  --amber-bg:      #fffbeb;
-  --amber-border:  #fcd34d;
+  /* Outline */
+  --md-outline:            #73777F;
+  --md-outline-variant:    #C3C6CF;
 
-  /* Teal */
-  --teal:          #0d9488;
-  --teal-bg:       #f0fdfa;
-  --teal-border:   #5eead4;
+  /* Semantic colours */
+  --green:         #1B7A4E;
+  --green-light:   #A0E6C4;
+  --green-bg:      #E9F7EF;
+  --green-border:  #6ECBA0;
 
-  /* Aliases used throughout */
-  --accent:        var(--green);
-  --accent-light:  var(--green-light);
-  --accent-bg:     var(--green-bg);
-  --accent-border: var(--green-border);
+  --amber:         #C17000;
+  --amber-light:   #FDDFA0;
+  --amber-bg:      #FFF8E7;
+  --amber-border:  #F5C842;
 
-  --shadow:    0 1px 3px rgba(0,0,0,0.07), 0 4px 12px rgba(0,0,0,0.06);
-  --shadow-lg: 0 4px 8px rgba(0,0,0,0.08), 0 16px 40px rgba(0,0,0,0.12);
+  --indigo:        #4F46E5;
+  --indigo-light:  #C7D2FE;
+  --indigo-bg:     #EEF2FF;
+  --indigo-border: #A5B4FC;
 
-  --sans:    system-ui, 'Segoe UI', Roboto, sans-serif;
-  --heading: system-ui, 'Segoe UI', Roboto, sans-serif;
-  --mono:    ui-monospace, Consolas, monospace;
+  --teal:          #0891B2;
+  --teal-bg:       #ECFEFF;
+  --teal-border:   #A5F3FC;
 
-  font: 18px/145% var(--sans);
-  letter-spacing: 0.18px;
+  /* Legacy aliases — keep working without touching JSX */
+  --navy:          var(--md-primary);
+  --navy-mid:      #155EA8;
+  --navy-light:    #93B8E8;
+  --navy-bg:       var(--md-primary-container);
+  --navy-border:   #93B8E8;
+  --text:          var(--md-on-surface-variant);
+  --text-h:        var(--md-on-surface);
+  --text-muted:    var(--md-outline);
+  --bg:            var(--md-surface);
+  --bg-surface:    #FFFFFF;
+  --border:        var(--md-outline-variant);
+  --code-bg:       var(--md-surface-container);
+
+  /* M3 elevation shadows */
+  --shadow:    0 1px 2px rgba(0,28,90,0.12), 0 2px 8px rgba(0,28,90,0.06);
+  --shadow-md: 0 2px 6px rgba(0,28,90,0.12), 0 8px 20px rgba(0,28,90,0.08);
+  --shadow-lg: 0 4px 12px rgba(0,28,90,0.14), 0 20px 48px rgba(0,28,90,0.12);
+
+  --sans:    Roboto, system-ui, 'Segoe UI', sans-serif;
+  --heading: Roboto, system-ui, 'Segoe UI', sans-serif;
+  --mono:    'Roboto Mono', ui-monospace, Consolas, monospace;
+
+  font: 16px/150% var(--sans);
+  letter-spacing: 0.15px;
   color-scheme: light;
   color: var(--text);
   background: var(--bg);
@@ -52,10 +74,14 @@
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
 
-  @media (max-width: 1024px) { font-size: 16px; }
+  @media (max-width: 1024px) { font-size: 15px; }
 }
 
-body { margin: 0; }
+/* Dark page background — shows in side gutters on wide screens */
+body {
+  margin: 0;
+  background: #C8D0DC;
+}
 
 #root {
   width: 1126px;
@@ -65,22 +91,29 @@ body { margin: 0; }
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  background: var(--bg-surface);
-  border-inline: 1px solid var(--border);
+  background-color: var(--md-surface);
+  /* Subtle graph-paper grid */
+  background-image:
+    linear-gradient(rgba(26,109,200,0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(26,109,200,0.05) 1px, transparent 1px);
+  background-size: 32px 32px;
+  /* Floating card effect against dark body */
+  box-shadow: 0 0 0 1px rgba(0,0,0,0.18), 0 32px 80px rgba(0,0,0,0.45);
 }
 
 h1, h2, h3 {
   font-family: var(--heading);
-  font-weight: 600;
+  font-weight: 500;
   color: var(--text-h);
 }
 
 h1 {
-  font-size: 48px;
-  letter-spacing: -1.6px;
+  font-size: 42px;
+  letter-spacing: -0.5px;
+  font-weight: 400;
   margin: 0;
-  @media (max-width: 1024px) { font-size: 32px; }
+  @media (max-width: 1024px) { font-size: 30px; }
 }
 
-h2 { font-size: 22px; letter-spacing: -0.2px; margin: 0 0 8px; }
+h2 { font-size: 20px; letter-spacing: 0; margin: 0 0 8px; }
 p  { margin: 0; }
