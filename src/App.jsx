@@ -11,9 +11,9 @@ import { calculate } from './pipeline/calculate.js'
 import { buildTradeTotals, buildTaxSummary } from './domain/tradeSummary.js'
 import { inferPriorPositions } from './services/inferPriorPositions.js'
 import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
-import AboutSection from './content/AboutSection.jsx'
-import Disclaimer from './content/Disclaimer.jsx'
-import TermsContent from './content/TermsContent.jsx'
+import AboutSection from './components/AboutSection.jsx'
+import Disclaimer from './components/Disclaimer.jsx'
+import TermsContent from './components/TermsContent.jsx'
 import Dropzone from './components/Dropzone.jsx'
 import { HTM_INFO } from './components/dropzoneInfo.js'
 import DataTable from './components/DataTable.jsx'
@@ -447,10 +447,25 @@ export default function App() {
 
           {/* Demo load button — shown until files are selected */}
           {!csvFile && !htmlFile && (
-            <Box sx={{ mt: 1 }}>
-              <Button variant="outlined" onClick={handleLoadDemo}>
-                Зареди демо
-              </Button>
+            <Box
+              sx={{
+                mb: 1,
+                px: 2,
+                py: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                borderRadius: 1,
+                bgcolor: 'rgba(255,255,255,0.04)', // subtle, not a heavy banner
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Нямате наличен файл?
+              </Typography>
+                <Button variant="outlined" onClick={handleLoadDemo}>
+                  Заредете демо
+                </Button>
             </Box>
           )}
 
