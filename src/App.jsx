@@ -1,15 +1,19 @@
 import { useState, useEffect, useMemo } from 'react'
 import {
   Alert, Box, Button, Checkbox, Dialog, DialogActions, DialogContent, DialogTitle,
-  FormControlLabel, IconButton, Link, Tab, Tabs, Typography, Tooltip
+  FormControlLabel, IconButton, Link, Tab, Tabs, Tooltip, Typography,
 } from '@mui/material'
-import { Check, Close, ContentCopy, FavoriteOutlined, GitHub, InfoOutlined, Favorite, ReceiptLongOutlined } from '@mui/icons-material'
-import { processFile, parseFilesData } from './services/processFile.js'
+import {
+  Check, Close, ContentCopy, Favorite, GitHub, InfoOutlined, ReceiptLongOutlined,
+} from '@mui/icons-material'
+import { readInput } from './pipeline/readInput.js'
+import { calculate } from './pipeline/calculate.js'
+import { buildTradeTotals, buildTaxSummary } from './domain/tradeSummary.js'
 import { inferPriorPositions } from './services/inferPriorPositions.js'
 import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
-import AboutSection from './content/AboutSection.jsx'
-import Disclaimer from './content/Disclaimer.jsx'
-import TermsContent from './content/TermsContent.jsx'
+import AboutSection from './components/AboutSection.jsx'
+import Disclaimer from './components/Disclaimer.jsx'
+import TermsContent from './components/TermsContent.jsx'
 import Dropzone from './components/Dropzone.jsx'
 import { HTM_INFO } from './components/dropzoneInfo.js'
 import DataTable from './components/DataTable.jsx'
@@ -22,6 +26,8 @@ import PriorYearPositionsForm from './components/PriorYearPositionsForm.jsx'
 import './App.css'
 
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true'
+
+// ── Small UI helpers ──────────────────────────────────────────────────────────
 
 function CopyButton({ text }) {
   const [copied, setCopied] = useState(false)
@@ -60,70 +66,28 @@ function TabPanel({ children, value, index }) {
   return value === index ? <Box sx={{ pt: 2 }}>{children}</Box> : null
 }
 
-// ── Helpers for dynamic trades totals & tax summary ──────────────────────────
-const TRADE_SUM_COLS     = ['proceeds', 'comm', 'fee', 'totalWithFee']
-const TRADE_SUM_BGN_COLS = ['totalWithFeeBGN', 'costBasisBGN']
+// ── Result display ────────────────────────────────────────────────────────────
 
-function buildTradeTotals(dataRows, localCurrencyCode = 'BGN') {
-  const totals = []
-  for (const label of ['Облагаем', 'Освободен']) {
-    const group = dataRows.filter(r => r.taxExemptLabel === label)
-    if (group.length === 0) continue
-    for (const cur of ['EUR', 'USD']) {
-      const subset = group.filter(r => r.currency === cur)
-      if (subset.length === 0) continue
-      const row = { _total: true, taxExemptLabel: label, currency: cur }
-      TRADE_SUM_COLS.forEach(k     => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
-      TRADE_SUM_BGN_COLS.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
-      totals.push(row)
-    }
-    const lclRow = { _total: true, taxExemptLabel: label, currency: localCurrencyCode }
-    TRADE_SUM_BGN_COLS.forEach(k => { lclRow[k] = group.reduce((s, r) => s + (r[k] ?? 0), 0) })
-    totals.push(lclRow)
-  }
-  return totals
-}
-
-function buildTaxSummary(dataRows) {
-  const sells   = dataRows.filter(r => r.type === 'SELL')
-  const taxable = sells.filter(r => r.taxable === true)
-  const exempt  = sells.filter(r => r.taxable === false)
-  const summarize = group => {
-    const totalProceedsBGN  = group.reduce((s, r) => s + (r.totalWithFeeBGN ?? 0), 0)
-    const totalCostBasisBGN = group.reduce((s, r) => s + (r.costBasisBGN ?? 0), 0)
-    const profits = group.reduce((s, r) => {
-      const pl = (r.totalWithFeeBGN ?? 0) - (r.costBasisBGN ?? 0)
-      return pl > 0 ? s + pl : s
-    }, 0)
-    const losses = group.reduce((s, r) => {
-      const pl = (r.totalWithFeeBGN ?? 0) - (r.costBasisBGN ?? 0)
-      return pl < 0 ? s + Math.abs(pl) : s
-    }, 0)
-    return { totalProceedsBGN, totalCostBasisBGN, profits, losses }
-  }
-  return { app5: summarize(taxable), app13: summarize(exempt) }
-}
-
-function ResultTabs({ result, jsonText }) {
+function ResultTabs({ result, inputJsonText, outputJsonText }) {
   const [tab, setTab] = useState(0)
+
+  const { taxYear, localCurrencyCode, localCurrencyLabel } = result
   const hasDividends = result.dividends.rows.length > 0
   const hasInterest  = result.interest.rows.filter(r => !r._total).length > 0
 
-  const { taxYear, localCurrencyCode, localCurrencyLabel } = result
-
-  // Mutable trades data rows (user can toggle taxable status)
+  // Mutable trade rows — user can toggle taxable status per row
   const [tradesDataRows, setTradesDataRows] = useState(() =>
     result.trades.rows.filter(r => !r._total)
   )
 
   const trades = useMemo(() => ({
     columns: result.trades.columns,
-    rows: [...tradesDataRows, ...buildTradeTotals(tradesDataRows, localCurrencyCode)],
+    rows:    [...tradesDataRows, ...buildTradeTotals(tradesDataRows, localCurrencyCode)],
   }), [result.trades.columns, tradesDataRows, localCurrencyCode])
 
   const taxSummary = useMemo(() => buildTaxSummary(tradesDataRows), [tradesDataRows])
   const approxRows = useMemo(
-    () => tradesDataRows.filter(r => r.type === 'SELL' && r.costBasisBGNApprox),
+    () => tradesDataRows.filter(r => r.side === 'SELL' && r.costBasisBGNApprox),
     [tradesDataRows]
   )
 
@@ -149,9 +113,9 @@ function ResultTabs({ result, jsonText }) {
   const tabs = [
     { label: 'Сделки' },
     { label: 'Позиции' },
-    ...(hasDividends ? [{ label: 'Дивиденти' }]  : []),
-    ...(hasInterest  ? [{ label: 'Лихви' }]       : []),
-    ...(DEV_MODE     ? [{ label: 'Dev' }]          : []),
+    ...(hasDividends ? [{ label: 'Дивиденти' }] : []),
+    ...(hasInterest  ? [{ label: 'Лихви' }]     : []),
+    ...(DEV_MODE     ? [{ label: 'Dev' }]        : []),
   ]
 
   let idx = 0
@@ -173,7 +137,6 @@ function ResultTabs({ result, jsonText }) {
         {tabs.map((t, i) => <Tab key={i} label={t.label} />)}
       </Tabs>
 
-      {/* Сделки */}
       <TabPanel value={tab} index={TAB_TRADES}>
         <DataTable title="Trade Confirmation – Сделки" data={trades} countLabel="сделки" onCheckChange={handleTaxableToggle} />
         <PriorYearApproxWarning rows={approxRows} taxYear={taxYear} />
@@ -181,19 +144,16 @@ function ResultTabs({ result, jsonText }) {
         <TaxApp13 summary={taxSummary.app13} localCurrencyLabel={localCurrencyLabel} />
       </TabPanel>
 
-      {/* Позиции */}
       <TabPanel value={tab} index={TAB_HOLDINGS}>
         <TaxApp8Holdings data={result.taxSummary.app8Holdings} />
       </TabPanel>
 
-      {/* Дивиденти */}
       {hasDividends && (
         <TabPanel value={tab} index={TAB_DIVIDENDS}>
           <TaxApp8Dividends data={result.taxSummary.app8Dividends} />
         </TabPanel>
       )}
 
-      {/* Лихви */}
       {hasInterest && (
         <TabPanel value={tab} index={TAB_INTEREST}>
           <Box sx={{
@@ -222,22 +182,25 @@ function ResultTabs({ result, jsonText }) {
         </TabPanel>
       )}
 
-      {/* Dev */}
       {DEV_MODE && (
         <TabPanel value={tab} index={TAB_DEV}>
+          <div className="output" style={{ marginBottom: 24 }}>
+            <div className="output-header">
+              <span className="output-count">Input JSON</span>
+              <CopyButton text={inputJsonText} />
+            </div>
+            <pre className="json-output">{inputJsonText}</pre>
+          </div>
           <div className="output">
             <div className="output-header">
-              <span className="output-count">
-                JSON <span className="output-pill">{result.holdings.rows.length}</span>
-              </span>
-              <CopyButton text={jsonText} />
+              <span className="output-count">Output JSON</span>
+              <CopyButton text={outputJsonText} />
             </div>
-            <pre className="json-output">{jsonText}</pre>
+            <pre className="json-output">{outputJsonText}</pre>
           </div>
         </TabPanel>
       )}
 
-      {/* Confirmation dialog for taxable status toggle */}
       {pendingToggle && (
         <Dialog open onClose={() => setPendingToggle(null)} maxWidth="xs" fullWidth>
           <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
@@ -264,29 +227,32 @@ function ResultTabs({ result, jsonText }) {
   )
 }
 
+// ── Main application ──────────────────────────────────────────────────────────
+
 export default function App() {
-  // ── File states ──────────────────────────────────────────────
-  const [csvFile, setCsvFile] = useState(null)
-  const [csvFileUrl, setCsvFileUrl] = useState('')
-  const [htmlFile, setHtmlFile] = useState(null)
+  const [csvFile,     setCsvFile]     = useState(null)
+  const [csvFileUrl,  setCsvFileUrl]  = useState('')
+  const [htmlFile,    setHtmlFile]    = useState(null)
   const [htmlFileUrl, setHtmlFileUrl] = useState('')
 
-  // ── Prior-year positions (controlled form state, lifted here) ────────────
-  // null  = not yet inferred / files not both loaded
-  // []    = inferred, no prior positions found
-  // [...] = editable prior positions (form shown above button row)
-  const [pendingPositions, setPendingPositions] = useState(null)
-  const [taxYear, setTaxYear] = useState(2025)
-  const [parsing, setParsing] = useState(false)
+  // Parsed input data (Phase 1 output) — set when both files are loaded
+  const [inputData, setInputData] = useState(null)
+  const [parsing,   setParsing]   = useState(false)
 
-  // ── Results and UI states ────────────────────────────────────
+  // Prior-year positions editable form state (null = not inferred yet)
+  const [pendingPositions, setPendingPositions] = useState(null)
+
+  // Result (Phase 2 output)
   const [result, setResult] = useState(null)
-  const [error, setError] = useState(null)
-  const [loading, setLoading] = useState(false)
-  const [agreed, setAgreed] = useState(false)
+  const [error,  setError]  = useState(null)
+
+  const [agreed,    setAgreed]    = useState(false)
   const [showTerms, setShowTerms] = useState(false)
 
-  // ── File URL effects ─────────────────────────────────────────
+  const taxYear = inputData?.taxYear ?? 2025
+
+
+  // Object URL lifecycle for dropzone previews
   useEffect(() => {
     if (!csvFile) { setCsvFileUrl(''); return }
     const url = URL.createObjectURL(csvFile)
@@ -301,44 +267,46 @@ export default function App() {
     return () => URL.revokeObjectURL(url)
   }, [htmlFile])
 
-  // ── Preliminary parse: infer prior-year positions when both files ready ──
+  // Phase 1 — read + parse files whenever both are available.
+  // Infers prior-year positions so the user can review them before calculating.
   useEffect(() => {
     if (!csvFile || !htmlFile) {
+      setInputData(null)
       setPendingPositions(null)
       return
     }
     let cancelled = false
     setParsing(true)
-    parseFilesData({ csvFile, htmlFile })
+    setError(null)
+    readInput({ csvFile, htmlFile })
       .then(data => {
         if (cancelled) return
-        const yr = data.taxYear ?? 2025
-        setTaxYear(yr)
+        setInputData(data)
         const prior = inferPriorPositions({
-          htmlTrades:     data.processedTrades.rows,
-          openPositions:  data.openPositions.rows,
-          csvTradeBasis:  data.csvTradeBasis,
-          instrumentInfo: data.instrumentInfo,
-          taxYear:        yr,
+          trades:       data.trades,
+          openPositions: data.openPositions,
+          csvTrades:    data.csvTrades,
+          instruments:  data.instruments,
+          period:       data.statement.period,
         })
-        // Convert inferred positions to editable form objects
-        const defaultAcqDate = getPrevYearDefaultAcqDate(yr)
+        const defaultAcqDate = getPrevYearDefaultAcqDate(data.taxYear)
         setPendingPositions(prior.map(p => ({
           ...p,
-          costBGNInput:    p.costBGN != null ? String(Number(p.costBGN).toFixed(2)) : '',
+          costBGNInput:     p.costBGN != null ? String(Number(p.costBGN).toFixed(2)) : '',
           lastBuyDateInput: p.lastBuyDate ?? defaultAcqDate,
         })))
       })
       .catch(e => {
         if (cancelled) return
-        console.warn('Prior-year inference failed:', e)
+        setError(e.message)
+        setInputData(null)
         setPendingPositions([])
       })
       .finally(() => { if (!cancelled) setParsing(false) })
     return () => { cancelled = true }
   }, [csvFile, htmlFile])
 
-  // ── File selection handlers ──────────────────────────────────
+  // File selection handlers
   function selectCsvFile(f) {
     if (!f) return
     setCsvFile(f)
@@ -361,14 +329,12 @@ export default function App() {
     setError(null)
   }
 
-  // ── Calculate ────────────────────────────────────────────────
-  async function handleCalculate() {
-    if (!csvFile || !htmlFile || !agreed || parsing) return
+  // Phase 2 — calculate from already-parsed inputData (synchronous)
+  function handleCalculate() {
+    if (!inputData || !agreed) return
     setError(null)
     setResult(null)
-    setLoading(true)
     try {
-      // Convert form editable objects to processFile format
       const priorPositions = (pendingPositions ?? []).map(p => ({
         symbol:      p.symbol,
         currency:    p.currency,
@@ -377,32 +343,29 @@ export default function App() {
         costBGN:     parseFloat(String(p.costBGNInput).replace(',', '.')) || 0,
         lastBuyDate: p.lastBuyDateInput || getPrevYearDefaultAcqDate(taxYear),
       }))
-      const res = await processFile({ csvFile, htmlFile, priorPositions })
-      setResult(res)
+      setResult(calculate(inputData, priorPositions))
     } catch (e) {
       setError(e.message)
       console.error(e)
-    } finally {
-      setLoading(false)
     }
   }
 
-  async function loadBothDemoFiles() {
-    const [csvResp, htmResp] = await Promise.all([
-      fetch('/demo/U0_2025_activity_demo.csv'),
-      fetch('/demo/U0_2025_trades_demo.htm'),
-    ])
-    const [csvText, htmText] = await Promise.all([csvResp.text(), htmResp.text()])
-    selectCsvFile(new File([new Blob([csvText], { type: 'text/csv' })],  'U0_2025_activity_demo.csv', { type: 'text/csv' }))
-    setHtmlFile(  new File([new Blob([htmText], { type: 'text/html' })], 'U0_2025_trades_demo.htm',  { type: 'text/html' }))
-  }
-
   async function handleLoadDemo() {
-    try { await loadBothDemoFiles() }
-    catch (e) { setError('Неуспешно зареждане на демо файл: ' + e.message) }
+    try {
+      const [csvResp, htmResp] = await Promise.all([
+        fetch('/demo/U0_2025_activity_demo.csv'),
+        fetch('/demo/U0_2025_trades_demo.htm'),
+      ])
+      const [csvText, htmText] = await Promise.all([csvResp.text(), htmResp.text()])
+      selectCsvFile(new File([csvText], 'U0_2025_activity_demo.csv', { type: 'text/csv' }))
+      setHtmlFile(  new File([htmText], 'U0_2025_trades_demo.htm',   { type: 'text/html' }))
+    } catch (e) {
+      setError('Неуспешно зареждане на демо файл: ' + e.message)
+    }
   }
 
-  const jsonText = result ? JSON.stringify(result, null, 2) : ''
+  const inputJsonText  = inputData ? JSON.stringify(inputData, null, 2) : ''
+  const outputJsonText = result    ? JSON.stringify(result,    null, 2) : ''
 
   return (
     <div className="app">
@@ -417,7 +380,7 @@ export default function App() {
 
       <div className="app-content">
         <main>
-          {/* ── Two dropzones ──────────────────────────────────────── */}
+          {/* Dropzones */}
           <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '1fr 1fr' }, gap: 2 }}>
             <Box>
               <Dropzone
@@ -446,7 +409,7 @@ export default function App() {
             </Box>
           </Box>
 
-          {/* ── Prior-year positions form (above button row) ────────── */}
+          {/* Prior-year positions form — shown when inferred positions exist */}
           {!result && pendingPositions !== null && pendingPositions.length > 0 && (
             <PriorYearPositionsForm
               positions={pendingPositions}
@@ -457,47 +420,59 @@ export default function App() {
             />
           )}
 
-          {/* ── Checkbox + Изчисли ────────────────────────────── */}
-          {csvFile && htmlFile && !result
-            && (
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-            <FormControlLabel
-              control={
-                <Checkbox
-                  checked={agreed}
-                  onChange={e => setAgreed(e.target.checked)}
-                  size="small"
-                  color="primary"
-                />
-              }
-              label={
-                <Typography variant="body2">
-                  Съгласен/на съм с{' '}
-                  <Link component="button" variant="body2" onClick={() => setShowTerms(true)}
-                    sx={{ verticalAlign: 'baseline' }}>
-                    условията за ползване
-                  </Link>
-                </Typography>
-              }
-            />
-            <Button
-              variant="contained"
-              disabled={!csvFile || !htmlFile || !agreed || loading || parsing}
-              onClick={handleCalculate}
-            >
-              {loading ? 'Изчислява се...' : parsing ? 'Зарежда се...' : 'Изчисли'}
-            </Button>
-          </Box>
+          {/* Terms + Calculate button */}
+          {csvFile && htmlFile && !result && (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+              <FormControlLabel
+                control={
+                  <Checkbox
+                    checked={agreed}
+                    onChange={e => setAgreed(e.target.checked)}
+                    size="small"
+                    color="primary"
+                  />
+                }
+                label={
+                  <Typography variant="body2">
+                    Съгласен/на съм с{' '}
+                    <Link component="button" variant="body2" onClick={() => setShowTerms(true)}
+                      sx={{ verticalAlign: 'baseline' }}>
+                      условията за ползване
+                    </Link>
+                  </Typography>
+                }
+              />
+              <Button
+                variant="contained"
+                disabled={!inputData || !agreed || parsing}
+                onClick={handleCalculate}
+              >
+                {parsing ? 'Зарежда се...' : 'Изчисли'}
+              </Button>
+            </Box>
           )}
 
-          {/* ── Демо ──────────────────────────────*/}
-          
-          {(!csvFile || !htmlFile) && !loading && !parsing
-            && (
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
-              <Button variant="outlined" onClick={handleLoadDemo}>
-                Зареди демо
-              </Button>
+          {/* Demo load button — shown until files are selected */}
+          {(!csvFile || !htmlFile) && (
+            <Box
+              sx={{
+                mb: 1,
+                px: 2,
+                py: 1,
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                gap: 1,
+                borderRadius: 1,
+                bgcolor: 'rgba(255,255,255,0.04)', // subtle, not a heavy banner
+              }}
+            >
+              <Typography variant="body2" color="text.secondary">
+                Нямате наличен файл?
+              </Typography>
+                <Button variant="outlined" onClick={handleLoadDemo}>
+                  Заредете демо
+                </Button>
             </Box>
           )}
 
@@ -506,7 +481,7 @@ export default function App() {
           {result && (
             <>
               <Disclaimer />
-              <ResultTabs result={result} jsonText={jsonText} />
+              <ResultTabs result={result} inputJsonText={inputJsonText} outputJsonText={outputJsonText} />
             </>
           )}
         </main>
@@ -524,11 +499,11 @@ export default function App() {
             Условия&nbsp;за&nbsp;ползване
           </button>
           <span className="footer-sep">·</span>
-          <Tooltip title="Подкрепи фондация „Дивите животни“" arrow>
-          <a href="https://dmsbg.com/7997/dms-divite/" target="_blank" rel="noopener noreferrer" className="footer-link footer-btn">
-            <Favorite sx={{ fontSize: 16 }} />
-            Подкрепи кауза
-          </a>
+          <Tooltip title={'Подкрепи фондация \u201e\u0414\u0438\u0432\u0438\u0442\u0435 \u0436\u0438\u0432\u043e\u0442\u043d\u0438\u201c'} arrow>
+            <a href="https://dmsbg.com/7997/dms-divite/" target="_blank" rel="noopener noreferrer" className="footer-link footer-btn">
+              <Favorite sx={{ fontSize: 16 }} />
+              Подкрепи кауза
+            </a>
           </Tooltip>
         </div>
         <div className="footer-copy">

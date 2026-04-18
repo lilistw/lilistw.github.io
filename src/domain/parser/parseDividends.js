@@ -1,105 +1,57 @@
 /**
- * Parses the Dividends and Withholding Tax sections.
- * Matches withholding using (symbol + date) — robust for IBKR data.
+ * Parses the Dividends section into a raw array.
  *
  * @param {string[][]} rows
- * @param {{ [symbol: string]: object }} instrumentInfo
- * @returns {{ columns: object[], rows: object[] }}
+ * @returns {object[]}
  */
-export function parseDividends(rows, instrumentInfo = {}) {
-  const divHeader = rows.find(r => r[0] === 'Dividends' && r[1] === 'Header')
-  if (!divHeader) return { columns: [], rows: [] }
+export function parseDividends(rows) {
+  const header = rows.find(r => r[0] === 'Dividends' && r[1] === 'Header')
+  if (!header) return []
 
-  const divIdx = {}
-  for (let i = 2; i < divHeader.length; i++) {
-    divIdx[divHeader[i].trim()] = i
-  }
-
-  // ── Build withholding map: key = symbol_date ─────────────────────
-  const withholding = {}
-
-  const whHeader = rows.find(r => r[0] === 'Withholding Tax' && r[1] === 'Header')
-  if (whHeader) {
-    const whIdx = {}
-    for (let i = 2; i < whHeader.length; i++) {
-      whIdx[whHeader[i].trim()] = i
-    }
-
-    rows
-      .filter(r =>
-        r[0] === 'Withholding Tax' &&
-        r[1] === 'Data' &&
-        !(r[whIdx['Currency']] || '').startsWith('Total')
-      )
-      .forEach(r => {
-        const desc = r[whIdx['Description']] || ''
-        const date = r[whIdx['Date']]
-
-        const symbolMatch = desc.match(/^([^(]+)\(/)
-        const symbol = symbolMatch ? symbolMatch[1].trim() : null
-
-        if (!symbol || !date) return
-
-        const key = `${symbol}_${date}`
-
-        const amount = parseFloat(r[whIdx['Amount']]) || 0
-
-        withholding[key] = (withholding[key] || 0) + amount
-      })
-  }
+  const idx = {}
+  for (let i = 2; i < header.length; i++) idx[header[i].trim()] = i
 
   const SKIP = new Set(['Total', 'Total in EUR', 'Total Dividends in EUR'])
 
-  const dataRows = rows
+  return rows
     .filter(r =>
       r[0] === 'Dividends' &&
       r[1] === 'Data' &&
-      !SKIP.has((r[divIdx['Currency']] || '').trim())
+      !SKIP.has((r[idx['Currency']] || '').trim())
     )
-    .map(r => {
-      const currency    = r[divIdx['Currency']]
-      const date        = r[divIdx['Date']]
-      const description = (r[divIdx['Description']] || '').trim()
+    .map(r => ({
+      currency:    (r[idx['Currency']]    || '').trim(),
+      date:        (r[idx['Date']]         || '').trim(),
+      description: (r[idx['Description']] || '').trim(),
+      amount:      (r[idx['Amount']]       || '').trim(),
+    }))
+    .filter(r => parseFloat(r.amount) > 0)
+}
 
-      const grossAmount = parseFloat(r[divIdx['Amount']]) || 0
+/**
+ * Parses the Withholding Tax section into a raw array.
+ *
+ * @param {string[][]} rows
+ * @returns {object[]}
+ */
+export function parseWithholdingTax(rows) {
+  const header = rows.find(r => r[0] === 'Withholding Tax' && r[1] === 'Header')
+  if (!header) return []
 
-      const symbolMatch = description.match(/^([^(]+)\(/)
-      const symbol = symbolMatch
-        ? symbolMatch[1].trim()
-        : description.split(' ')[0]
+  const idx = {}
+  for (let i = 2; i < header.length; i++) idx[header[i].trim()] = i
 
-      const key = `${symbol}_${date}`
-
-      const withheldTax = Math.abs(withholding[key] || 0)
-
-      const info = instrumentInfo[symbol] || {}
-
-      return {
-        symbol,
-        date,
-        currency,
-        description,
-        grossAmount,
-        withheldTax,
-        netAmount: grossAmount - withheldTax,
-        country:     info.country     || '',
-        countryName: info.countryName || '',
-        taxCode: withheldTax > 0 ? 1 : 3, // 1 = credit, 3 = exemption
-      }
-    })
-    .filter(r => r.grossAmount > 0)
-
-  return {
-    columns: [
-      { key: 'date',        label: 'Дата',           mono: true },
-      { key: 'symbol',      label: 'Символ',         bold: true },
-      { key: 'countryName', label: 'Държава' },
-      { key: 'currency',    label: 'Валута' },
-      { key: 'grossAmount', label: 'Брутна сума',    align: 'right', mono: true, decimals: 2 },
-      { key: 'withheldTax', label: 'Удържан данък',  align: 'right', mono: true, decimals: 2 },
-      { key: 'netAmount',   label: 'Нетна сума',     align: 'right', mono: true, decimals: 2 },
-      { key: 'taxCode',     label: 'Код' },
-    ],
-    rows: dataRows,
-  }
+  return rows
+    .filter(r =>
+      r[0] === 'Withholding Tax' &&
+      r[1] === 'Data' &&
+      !(r[idx['Currency']] || '').startsWith('Total')
+    )
+    .map(r => ({
+      currency:    (r[idx['Currency']]    || '').trim(),
+      date:        (r[idx['Date']]         || '').trim(),
+      description: (r[idx['Description']] || '').trim(),
+      amount:      (r[idx['Amount']]       || '').trim(),
+      code:        (r[idx['Code']]         || '').trim(),
+    }))
 }

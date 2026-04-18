@@ -44,7 +44,6 @@ export default function TaxApp8Holdings({ data }) {
             Данните се базират на отворените позиции от IBKR към края на годината.
           </Typography>
         </Box>
-        
       </Box>
       <HoldingsSubTable label="Акции" data={data} type="Акции" />
       <HoldingsSubTable label="Дялове" data={data} type="Дялове" />
