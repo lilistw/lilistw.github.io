@@ -1,6 +1,7 @@
 import Decimal from 'decimal.js'
-import { parseOpenPositions } from '../domain/parser/parseOpenPositions.js'
-import { expandByAliases } from '../domain/parser/parseFinancialInstrumentInfo.js'
+import { buildOpenPositions } from '../domain/parser/parseOpenPositions.js'
+import { buildInstrumentInfo, expandByAliases } from '../domain/parser/parseInstruments.js'
+import { buildCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
 import {
   toLocalCurrency,
   getLocalCurrencyCode, getLocalCurrencyLabel,
@@ -35,7 +36,43 @@ function summarizeSells(sells) {
 }
 
 /**
- * Process parsed InputData and confirmed prior-year positions into a ResultData object.
+ * Matches raw dividends with raw withholding tax entries.
+ * Returns enriched dividend rows ready for App8 display.
+ */
+function matchDividends(rawDividends, rawWithholdingTax, instrumentInfo) {
+  const withholding = {}
+  for (const wt of rawWithholdingTax) {
+    const m = wt.description.match(/^([^(]+)\(/)
+    const symbol = m ? m[1].trim() : null
+    if (!symbol || !wt.date) continue
+    const key = `${symbol}_${wt.date}`
+    withholding[key] = (withholding[key] || 0) + parseFloat(wt.amount || '0')
+  }
+
+  return rawDividends.map(d => {
+    const m = d.description.match(/^([^(]+)\(/)
+    const symbol = m ? m[1].trim() : d.description.split(' ')[0]
+    const key = `${symbol}_${d.date}`
+    const grossAmount = parseFloat(d.amount || '0')
+    const withheldTax = Math.abs(withholding[key] || 0)
+    const info = instrumentInfo[symbol] || {}
+    return {
+      symbol,
+      date:        d.date,
+      currency:    d.currency,
+      description: d.description,
+      grossAmount,
+      withheldTax,
+      netAmount:   grossAmount - withheldTax,
+      country:     info.country     || '',
+      countryName: info.countryName || '',
+      taxCode:     withheldTax > 0 ? 1 : 3,
+    }
+  })
+}
+
+/**
+ * Process raw InputData and confirmed prior-year positions into a ResultData object.
  * Pure function — no file I/O.
  *
  * @param {InputData} input  — from readInput()
@@ -43,7 +80,10 @@ function summarizeSells(sells) {
  * @returns {ResultData}
  */
 export function calculate(input, priorPositions = []) {
-  const { taxYear, instrumentInfo, trades, csvTradeBasis, dividends, interest, csvRows } = input
+  const { taxYear } = input
+
+  const instrumentInfo = buildInstrumentInfo(input.instruments)
+  const csvTradeBasis  = buildCsvTradeBasis(input.csvTrades)
 
   const localCurrencyCode  = getLocalCurrencyCode(taxYear)
   const localCurrencyLabel = getLocalCurrencyLabel(taxYear)
@@ -54,10 +94,10 @@ export function calculate(input, priorPositions = []) {
   const toLcl = (amount, currency, dateStr) =>
     toLocalCurrency(amount, currency, dateStr, taxYear)
 
-  // Sort by symbol then date for correct weighted-average cost tracking
-  const sortedTrades = [...trades.rows].sort((a, b) => {
+  // Sort by symbol then datetime for correct weighted-average cost tracking
+  const sortedTrades = [...input.trades].sort((a, b) => {
     if (a.symbol !== b.symbol) return a.symbol.localeCompare(b.symbol)
-    return new Date(a.dateTime) - new Date(b.dateTime)
+    return new Date(a.datetime) - new Date(b.datetime)
   })
 
   // Seed positions from confirmed prior-year data
@@ -79,30 +119,31 @@ export function calculate(input, priorPositions = []) {
       }
       const pos = acc.positions[t.symbol]
 
-      const exempt    = t.type === 'SELL' && isTaxExempt(t, instrumentInfo)
-      const proceedsD = t.proceeds instanceof Decimal ? t.proceeds : new Decimal(String(t.proceeds ?? 0))
-      const commD     = t.comm    instanceof Decimal ? t.comm    : new Decimal(String(t.comm    ?? 0))
-      const feeD      = t.fee     instanceof Decimal ? t.fee     : new Decimal(String(t.fee     ?? 0))
+      const date      = t.datetime.split(/[,\s]/)[0]
+      const exempt    = t.side === 'SELL' && isTaxExempt(t, instrumentInfo)
+      const proceedsD = new Decimal(t.proceeds   || '0')
+      const commD     = new Decimal(t.commission || '0')
+      const feeD      = new Decimal(t.fee        || '0')
+      const rawQtyD   = new Decimal(t.quantity   || '0')
+      const qtyD      = rawQtyD.abs()
       const totalD    = proceedsD.plus(commD).plus(feeD)
-      const totalLclD = toLcl(totalD, t.currency, t.date)
-      const rateD     = toLcl(new Decimal(1), t.currency, t.date)
+      const totalLclD = toLcl(totalD, t.currency, date)
+      const rateD     = toLcl(new Decimal(1), t.currency, date)
 
       let costBasis          = null
       let costBasisBGN       = null
       let costBasisBGNApprox = false
 
-      if (t.type === 'BUY') {
-        pos.qty     = pos.qty.plus(t.quantity)
+      if (t.side === 'BUY') {
+        pos.qty     = pos.qty.plus(qtyD)
         pos.cost    = pos.cost.plus(totalD.neg())
         pos.costBGN = pos.costBGN.plus((totalLclD ?? D0).neg())
       }
 
-      if (t.type === 'SELL') {
-        const qtyD = t.quantity instanceof Decimal ? t.quantity : new Decimal(String(t.quantity))
-
+      if (t.side === 'SELL') {
         if (pos.qty.isZero()) {
           // No BUY in current dataset — fall back to IBKR CSV basis
-          const csvBasisD = csvTradeBasis.get(`${t.symbol}|${t.date}|${qtyD.toFixed(0)}`)
+          const csvBasisD = csvTradeBasis.get(`${t.symbol}|${date}|${qtyD.toFixed(0)}`)
           if (csvBasisD) {
             costBasis          = csvBasisD.toNumber()
             costBasisBGN       = toLcl(csvBasisD, t.currency, prevYearEndDate)?.toNumber() ?? null
@@ -119,16 +160,32 @@ export function calculate(input, priorPositions = []) {
         }
       }
 
-      const taxable       = t.type !== 'SELL' ? null : !exempt
-      const proceedsBGN   = t.type === 'SELL' && totalLclD ? totalLclD.toNumber() : null
+      const taxable       = t.side !== 'SELL' ? null : !exempt
+      const proceedsBGN   = t.side === 'SELL' && totalLclD ? totalLclD.toNumber() : null
       const realizedPLBGN = proceedsBGN != null && costBasisBGN != null
         ? new Decimal(proceedsBGN).minus(costBasisBGN).toNumber() : null
 
       acc.rows.push({
-        ...t,
+        // Raw string fields preserved for display
+        symbol:          t.symbol,
+        datetime:        t.datetime,
+        settleDate:      t.settleDate,
+        exchange:        t.exchange,
+        currency:        t.currency,
+        side:            t.side,
+        price:           t.price,
+        orderType:       t.orderType,
+        code:            t.code,
+        // Derived/overridden — numbers for totals
         '#':             i + 1,
+        date,
+        quantityDisplay: qtyD.toString(),
+        proceeds:        proceedsD.toNumber(),
+        commission:      commD.toNumber(),
+        fee:             feeD.toNumber(),
+        // Computed fields
         taxable,
-        taxExemptLabel:  t.type !== 'SELL' ? '' : exempt ? 'Освободен' : 'Облагаем',
+        taxExemptLabel:  t.side !== 'SELL' ? '' : exempt ? 'Освободен' : 'Облагаем',
         rate:            rateD ? rateD.toNumber() : null,
         totalWithFee:    totalD.toNumber(),
         totalWithFeeBGN: totalLclD ? totalLclD.toNumber() : null,
@@ -154,31 +211,31 @@ export function calculate(input, priorPositions = []) {
     ),
     instrumentInfo
   )
-  const holdings = parseOpenPositions(csvRows, instrumentInfo, positionsCostBasis)
+  const holdings = buildOpenPositions(input.openPositions, instrumentInfo, positionsCostBasis)
 
   // ── Trade totals rows ────────────────────────────────────────────────────
   const dataRows   = [...enrichedRows]
-  const sumCols    = ['proceeds', 'comm', 'fee', 'totalWithFee']
+  const sumCols    = ['proceeds', 'commission', 'fee', 'totalWithFee']
   const sumLclCols = ['totalWithFeeBGN']
 
   for (const cur of ['EUR', 'USD']) {
     const subset = dataRows.filter(r => r.currency === cur)
     if (subset.length === 0) continue
     const row = { _total: true, currency: cur }
-    sumCols.forEach(k    => { row[k] = subset.reduce((s, r) => s + (Number(r[k]) || 0), 0) })
-    sumLclCols.forEach(k => { row[k] = subset.reduce((s, r) => s + (Number(r[k]) || 0), 0) })
+    sumCols.forEach(k    => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
+    sumLclCols.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
     enrichedRows.push(row)
   }
   enrichedRows.push({
     _total: true,
     currency: localCurrencyCode,
     ...Object.fromEntries(
-      sumLclCols.map(k => [k, dataRows.reduce((s, r) => s + (Number(r[k]) || 0), 0)])
+      sumLclCols.map(k => [k, dataRows.reduce((s, r) => s + (r[k] ?? 0), 0)])
     ),
   })
 
   // ── App5 / App13 initial summaries ───────────────────────────────────────
-  const sells        = dataRows.filter(r => r.type === 'SELL')
+  const sells        = dataRows.filter(r => r.side === 'SELL')
   const taxableSells = sells.filter(r => !isTaxExempt(r, instrumentInfo))
   const exemptSells  = sells.filter(r =>  isTaxExempt(r, instrumentInfo))
 
@@ -188,7 +245,7 @@ export function calculate(input, priorPositions = []) {
     if (p.symbol && p.lastBuyDate) lastBuyDate[p.symbol] = p.lastBuyDate
   }
   for (const t of enrichedRows) {
-    if (t._total || t.type !== 'BUY') continue
+    if (t._total || t.side !== 'BUY') continue
     if (!lastBuyDate[t.symbol] || t.date > lastBuyDate[t.symbol]) {
       lastBuyDate[t.symbol] = t.date
     }
@@ -199,9 +256,9 @@ export function calculate(input, priorPositions = []) {
   const netBuyQty = {}
   for (const t of enrichedRows) {
     if (t._total) continue
-    const q = t.quantity instanceof Decimal ? t.quantity.toNumber() : Number(t.quantity)
-    if (t.type === 'BUY')  netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) + q
-    if (t.type === 'SELL') netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) - q
+    const q = Number(t.quantityDisplay) || 0
+    if (t.side === 'BUY')  netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) + q
+    if (t.side === 'SELL') netBuyQty[t.symbol] = (netBuyQty[t.symbol] ?? 0) - q
   }
   const netBuyQtyExpanded = expandByAliases(netBuyQty, instrumentInfo)
 
@@ -251,6 +308,8 @@ export function calculate(input, priorPositions = []) {
   }
 
   // ── App8 Part III — dividends ────────────────────────────────────────────
+  const matchedDividends = matchDividends(input.dividends, input.withholdingTax, instrumentInfo)
+
   const app8Dividends = {
     columns: [
       { key: 'symbol',             label: 'Символ', bold: true, tooltip: 'description' },
@@ -263,7 +322,7 @@ export function calculate(input, priorPositions = []) {
       { key: 'allowableCreditBGN', label: 'Допустим размер на данъчния кредит',                                    shortLabel: `Допустим кредит (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
       { key: 'dueTaxBGN',          label: 'Дължим данък, подлежащ на внасяне по реда на чл. 67, ал. 4 от ЗДДФЛ', shortLabel: `Дължим данък (${lcl})`,      align: 'right', mono: true, decimals: 2, nullAs: '—' },
     ],
-    rows: dividends.rows.map(d => {
+    rows: matchedDividends.map(d => {
       const grossD      = toLcl(d.grossAmount, d.currency, d.date)
       const withheldD   = toLcl(d.withheldTax, d.currency, d.date)
       const grossBGN    = grossD    ? grossD.toNumber()    : null
@@ -292,10 +351,26 @@ export function calculate(input, priorPositions = []) {
     }),
   }
 
+  // ── Dividends display table ──────────────────────────────────────────────
+  const dividends = {
+    columns: [
+      { key: 'date',        label: 'Дата',           mono: true },
+      { key: 'symbol',      label: 'Символ',         bold: true },
+      { key: 'countryName', label: 'Държава' },
+      { key: 'currency',    label: 'Валута' },
+      { key: 'grossAmount', label: 'Брутна сума',    align: 'right', mono: true, decimals: 2 },
+      { key: 'withheldTax', label: 'Удържан данък',  align: 'right', mono: true, decimals: 2 },
+      { key: 'netAmount',   label: 'Нетна сума',     align: 'right', mono: true, decimals: 2 },
+      { key: 'taxCode',     label: 'Код' },
+    ],
+    rows: matchedDividends,
+  }
+
   // ── Interest with local-currency amounts + totals ────────────────────────
-  const dataInterestRows = interest.rows.map(r => ({
+  const dataInterestRows = input.interest.map(r => ({
     ...r,
-    amountBGN: toLcl(r.amount, r.currency, r.date)?.toNumber() ?? null,
+    amount:    parseFloat(r.amount) || 0,
+    amountBGN: toLcl(new Decimal(r.amount || '0'), r.currency, r.date)?.toNumber() ?? null,
   }))
   const enrichedInterestRows = [...dataInterestRows]
   for (const cur of ['EUR', 'USD']) {
@@ -312,8 +387,11 @@ export function calculate(input, priorPositions = []) {
     amountBGN: dataInterestRows.reduce((s, r) => s + (r.amountBGN ?? 0), 0),
   })
   const interestColumns = [
-    ...interest.columns,
-    { key: 'amountBGN', label: `Сума (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
+    { key: 'date',        label: 'Дата',           mono: true },
+    { key: 'currency',    label: 'Валута' },
+    { key: 'description', label: 'Описание' },
+    { key: 'amount',      label: 'Сума',           align: 'right', mono: true, decimals: 2 },
+    { key: 'amountBGN',   label: `Сума (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
   ]
 
   // ── Holdings totals rows ─────────────────────────────────────────────────
@@ -329,13 +407,24 @@ export function calculate(input, priorPositions = []) {
 
   // ── Trade column definitions ─────────────────────────────────────────────
   const tradeColumns = [
-    { key: '#',              label: '#',                             align: 'right', mono: true, decimals: 0 },
-    ...trades.columns,
-    { key: 'totalWithFee',    label: 'Общо + такси (вал)',           align: 'right', mono: true, decimals: 2 },
-    { key: 'rate',            label: `Курс (${lcl})`,               align: 'right', mono: true, decimals: 5, nullAs: '—' },
-    { key: 'totalWithFeeBGN', label: `Общо + такси (${lcl})`,       align: 'right', mono: true, decimals: 2, nullAs: '—' },
-    { key: 'costBasis',       label: 'Цена на придобиване (вал)',    align: 'right', mono: true, decimals: 2, nullAs: '—' },
-    { key: 'costBasisBGN',    label: `Цена на придобиване (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
+    { key: '#',               label: '#',                              align: 'right', mono: true, decimals: 0 },
+    { key: 'taxable',         label: 'Облагаем?',                     editable: 'checkbox' },
+    { key: 'taxExemptLabel',  label: 'Данъчен статус',                chip: true, chipColors: { 'Освободен': 'success', 'Облагаем': 'default' } },
+    { key: 'symbol',          label: 'Symbol',                        bold: true },
+    { key: 'datetime',        label: 'Trade Date/Time',               mono: true },
+    { key: 'exchange',        label: 'Exchange' },
+    { key: 'currency',        label: 'Currency' },
+    { key: 'side',            label: 'Type',                          chip: true, chipColors: { BUY: 'primary', SELL: 'secondary' } },
+    { key: 'quantityDisplay', label: 'Quantity',                      align: 'right', mono: true },
+    { key: 'price',           label: 'Price',                         align: 'right', mono: true },
+    { key: 'proceeds',        label: 'Proceeds',                      align: 'right', mono: true, decimals: 2 },
+    { key: 'commission',      label: 'Commission',                    align: 'right', mono: true, decimals: 2 },
+    { key: 'fee',             label: 'Fee',                           align: 'right', mono: true, decimals: 2 },
+    { key: 'totalWithFee',    label: 'Общо + такси (вал)',            align: 'right', mono: true, decimals: 2 },
+    { key: 'rate',            label: `Курс (${lcl})`,                align: 'right', mono: true, decimals: 5, nullAs: '—' },
+    { key: 'totalWithFeeBGN', label: `Общо + такси (${lcl})`,        align: 'right', mono: true, decimals: 2, nullAs: '—' },
+    { key: 'costBasis',       label: 'Цена на придобиване (вал)',     align: 'right', mono: true, decimals: 2, nullAs: '—' },
+    { key: 'costBasisBGN',    label: `Цена на придобиване (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
   ]
 
   return {

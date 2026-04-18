@@ -68,7 +68,7 @@ function TabPanel({ children, value, index }) {
 
 // ── Result display ────────────────────────────────────────────────────────────
 
-function ResultTabs({ result, jsonText }) {
+function ResultTabs({ result, inputJsonText, outputJsonText }) {
   const [tab, setTab] = useState(0)
 
   const { taxYear, localCurrencyCode, localCurrencyLabel } = result
@@ -87,7 +87,7 @@ function ResultTabs({ result, jsonText }) {
 
   const taxSummary = useMemo(() => buildTaxSummary(tradesDataRows), [tradesDataRows])
   const approxRows = useMemo(
-    () => tradesDataRows.filter(r => r.type === 'SELL' && r.costBasisBGNApprox),
+    () => tradesDataRows.filter(r => r.side === 'SELL' && r.costBasisBGNApprox),
     [tradesDataRows]
   )
 
@@ -184,14 +184,19 @@ function ResultTabs({ result, jsonText }) {
 
       {DEV_MODE && (
         <TabPanel value={tab} index={TAB_DEV}>
+          <div className="output" style={{ marginBottom: 24 }}>
+            <div className="output-header">
+              <span className="output-count">Input JSON</span>
+              <CopyButton text={inputJsonText} />
+            </div>
+            <pre className="json-output">{inputJsonText}</pre>
+          </div>
           <div className="output">
             <div className="output-header">
-              <span className="output-count">
-                JSON <span className="output-pill">{result.holdings.rows.length}</span>
-              </span>
-              <CopyButton text={jsonText} />
+              <span className="output-count">Output JSON</span>
+              <CopyButton text={outputJsonText} />
             </div>
-            <pre className="json-output">{jsonText}</pre>
+            <pre className="json-output">{outputJsonText}</pre>
           </div>
         </TabPanel>
       )}
@@ -246,6 +251,7 @@ export default function App() {
 
   const taxYear = inputData?.taxYear ?? 2025
 
+
   // Object URL lifecycle for dropzone previews
   useEffect(() => {
     if (!csvFile) { setCsvFileUrl(''); return }
@@ -277,11 +283,11 @@ export default function App() {
         if (cancelled) return
         setInputData(data)
         const prior = inferPriorPositions({
-          htmlTrades:     data.trades.rows,
-          openPositions:  data.openPositions.rows,
-          csvTradeBasis:  data.csvTradeBasis,
-          instrumentInfo: data.instrumentInfo,
-          taxYear:        data.taxYear,
+          trades:       data.trades,
+          openPositions: data.openPositions,
+          csvTrades:    data.csvTrades,
+          instruments:  data.instruments,
+          period:       data.statement.period,
         })
         const defaultAcqDate = getPrevYearDefaultAcqDate(data.taxYear)
         setPendingPositions(prior.map(p => ({
@@ -358,7 +364,8 @@ export default function App() {
     }
   }
 
-  const jsonText = result ? JSON.stringify(result, null, 2) : ''
+  const inputJsonText  = inputData ? JSON.stringify(inputData, null, 2) : ''
+  const outputJsonText = result    ? JSON.stringify(result,    null, 2) : ''
 
   return (
     <div className="app">
@@ -474,7 +481,7 @@ export default function App() {
           {result && (
             <>
               <Disclaimer />
-              <ResultTabs result={result} jsonText={jsonText} />
+              <ResultTabs result={result} inputJsonText={inputJsonText} outputJsonText={outputJsonText} />
             </>
           )}
         </main>

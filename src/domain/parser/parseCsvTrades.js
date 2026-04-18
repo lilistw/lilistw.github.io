@@ -1,20 +1,17 @@
+import Decimal from 'decimal.js'
 import { parseToDecimal } from '../../utils/numStr.js'
 
 /**
- * Parses the "Trades" section of an IBKR Activity Statement CSV to extract
- * the cost basis (Basis column) for SELL trades.
+ * Parses the "Trades" section of an IBKR Activity Statement CSV into a raw array.
  *
- * Used as a fallback for positions opened in prior years where no BUY trade
- * exists in the current dataset. IBKR records the weighted-average cost basis
- * of the sold shares in the "Basis" column (negative value for sells).
- *
- * Returns a Map keyed by "SYMBOL|YYYY-MM-DD|QTY" → Decimal cost basis (positive).
+ * @param {string[][]} rows
+ * @returns {object[]}
  */
-export function parseCsvTradeBasis(rows) {
+export function parseCsvTrades(rows) {
   const headerRow = rows.find(
     r => r[0] === 'Trades' && r[1] === 'Header' && r[2] === 'DataDiscriminator'
   )
-  if (!headerRow) return new Map()
+  if (!headerRow) return []
 
   const colIndex = {}
   for (let i = 2; i < headerRow.length; i++) {
@@ -22,25 +19,46 @@ export function parseCsvTradeBasis(rows) {
     if (name) colIndex[name] = i
   }
 
-  const result = new Map()
-
-  rows
+  return rows
     .filter(r => r[0] === 'Trades' && r[1] === 'Data' && r[2] === 'Order')
-    .forEach(r => {
-      const qtyD = parseToDecimal(r[colIndex['Quantity']])
-      if (!qtyD || qtyD.gte(0)) return  // only SELL trades have negative quantity
+    .map(r => ({
+      assetCategory: (r[colIndex['Asset Category']]    || '').trim(),
+      currency:      (r[colIndex['Currency']]          || '').trim(),
+      symbol:        (r[colIndex['Symbol']]            || '').trim(),
+      datetime:      (r[colIndex['Date/Time']]         || '').replace(/"/g, '').trim(),
+      settleDate:    (r[colIndex['Settle Date/Time']]  || '').trim(),
+      exchange:      (r[colIndex['Exchange']]          || '').trim(),
+      side:          (r[colIndex['Buy/Sell']]          || '').trim(),
+      quantity:      (r[colIndex['Quantity']]          || '').trim(),
+      price:         (r[colIndex['Price']]             || '').trim(),
+      proceeds:      (r[colIndex['Proceeds']]          || '').trim(),
+      commission:    (r[colIndex['Comm/Fee']]          || '').trim(),
+      basis:         (r[colIndex['Basis']]             || '').trim(),
+      realizedPL:    (r[colIndex['Realized P/L']]      || '').trim(),
+      code:          (r[colIndex['Code']]              || '').trim(),
+    }))
+}
 
-      const symbol   = (r[colIndex['Symbol']] || '').trim()
-      const dateTime = (r[colIndex['Date/Time']] || '').replace(/"/g, '')
-      const date     = dateTime.split(',')[0].trim()   // 'YYYY-MM-DD'
-      const basisD   = parseToDecimal(r[colIndex['Basis']])  // negative in CSV for sells
+/**
+ * Builds a Map<"SYMBOL|YYYY-MM-DD|QTY" → Decimal> from raw CSV trades.
+ * Used as fallback cost basis for positions opened in prior years.
+ * IBKR records a negative Basis for SELLs; stored here as positive.
+ *
+ * @param {object[]} csvTrades
+ * @returns {Map<string, Decimal>}
+ */
+export function buildCsvTradeBasis(csvTrades) {
+  const result = new Map()
+  for (const t of csvTrades) {
+    const qtyD = parseToDecimal(t.quantity)
+    if (!qtyD || qtyD.gte(0)) continue  // only SELL trades have negative quantity
 
-      if (!symbol || !date || !basisD) return
+    const date   = t.datetime.split(',')[0].trim()
+    const basisD = parseToDecimal(t.basis)
+    if (!t.symbol || !date || !basisD) continue
 
-      // Basis is negative (a cost); store as positive cost basis
-      const key = `${symbol}|${date}|${qtyD.abs().toFixed(0)}`
-      result.set(key, basisD.neg())
-    })
-
+    const key = `${t.symbol}|${date}|${qtyD.abs().toFixed(0)}`
+    result.set(key, basisD.neg())
+  }
   return result
 }

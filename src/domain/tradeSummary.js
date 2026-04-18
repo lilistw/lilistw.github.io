@@ -3,7 +3,7 @@
  * Both functions are pure and operate on the current trade data rows from App state.
  */
 
-const TRADE_SUM_COLS     = ['proceeds', 'comm', 'fee', 'totalWithFee']
+const TRADE_SUM_COLS     = ['proceeds', 'commission', 'fee', 'totalWithFee']
 const TRADE_SUM_BGN_COLS = ['totalWithFeeBGN', 'costBasisBGN']
 
 /**
@@ -36,7 +36,7 @@ export function buildTradeTotals(dataRows, localCurrencyCode = 'BGN') {
  * Reflects any taxable-status toggles the user has made.
  */
 export function buildTaxSummary(dataRows) {
-  const sells   = dataRows.filter(r => r.type === 'SELL')
+  const sells   = dataRows.filter(r => r.side === 'SELL')
   const taxable = sells.filter(r => r.taxable === true)
   const exempt  = sells.filter(r => r.taxable === false)
 

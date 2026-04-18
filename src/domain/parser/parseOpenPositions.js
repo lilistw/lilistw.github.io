@@ -1,70 +1,83 @@
 /**
- * Parses IBKR "Open Positions" rows into a normalized holdings list.
+ * Parses IBKR "Open Positions" section into a raw array.
  *
- * @param {string[][]} rows - 2D array from PapaParse
- * @returns {object[]} normalized holdings
+ * @param {string[][]} rows
+ * @returns {object[]}
  */
-export function parseOpenPositions(rows, instrumentInfo = {}, positionsCostBasis = {}) {
-  const isIBKR = rows.some(r => r[0] === 'Statement' && r[1] === 'Data')
-  if (!isIBKR) {
-    throw new Error('Файлът не е валиден IBKR Activity Statement.')
-  }
-
+export function parseOpenPositions(rows) {
   const headerRow = rows.find(r => r[0] === 'Open Positions' && r[1] === 'Header')
-  if (!headerRow) {
-    throw new Error('В документа не са намерени данни за позиции (Open Positions секция липсва).')
-  }
+  if (!headerRow) return []
 
   const colIndex = {}
-  for (let i = 2; i < headerRow.length; i++) {
-    colIndex[headerRow[i].trim()] = i
-  }
+  for (let i = 2; i < headerRow.length; i++) colIndex[headerRow[i].trim()] = i
 
-  const parseNumber = value => {
-    const normalized = (value || '').replace(/,/g, '').trim()
-    const parsed = parseFloat(normalized)
-    return Number.isFinite(parsed) ? parsed : null
-  }
-
-  const dataRows = rows
+  return rows
     .filter(r => r[0] === 'Open Positions' && r[1] === 'Data' && r[2] === 'Summary')
-    .map(r => {
-      const symbol   = r[colIndex['Symbol']]
-      const info     = instrumentInfo[symbol] || {}
-      const quantity = parseNumber(r[colIndex['Quantity']])
-      // Use the calculated cost basis from trade processing when available;
-      // fall back to IBKR's reported value.
-      const calcPos  = positionsCostBasis[symbol]
-      const costBasis = calcPos?.cost != null ? calcPos.cost : parseNumber(r[colIndex['Cost Basis']])
-      const costPrice = quantity ? costBasis / quantity : parseNumber(r[colIndex['Cost Price']])
-      return {
-        assetCategory: r[colIndex['Asset Category']],
-        currency: r[colIndex['Currency']],
-        symbol,
-        country:     info.countryName || info.country || '',
-        quantity,
-        multiplier:  parseNumber(r[colIndex['Mult']]),
-        costPrice,
-        costBasis,
-        closePrice:  parseNumber(r[colIndex['Close Price']]),
-        value:       parseNumber(r[colIndex['Value']]),
-        unrealizedPL: parseNumber(r[colIndex['Unrealized P/L']]),
-        code: (r[colIndex['Code']] || '').trim(),
-      }
-    })
+    .map(r => ({
+      assetCategory: (r[colIndex['Asset Category']] || '').trim(),
+      currency:      (r[colIndex['Currency']]       || '').trim(),
+      symbol:        (r[colIndex['Symbol']]         || '').trim(),
+      quantity:      (r[colIndex['Quantity']]        || '').trim(),
+      multiplier:    (r[colIndex['Mult']]            || '').trim(),
+      costPrice:     (r[colIndex['Cost Price']]      || '').trim(),
+      costBasis:     (r[colIndex['Cost Basis']]      || '').trim(),
+      closePrice:    (r[colIndex['Close Price']]     || '').trim(),
+      value:         (r[colIndex['Value']]           || '').trim(),
+      unrealizedPL:  (r[colIndex['Unrealized P/L']] || '').trim(),
+      code:          (r[colIndex['Code']]            || '').trim(),
+    }))
+}
+
+/**
+ * Builds an enriched holdings list from raw open positions, applying calculated
+ * cost basis overrides from the trade processing step.
+ *
+ * @param {object[]} rawPositions
+ * @param {{ [symbol: string]: object }} instrumentInfo
+ * @param {{ [symbol: string]: { cost: number, qty: number } }} positionsCostBasis
+ * @returns {{ columns: object[], rows: object[] }}
+ */
+export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsCostBasis = {}) {
+  const parseNum = v => {
+    const n = parseFloat((v || '').replace(/,/g, ''))
+    return Number.isFinite(n) ? n : null
+  }
+
+  const dataRows = rawPositions.map(r => {
+    const symbol   = r.symbol
+    const info     = instrumentInfo[symbol] || {}
+    const quantity = parseNum(r.quantity)
+    const calcPos  = positionsCostBasis[symbol]
+    const costBasis = calcPos?.cost != null ? calcPos.cost : parseNum(r.costBasis)
+    const costPrice = quantity ? costBasis / quantity : parseNum(r.costPrice)
+    return {
+      assetCategory: r.assetCategory,
+      currency:      r.currency,
+      symbol,
+      country:      info.countryName || info.country || '',
+      quantity,
+      multiplier:   parseNum(r.multiplier),
+      costPrice,
+      costBasis,
+      closePrice:   parseNum(r.closePrice),
+      value:        parseNum(r.value),
+      unrealizedPL: parseNum(r.unrealizedPL),
+      code:         r.code,
+    }
+  })
 
   return {
     columns: [
-      { key: 'assetCategory',label: 'Категория' },
-      { key: 'currency',     label: 'Валута' },
-      { key: 'symbol',       label: 'Символ',             bold: true },
-      { key: 'quantity',     label: 'Количество',         align: 'right', mono: true, decimals: 4 },
-      { key: 'multiplier',   label: 'Множител',           align: 'right', mono: true, decimals: 2 },
-      { key: 'costPrice',    label: 'Цена',               align: 'right', mono: true, decimals: 4, nullAs: '—' },
-      { key: 'costBasis',    label: 'База',               align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'closePrice',   label: 'Крайна цена',        align: 'right', mono: true, decimals: 4, nullAs: '—' },
-      { key: 'value',        label: 'Стойност',           align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'unrealizedPL', label: 'Нереализирана P/L',  align: 'right', mono: true, decimals: 2, pnl: true, nullAs: '—' },
+      { key: 'assetCategory', label: 'Категория' },
+      { key: 'currency',      label: 'Валута' },
+      { key: 'symbol',        label: 'Символ',            bold: true },
+      { key: 'quantity',      label: 'Количество',        align: 'right', mono: true, decimals: 4 },
+      { key: 'multiplier',    label: 'Множител',          align: 'right', mono: true, decimals: 2 },
+      { key: 'costPrice',     label: 'Цена',              align: 'right', mono: true, decimals: 4, nullAs: '—' },
+      { key: 'costBasis',     label: 'База',              align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'closePrice',    label: 'Крайна цена',       align: 'right', mono: true, decimals: 4, nullAs: '—' },
+      { key: 'value',         label: 'Стойност',          align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'unrealizedPL',  label: 'Нереализирана P/L', align: 'right', mono: true, decimals: 2, pnl: true, nullAs: '—' },
     ],
     rows: dataRows,
   }
