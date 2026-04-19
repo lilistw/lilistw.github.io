@@ -1,15 +1,12 @@
 // Heuristic instrument classification — intentionally simple.
 // Default is conservative: облагаем (taxable) if classification is uncertain.
 
-export function classifyInstrument(instrument) {
-  const name = (instrument.name || '').toUpperCase()
+const keywords = ['BITCOIN', 'CRYPTO', 'BTC', 'ETH']
 
-  const isETF = name.includes('ETF') || (instrument.type || '').toUpperCase() === 'ETF'
-  const isCryptoRelated =
-    name.includes('BITCOIN') ||
-    name.includes('CRYPTO') ||
-    name.includes('BTC') ||
-    name.includes('ETH')
+export function classifyInstrument(instrument) {
+  const isETF = (instrument.type || '').toUpperCase() === 'ETF'
+  const instrumentName = instrument.name?.toUpperCase() || false;
+  const isCryptoRelated = instrumentName && keywords.some(k => instrumentName.includes(k))
 
   return {
     isETF,
