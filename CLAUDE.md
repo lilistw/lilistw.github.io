@@ -355,10 +355,66 @@ expect(result).toBeDefined()
 
 ---
 
+### Git Workflow Rules
+
+#### Branching
+
+- ALWAYS create a new branch for each issue
+- ALWAYS branch from "master"
+- NEVER commit directly to "master"
+
+---
+
+#### Branch naming
+
+Use format:
+
+feature/<short-description>
+fix/<short-description>
+refactor/<short-description>
+
+Examples:
+
+- "feature/pdf-support"
+- "fix/tax-classification"
+- "refactor/strategy-pattern"
+
+---
+
+#### Process
+
+For every new issue:
+
+1. Checkout latest master:
+   
+   git checkout master
+git pull
+
+2. Create new branch:
+   
+   git checkout -b <branch-name>
+
+3. Implement changes
+
+4. Commit with meaningful message
+
+5. Open Pull Request into "master"
+
+---
+
+#### Restrictions
+
+- Do NOT reuse old branches
+- Do NOT commit unrelated changes in same branch
+- One issue = one branch
+
+---
+
 #### PR Requirements
 
 Any PR involving logic changes must:
 
+- PR must reference the issue
 - include or update tests
 - not break existing tests
 - run successfully with "npm test"
