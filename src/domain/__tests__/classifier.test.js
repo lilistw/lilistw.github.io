@@ -9,6 +9,17 @@ describe('classifyInstrument', () => {
     expect(c.isRegulatedMarket).toBe(true)
   })
 
+  it('detects ETF from type field when name has no "ETF" (e.g. IWDA)', () => {
+    const c = classifyInstrument({ name: 'ISHARES CORE MSCI WORLD', type: 'ETF', isRegulatedMarket: true })
+    expect(c.isETF).toBe(true)
+    expect(c.isCryptoRelated).toBe(false)
+  })
+
+  it('does not treat non-ETF type as ETF', () => {
+    const c = classifyInstrument({ name: 'SAP SE', type: 'COMMON', isRegulatedMarket: true })
+    expect(c.isETF).toBe(false)
+  })
+
   it('detects crypto ETF — BITCOIN in name', () => {
     const c = classifyInstrument({ name: 'iShares Bitcoin Trust ETF', isRegulatedMarket: true })
     expect(c.isETF).toBe(true)
@@ -51,6 +62,11 @@ describe('classifyInstrument', () => {
 describe('isTaxable', () => {
   it('standard ETF on regulated market → необлагаем (false)', () => {
     expect(isTaxable({ name: 'iShares Core MSCI World ETF', isRegulatedMarket: true })).toBe(false)
+  })
+
+  it('ETF detected by type (no "ETF" in name) on regulated market → необлагаем (false)', () => {
+    // IWDA: description = "ISHARES CORE MSCI WORLD", type = "ETF", exchange = IBIS2 (regulated)
+    expect(isTaxable({ name: 'ISHARES CORE MSCI WORLD', type: 'ETF', isRegulatedMarket: true })).toBe(false)
   })
 
   it('crypto ETF on regulated market → облагаем (true)', () => {
