@@ -333,7 +333,7 @@ export class TaxStrategy2026 extends TaxStrategy {
           countryName:        d.countryName,
           incomeCategoryCode: 8141,
           methodCode:         d.taxCode,
-          grossAmountLcl,
+          grossAmountLcl : grossLcl,
           foreignTaxPaidLcl:  withheldLcl,
           allowableCreditLcl: allowableLcl,
           dueTaxLcl,
