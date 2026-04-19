@@ -17,9 +17,9 @@ export default function TaxApp5({ summary, localCurrencyLabel = 'лв' }) {
       subtitle={t('taxApp5.subtitle')}
     >
       <TaxRow label={t('taxApp5.totalProceeds', { lcl })}
-        value={fmt(summary.totalProceedsBGN)} />
+        value={fmt(summary.totalProceedsLcl)} />
       <TaxRow label={t('taxApp5.totalCost', { lcl })}
-        value={fmt(summary.totalCostBasisBGN)} />
+        value={fmt(summary.totalcostBasisLcl)} />
       <TaxRow label={t('taxApp5.profits', { lcl })}
         value={fmt(summary.profits)} color="success.main" />
       <TaxRow label={t('taxApp5.losses', { lcl })}

@@ -25,7 +25,7 @@ export default function TradesTab({ result }) {
   const taxSummary = useMemo(() => buildTaxSummary(rows), [rows])
 
   const approxRows = useMemo(
-    () => rows.filter(r => r.side === 'SELL' && r.costBasisBGNApprox),
+    () => rows.filter(r => r.side === 'SELL' && r.costBasisLclApprox),
     [rows]
   )
 
