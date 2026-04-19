@@ -228,47 +228,6 @@ describe('calculate — tax-exempt ETF on EU-regulated exchange', () => {
     const sellRow = trades.rows.find(r => r.side === 'SELL')
     expect(sellRow.taxable).toBe(true)
   })
-
-  it('IWDA ETF (type=ETF, no "ETF" in description) on IBIS2 is taxable=false', () => {
-    // Regression: IWDA description = "ISHARES CORE MSCI WORLD" — no "ETF" in name.
-    // Must be detected as ETF via the type field from Financial Instrument Information.
-    const input = makeInput({
-      instruments: [
-        {
-          assetCategory: 'Stocks', symbol: 'IWDA', description: 'ISHARES CORE MSCI WORLD',
-          conid: '100292038', securityId: 'IE00B4L5Y983', underlying: '',
-          listingExchange: 'AEB', multiplier: '1', type: 'ETF', code: '',
-        },
-      ],
-      trades: [
-        makeTrade({ symbol: 'IWDA', side: 'BUY',  quantity: '10', proceeds: '-1110', commission: '-1.32', fee: '0', datetime: '2025-08-01, 10:00:00', exchange: 'IBIS2' }),
-        makeTrade({ symbol: 'IWDA', side: 'SELL', quantity: '-10', proceeds: '1110', commission: '-1.32', fee: '0', datetime: '2025-11-10, 04:17:39', exchange: 'IBIS2' }),
-      ],
-    })
-    const { trades } = calculate(input)
-    const sellRow = trades.rows.find(r => r.side === 'SELL')
-    expect(sellRow.taxable).toBe(false)
-    expect(sellRow.taxExemptLabel).toBe('Освободен')
-  })
-
-  it('IWDA ETF sell on IBIS2 contributes to app13, not app5', () => {
-    const input = makeInput({
-      instruments: [
-        {
-          assetCategory: 'Stocks', symbol: 'IWDA', description: 'ISHARES CORE MSCI WORLD',
-          conid: '100292038', securityId: 'IE00B4L5Y983', underlying: '',
-          listingExchange: 'AEB', multiplier: '1', type: 'ETF', code: '',
-        },
-      ],
-      trades: [
-        makeTrade({ symbol: 'IWDA', side: 'BUY',  quantity: '10', proceeds: '-1000', commission: '-1', fee: '0', datetime: '2025-08-01, 10:00:00', exchange: 'IBIS2' }),
-        makeTrade({ symbol: 'IWDA', side: 'SELL', quantity: '-10', proceeds: '1200', commission: '-1', fee: '0', datetime: '2025-11-10, 04:17:39', exchange: 'IBIS2' }),
-      ],
-    })
-    const { taxSummary } = calculate(input)
-    expect(taxSummary.app13.profits).toBeGreaterThan(0)
-    expect(taxSummary.app5.profits).toBe(0)
-  })
 })
 
 describe('calculate — weighted-average cost basis', () => {

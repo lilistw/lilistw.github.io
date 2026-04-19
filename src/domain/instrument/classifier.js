@@ -4,7 +4,7 @@
 export function classifyInstrument(instrument) {
   const name = (instrument.name || '').toUpperCase()
 
-  const isETF = name.includes('ETF') || (instrument.type || '').toUpperCase() === 'ETF'
+  const isETF = name.includes('ETF')
   const isCryptoRelated =
     name.includes('BITCOIN') ||
     name.includes('CRYPTO') ||

@@ -24,7 +24,6 @@ function makeInstrument(trade, instrumentInfo) {
   const exch = IBKR_EXCHANGES[trade.exchange]
   return {
     name: info?.description ?? '',
-    type: info?.type ?? '',
     isRegulatedMarket: exch?.regulated ?? false,
   }
 }
