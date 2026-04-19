@@ -263,3 +263,111 @@ automatically. Follow these rules:
   stay consistent.
 - Financial arithmetic: always use `Decimal.js`. Native `Number` accumulates
   floating-point error across many trades.
+
+### Unit Testing Guidelines
+
+#### Framework
+
+- Use Vitest as the default testing framework
+- Do NOT introduce Jest unless explicitly requested
+- All tests must run via:
+  npm test
+
+---
+
+#### Scope of Testing
+
+Focus on business logic only:
+
+Test:
+
+- Parser functions ("src/domain/parser")
+- Tax calculation logic ("taxService", strategies)
+
+Do NOT test:
+
+- UI components
+- Styling
+- trivial rendering
+
+---
+
+#### Test Structure
+
+- Place tests next to code or under:
+  src/__tests__/
+- File naming:
+  *.test.js
+
+---
+
+#### Test Quality Requirements
+
+Tests must:
+
+- Verify real behavior (not superficial checks)
+- Cover:
+  - normal cases
+  - edge cases
+  - invalid input
+
+Avoid:
+
+- meaningless assertions (e.g. "expect(true).toBe(true)")
+- testing implementation details
+
+---
+
+#### Example Expectations
+
+Good:
+
+expect(result.totalProfit).toBe(50)
+
+Bad:
+
+expect(result).toBeDefined()
+
+---
+
+#### Determinism
+
+- Tests must be deterministic
+- No randomness
+- No reliance on external APIs or network
+
+---
+
+#### Mocking
+
+- Use Vitest mocking:
+  import { vi } from 'vitest'
+- Mock only external dependencies (not core logic)
+
+---
+
+#### Coverage
+
+- Prioritize:
+  - tax calculations
+  - parsing correctness
+- Target meaningful coverage, not just % numbers
+
+---
+
+#### PR Requirements
+
+Any PR involving logic changes must:
+
+- include or update tests
+- not break existing tests
+- run successfully with "npm test"
+
+---
+
+#### Anti-Patterns (Do NOT do)
+
+- Mixing test frameworks (Jest + Vitest)
+- Testing UI instead of logic
+- Writing tests without assertions
+- Copy-pasting tests without understanding logic
