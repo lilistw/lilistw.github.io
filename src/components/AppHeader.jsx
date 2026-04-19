@@ -1,5 +1,5 @@
 import { useTranslation } from 'react-i18next';
-import { Tooltip, IconButton, Typography } from '@mui/material';
+import { Typography, Box } from '@mui/material';
 import { LightModeOutlined, DarkModeOutlined } from '@mui/icons-material';
 import AboutSection from './AboutSection';
 
@@ -8,27 +8,47 @@ export default function AppHeader({ nightMode, setNightMode }) {
 
   return (
     <header className="app-header">
-      <Tooltip title={nightMode ? t('theme.switchDay') : t('theme.switchNight')} arrow>
-        <IconButton
-          onClick={() => setNightMode(n => !n)}
-          size="small"
-          sx={{
-            position: 'absolute',
-            top: 12,
-            right: 16,
-            zIndex: 2,
-            color: 'rgba(255,255,255,0.7)',
-            '&:hover': {
-              color: '#fff',
-              background: 'rgba(255,255,255,0.1)',
-            },
-          }}
-        >
-          {nightMode
-            ? <LightModeOutlined fontSize="small" />
-            : <DarkModeOutlined fontSize="small" />}
-        </IconButton>
-      </Tooltip>
+      <Box
+        onClick={() => setNightMode(n => !n)}
+        sx={{
+          position: 'absolute',
+          top: 16,
+          right: 20,
+          zIndex: 2,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          px: 1.5,
+          py: 0.6,
+          borderRadius: 999,
+          cursor: 'pointer',
+
+          // 👇 THIS makes it look like a button
+          background: 'rgba(0,0,0,0.18)',
+          backdropFilter: 'blur(6px)',
+          border: '1px solid rgba(255,255,255,0.15)',
+
+          color: '#fff',
+          transition: 'all 0.2s ease',
+
+          '&:hover': {
+            background: 'rgba(0,0,0,0.28)',
+          },
+          '&:active': {
+            transform: 'scale(0.97)',
+          },
+        }}
+      >
+        {nightMode ? (
+          <LightModeOutlined fontSize="small" />
+        ) : (
+          <DarkModeOutlined fontSize="small" />
+        )}
+
+        <Typography variant="caption" sx={{ fontWeight: 500 }}>
+          {nightMode ? t('theme.light') : t('theme.dark')}
+        </Typography>
+      </Box>
 
       <div className="header-inner">
         <Typography variant="title" component="h1" sx={{ fontSize: 40, fontWeight: 700 }}>
