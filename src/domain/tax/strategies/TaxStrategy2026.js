@@ -305,45 +305,87 @@ export class TaxStrategy2026 extends TaxStrategy {
 
     const matchedDividends = matchDividends(input.dividends, input.withholdingTax, instrumentInfo)
 
-    const app8Dividends = {
-      columns: [
-        { key: 'symbol',              label: 'Символ', bold: true, tooltip: 'description' },
-        { key: 'description',         label: 'Наименование на лицето, изплатило дохода',                              shortLabel: 'Наименование',    mono: true, maxWidth: 200 },
-        { key: 'countryName',         label: 'Държава' },
-        { key: 'incomeCategoryCode',  label: 'Код вид доход',                                                         shortLabel: 'Код доход' },
-        { key: 'methodCode',          label: 'Код за прилагане на метод за избягване на двойното данъчно облагане',   shortLabel: 'Код метод' },
-        { key: 'grossAmountLcl',      label: 'Брутен размер на дохода, включително платения данък (за доходи с код 8141)', shortLabel: `Брутен доход (${lcl})`,    align: 'right', mono: true, decimals: 2, nullAs: '—' },
-        { key: 'foreignTaxPaidLcl',   label: 'Платен данък в чужбина',                                               shortLabel: `Данък в чужбина (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
-        { key: 'allowableCreditLcl',  label: 'Допустим размер на данъчния кредит',                                    shortLabel: `Допустим кредит (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
-        { key: 'dueTaxLcl',           label: 'Дължим данък, подлежащ на внасяне по реда на чл. 67, ал. 4 от ЗДДФЛ', shortLabel: `Дължим данък (${lcl})`,      align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      ],
-      rows: matchedDividends.map(d => {
-        const grossD      = toLcl(d.grossAmount, d.currency, d.date)
-        const withheldD   = toLcl(d.withheldTax, d.currency, d.date)
-        const grossLcl    = grossD    ? grossD.toNumber()    : null
-        const withheldLcl = withheldD ? withheldD.toNumber() : null
-        const bgTaxLcl    = grossLcl != null
-          ? new Decimal(grossLcl).times(BG_DIVIDEND_TAX_RATE).toNumber() : null
+    // 1. GROUP + AGGREGATE
+    const grouped = matchedDividends.reduce((acc, d) => {
+      const description = instrumentInfo[d.symbol]?.description ?? ''
 
-        const partialCredit = bgTaxLcl != null && withheldLcl != null && withheldLcl < bgTaxLcl
-          ? withheldLcl : null
-        const allowableLcl = d.taxCode === 1 ? partialCredit : null
-        const dueTaxLcl    = bgTaxLcl != null && withheldLcl != null
-          ? Math.max(0, new Decimal(bgTaxLcl).minus(withheldLcl).toNumber())
+      // safer grouping key (prevents accidental mixing)
+      const key = `${description}|${d.countryName}|${d.taxCode}`
+
+      const grossD      = toLcl(d.grossAmount, d.currency, d.date)
+      const withheldD   = toLcl(d.withheldTax, d.currency, d.date)
+
+      const grossLcl    = grossD ? grossD.toNumber() : 0
+      const withheldLcl = withheldD ? withheldD.toNumber() : 0
+
+      if (!acc[key]) {
+        acc[key] = {
+          symbol: d.symbol, // optional (first encountered)
+          description,
+          countryName: d.countryName,
+          incomeCategoryCode: 8141,
+          methodCode: d.taxCode,
+          grossAmountLcl: 0,
+          foreignTaxPaidLcl: 0,
+        }
+      }
+
+      acc[key].grossAmountLcl += grossLcl
+      acc[key].foreignTaxPaidLcl += withheldLcl
+
+      return acc
+    }, {})
+
+    // 2. DERIVED CALCULATIONS (AFTER aggregation)
+    const app8Rows = Object.values(grouped).map(d => {
+      const bgTaxLcl =
+        d.grossAmountLcl != null
+          ? new Decimal(d.grossAmountLcl)
+              .times(BG_DIVIDEND_TAX_RATE)
+              .toNumber()
+          : null
+
+      const partialCredit =
+        bgTaxLcl != null &&
+        d.foreignTaxPaidLcl != null &&
+        d.foreignTaxPaidLcl < bgTaxLcl
+          ? d.foreignTaxPaidLcl
+          : null
+
+      const allowableLcl = d.methodCode === 1 ? partialCredit : null
+
+      const dueTaxLcl =
+        bgTaxLcl != null && d.foreignTaxPaidLcl != null
+          ? Math.max(
+              0,
+              new Decimal(bgTaxLcl)
+                .minus(d.foreignTaxPaidLcl)
+                .toNumber()
+            )
           : bgTaxLcl
 
-        return {
-          symbol:             d.symbol,
-          description:        instrumentInfo[d.symbol]?.description ?? '',
-          countryName:        d.countryName,
-          incomeCategoryCode: 8141,
-          methodCode:         d.taxCode,
-          grossAmountLcl : grossLcl,
-          foreignTaxPaidLcl:  withheldLcl,
-          allowableCreditLcl: allowableLcl,
-          dueTaxLcl,
-        }
-      }),
+      return {
+        ...d,
+        allowableCreditLcl: allowableLcl,
+        dueTaxLcl,
+      }
+    })
+
+    // 3. FINAL STRUCTURES
+
+    const app8Dividends = {
+      columns: [
+        { key: 'symbol',             label: 'Символ', bold: true, tooltip: 'description' },
+        { key: 'description',        label: 'Наименование на лицето, изплатило дохода',                              shortLabel: 'Наименование',    mono: true, maxWidth: 200 },
+        { key: 'countryName',        label: 'Държава' },
+        { key: 'incomeCategoryCode', label: 'Код вид доход',                                                         shortLabel: 'Код доход' },
+        { key: 'methodCode',         label: 'Код за прилагане на метод за избягване на двойното данъчно облагане',   shortLabel: 'Код метод' },
+        { key: 'grossAmountLcl',     label: 'Брутен размер на дохода, включително платения данък (за доходи с код 8141)', shortLabel: `Брутен доход (${lcl})`,    align: 'right', mono: true, decimals: 2, nullAs: '—' },
+        { key: 'foreignTaxPaidLcl',  label: 'Платен данък в чужбина',                                               shortLabel: `Данък в чужбина (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
+        { key: 'allowableCreditLcl', label: 'Допустим размер на данъчния кредит',                                    shortLabel: `Допустим кредит (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
+        { key: 'dueTaxLcl',          label: 'Дължим данък, подлежащ на внасяне по реда на чл. 67, ал. 4 от ЗДДФЛ', shortLabel: `Дължим данък (${lcl})`,      align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      ],
+      rows: app8Rows,
     }
 
     const dividends = {

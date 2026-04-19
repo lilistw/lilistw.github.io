@@ -306,6 +306,74 @@ export class TaxStrategy2025 extends TaxStrategy {
 
     const matchedDividends = matchDividends(input.dividends, input.withholdingTax, instrumentInfo)
 
+    // 1. GROUP + AGGREGATE
+    const grouped = matchedDividends.reduce((acc, d) => {
+      const description = instrumentInfo[d.symbol]?.description ?? ''
+
+      // safer grouping key (prevents accidental mixing)
+      const key = `${description}|${d.countryName}|${d.taxCode}`
+
+      const grossD      = toLcl(d.grossAmount, d.currency, d.date)
+      const withheldD   = toLcl(d.withheldTax, d.currency, d.date)
+
+      const grossBGN    = grossD ? grossD.toNumber() : 0
+      const withheldBGN = withheldD ? withheldD.toNumber() : 0
+
+      if (!acc[key]) {
+        acc[key] = {
+          symbol: d.symbol, // optional (first encountered)
+          description,
+          countryName: d.countryName,
+          incomeCategoryCode: 8141,
+          methodCode: d.taxCode,
+          grossAmountBGN: 0,
+          foreignTaxPaidBGN: 0,
+        }
+      }
+
+      acc[key].grossAmountBGN += grossBGN
+      acc[key].foreignTaxPaidBGN += withheldBGN
+
+      return acc
+    }, {})
+
+    // 2. DERIVED CALCULATIONS (AFTER aggregation)
+    const app8Rows = Object.values(grouped).map(d => {
+      const bgTaxBGN =
+        d.grossAmountBGN != null
+          ? new Decimal(d.grossAmountBGN)
+              .times(BG_DIVIDEND_TAX_RATE)
+              .toNumber()
+          : null
+
+      const partialCredit =
+        bgTaxBGN != null &&
+        d.foreignTaxPaidBGN != null &&
+        d.foreignTaxPaidBGN < bgTaxBGN
+          ? d.foreignTaxPaidBGN
+          : null
+
+      const allowableBGN = d.methodCode === 1 ? partialCredit : null
+
+      const dueTaxBGN =
+        bgTaxBGN != null && d.foreignTaxPaidBGN != null
+          ? Math.max(
+              0,
+              new Decimal(bgTaxBGN)
+                .minus(d.foreignTaxPaidBGN)
+                .toNumber()
+            )
+          : bgTaxBGN
+
+      return {
+        ...d,
+        allowableCreditBGN: allowableBGN,
+        dueTaxBGN,
+      }
+    })
+
+    // 3. FINAL STRUCTURES
+
     const app8Dividends = {
       columns: [
         { key: 'symbol',             label: 'Символ', bold: true, tooltip: 'description' },
@@ -318,33 +386,7 @@ export class TaxStrategy2025 extends TaxStrategy {
         { key: 'allowableCreditBGN', label: 'Допустим размер на данъчния кредит',                                    shortLabel: `Допустим кредит (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
         { key: 'dueTaxBGN',          label: 'Дължим данък, подлежащ на внасяне по реда на чл. 67, ал. 4 от ЗДДФЛ', shortLabel: `Дължим данък (${lcl})`,      align: 'right', mono: true, decimals: 2, nullAs: '—' },
       ],
-      rows: matchedDividends.map(d => {
-        const grossD      = toLcl(d.grossAmount, d.currency, d.date)
-        const withheldD   = toLcl(d.withheldTax, d.currency, d.date)
-        const grossBGN    = grossD    ? grossD.toNumber()    : null
-        const withheldBGN = withheldD ? withheldD.toNumber() : null
-        const bgTaxBGN    = grossBGN != null
-          ? new Decimal(grossBGN).times(BG_DIVIDEND_TAX_RATE).toNumber() : null
-
-        const partialCredit = bgTaxBGN != null && withheldBGN != null && withheldBGN < bgTaxBGN
-          ? withheldBGN : null
-        const allowableBGN = d.taxCode === 1 ? partialCredit : null
-        const dueTaxBGN    = bgTaxBGN != null && withheldBGN != null
-          ? Math.max(0, new Decimal(bgTaxBGN).minus(withheldBGN).toNumber())
-          : bgTaxBGN
-
-        return {
-          symbol:             d.symbol,
-          description:        instrumentInfo[d.symbol]?.description ?? '',
-          countryName:        d.countryName,
-          incomeCategoryCode: 8141,
-          methodCode:         d.taxCode,
-          grossAmountBGN:     grossBGN,
-          foreignTaxPaidBGN:  withheldBGN,
-          allowableCreditBGN: allowableBGN,
-          dueTaxBGN,
-        }
-      }),
+      rows: app8Rows,
     }
 
     const dividends = {
