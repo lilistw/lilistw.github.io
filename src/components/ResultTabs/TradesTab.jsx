@@ -29,6 +29,13 @@ export default function TradesTab({ result }) {
     [rows]
   )
 
+  const hasTaxFreeTrades = useMemo(
+    () => result.trades.rows.some(
+      r => !r._total && r.side === 'SELL' && r.taxable === false
+    ),
+    [] // important: empty deps = only once on the first render
+  )
+
   const [pending, setPending] = useState(null)
 
   function handleToggle(idx) {
@@ -69,7 +76,7 @@ export default function TradesTab({ result }) {
 
   return (
     <>
-      <EtfClassificationWarning />
+      {hasTaxFreeTrades && <EtfClassificationWarning />}
 
       <DataTable
         title={t('app.tradesTableTitle')}
