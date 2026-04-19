@@ -2,14 +2,8 @@ import { describe, it, expect } from 'vitest'
 import { classifyInstrument, isTaxable, getInstrumentTypeLabel } from '../instrument/classifier.js'
 
 describe('classifyInstrument', () => {
-  it('detects ETF from name', () => {
-    const c = classifyInstrument({ name: 'iShares Core MSCI World ETF', isRegulatedMarket: true })
-    expect(c.isETF).toBe(true)
-    expect(c.isCryptoRelated).toBe(false)
-    expect(c.isRegulatedMarket).toBe(true)
-  })
 
-  it('detects ETF from type field when name has no "ETF" (e.g. IWDA)', () => {
+  it('detects ETF from type field', () => {
     const c = classifyInstrument({ name: 'ISHARES CORE MSCI WORLD', type: 'ETF', isRegulatedMarket: true })
     expect(c.isETF).toBe(true)
     expect(c.isCryptoRelated).toBe(false)
@@ -21,28 +15,28 @@ describe('classifyInstrument', () => {
   })
 
   it('detects crypto ETF — BITCOIN in name', () => {
-    const c = classifyInstrument({ name: 'iShares Bitcoin Trust ETF', isRegulatedMarket: true })
+    const c = classifyInstrument({ name: 'iShares Bitcoin Trust ETF', type: 'ETF', isRegulatedMarket: true })
     expect(c.isETF).toBe(true)
     expect(c.isCryptoRelated).toBe(true)
   })
 
   it('detects crypto ETF — CRYPTO in name', () => {
-    const c = classifyInstrument({ name: 'Global Crypto ETF', isRegulatedMarket: true })
+    const c = classifyInstrument({ name: 'Global Crypto ETF', type: 'ETF', isRegulatedMarket: true })
     expect(c.isCryptoRelated).toBe(true)
   })
 
   it('detects crypto ETF — BTC in name', () => {
-    const c = classifyInstrument({ name: 'ProShares BTC Strategy ETF', isRegulatedMarket: true })
+    const c = classifyInstrument({ name: 'ProShares BTC Strategy ETF', type: 'ETF', isRegulatedMarket: true })
     expect(c.isCryptoRelated).toBe(true)
   })
 
   it('detects crypto ETF — ETH in name', () => {
-    const c = classifyInstrument({ name: 'Ether ETF Fund', isRegulatedMarket: true })
+    const c = classifyInstrument({ name: 'Ether ETF Fund', type: 'ETF', isRegulatedMarket: true })
     expect(c.isCryptoRelated).toBe(true)
   })
 
   it('non-ETF stock is not ETF and not crypto', () => {
-    const c = classifyInstrument({ name: 'Apple Inc', isRegulatedMarket: false })
+    const c = classifyInstrument({ name: 'Apple Inc', type: 'STOCK', isRegulatedMarket: false })
     expect(c.isETF).toBe(false)
     expect(c.isCryptoRelated).toBe(false)
   })
@@ -54,14 +48,14 @@ describe('classifyInstrument', () => {
   })
 
   it('isRegulatedMarket is false when not set', () => {
-    const c = classifyInstrument({ name: 'Some ETF' })
+    const c = classifyInstrument({ name: 'Some ETF', type: 'ETF' })
     expect(c.isRegulatedMarket).toBe(false)
   })
 })
 
 describe('isTaxable', () => {
   it('standard ETF on regulated market → необлагаем (false)', () => {
-    expect(isTaxable({ name: 'iShares Core MSCI World ETF', isRegulatedMarket: true })).toBe(false)
+    expect(isTaxable({ name: 'iShares Core MSCI World ETF', type: 'ETF',isRegulatedMarket: true })).toBe(false)
   })
 
   it('ETF detected by type (no "ETF" in name) on regulated market → необлагаем (false)', () => {
@@ -70,19 +64,19 @@ describe('isTaxable', () => {
   })
 
   it('crypto ETF on regulated market → облагаем (true)', () => {
-    expect(isTaxable({ name: 'iShares Bitcoin Trust ETF', isRegulatedMarket: true })).toBe(true)
+    expect(isTaxable({ name: 'iShares Bitcoin Trust ETF', type: 'ETF', isRegulatedMarket: true })).toBe(true)
   })
 
   it('ETF on non-regulated market → облагаем (true)', () => {
-    expect(isTaxable({ name: 'iShares Core MSCI World ETF', isRegulatedMarket: false })).toBe(true)
+    expect(isTaxable({ name: 'iShares Core MSCI World ETF', type: 'ETF', isRegulatedMarket: false })).toBe(true)
   })
 
   it('regular stock → облагаем (true)', () => {
-    expect(isTaxable({ name: 'Apple Inc', isRegulatedMarket: false })).toBe(true)
+    expect(isTaxable({ name: 'Apple Inc', type: 'STOCK', isRegulatedMarket: false })).toBe(true)
   })
 
   it('regular stock on regulated market → облагаем (true)', () => {
-    expect(isTaxable({ name: 'SAP SE', isRegulatedMarket: true })).toBe(true)
+    expect(isTaxable({ name: 'SAP SE', type: 'STOCK', isRegulatedMarket: true })).toBe(true)
   })
 
   it('unknown instrument (empty name) → облагаем (true)', () => {
@@ -95,9 +89,6 @@ describe('isTaxable', () => {
 })
 
 describe('getInstrumentTypeLabel', () => {
-  it('returns "ETF" for ETF by name', () => {
-    expect(getInstrumentTypeLabel({ name: 'iShares Core MSCI World ETF' })).toBe('ETF')
-  })
 
   it('returns "ETF" for ETF by type field (IWDA case)', () => {
     expect(getInstrumentTypeLabel({ name: 'ISHARES CORE MSCI WORLD', type: 'ETF' })).toBe('ETF')
