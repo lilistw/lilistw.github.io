@@ -8,6 +8,7 @@ import {
   getYearEndDate, getPrevYearEndDate,
 } from '../domain/fx/fxRates.js'
 import { IBKR_EXCHANGES, EU_COUNTRY_CODES } from '../domain/constants.js'
+import { isTaxable } from '../domain/instrument/classifier.js'
 
 const D0 = new Decimal(0)
 const BG_DIVIDEND_TAX_RATE = new Decimal('0.05')
@@ -18,10 +19,13 @@ function toD(v) {
   try { return new Decimal(s) } catch { return D0 }
 }
 
-function isTaxExempt(trade, instrumentInfo) {
-  if (instrumentInfo[trade.symbol]?.type !== 'ETF') return false
+function makeInstrument(trade, instrumentInfo) {
+  const info = instrumentInfo[trade.symbol]
   const exch = IBKR_EXCHANGES[trade.exchange]
-  return exch?.regulated && EU_COUNTRY_CODES.has(instrumentInfo[trade.symbol]?.country)
+  return {
+    name: info?.description ?? '',
+    isRegulatedMarket: exch?.regulated === true && EU_COUNTRY_CODES.has(info?.country),
+  }
 }
 
 function summarizeSells(sells) {
@@ -126,7 +130,7 @@ export function calculate(input, priorPositions = []) {
       const pos = acc.positions[t.symbol]
 
       const date      = t.datetime.split(/[,\s]/)[0]
-      const exempt    = t.side === 'SELL' && isTaxExempt(t, instrumentInfo)
+      const exempt    = t.side === 'SELL' && !isTaxable(makeInstrument(t, instrumentInfo))
       const proceedsD = toD(t.proceeds)
       const commD     = toD(t.commission)
       const feeD      = toD(t.fee)
@@ -242,8 +246,8 @@ export function calculate(input, priorPositions = []) {
 
   // ── App5 / App13 initial summaries ───────────────────────────────────────
   const sells        = dataRows.filter(r => r.side === 'SELL')
-  const taxableSells = sells.filter(r => !isTaxExempt(r, instrumentInfo))
-  const exemptSells  = sells.filter(r =>  isTaxExempt(r, instrumentInfo))
+  const taxableSells = sells.filter(r => r.taxable !== false)
+  const exemptSells  = sells.filter(r => r.taxable === false)
 
   // ── Last BUY date per symbol ─────────────────────────────────────────────
   const lastBuyDate = {}

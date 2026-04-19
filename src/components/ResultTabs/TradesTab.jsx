@@ -4,6 +4,7 @@ import DataTable from '../DataTable'
 import TaxApp5 from './TaxApp5'
 import TaxApp13 from './TaxApp13'
 import PriorYearApproxWarning from '../PriorYearApproxWarning'
+import EtfClassificationWarning from '../EtfClassificationWarning'
 import { buildTradeTotals, buildTaxSummary } from '../../domain/tradeSummary'
 import TaxableToggleDialog from './TaxableToggleDialog'
 
@@ -55,6 +56,8 @@ export default function TradesTab({ result }) {
 
   return (
     <>
+      <EtfClassificationWarning />
+
       <DataTable
         title={t('app.tradesTableTitle')}
         data={trades}
