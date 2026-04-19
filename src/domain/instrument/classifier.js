@@ -18,6 +18,15 @@ export function classifyInstrument(instrument) {
   }
 }
 
+// Returns 'ETF', 'Stock', or 'Other' for display in UI tables.
+export function getInstrumentTypeLabel(instrument) {
+  const { isETF } = classifyInstrument(instrument)
+  if (isETF) return 'ETF'
+  const t = (instrument.type || '').toUpperCase()
+  if (!t || t === 'COMMON' || t === 'STOCK' || t === 'ADR' || t === 'REIT') return 'Stock'
+  return 'Other'
+}
+
 // Returns true (облагаем) for everything except non-crypto ETFs on regulated EU/EEA markets.
 export function isTaxable(instrument) {
   const c = classifyInstrument(instrument)
