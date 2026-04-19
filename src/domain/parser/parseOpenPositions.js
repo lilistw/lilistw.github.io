@@ -75,7 +75,7 @@ export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsC
       { key: 'assetCategory', label: 'Категория' },
       { key: 'currency',      label: 'Валута' },
       { key: 'symbol',        label: 'Символ',            bold: true },
-      { key: 'instrType',     label: 'Тип',               chip: true, chipColors: { ETF: 'info', Stock: 'default', Other: 'default' } },
+      { key: 'instrType',     label: 'Тип',               chip: true, chipColors: { ETF: 'primary', Stock: 'default', Other: 'default' } },
       { key: 'quantity',      label: 'Количество',        align: 'right', mono: true, decimals: 4 },
       { key: 'multiplier',    label: 'Множител',          align: 'right', mono: true, decimals: 2 },
       { key: 'costPrice',     label: 'Цена',              align: 'right', mono: true, decimals: 4, nullAs: '—' },

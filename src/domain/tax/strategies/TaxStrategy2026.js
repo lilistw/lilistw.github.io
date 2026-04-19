@@ -397,7 +397,7 @@ export class TaxStrategy2026 extends TaxStrategy {
       { key: 'taxable',         label: 'Облагаем?',                     editable: 'checkbox' },
       { key: 'taxExemptLabel',  label: 'Данъчен статус',                chip: true, chipColors: { 'Освободен': 'success', 'Облагаем': 'default' } },
       { key: 'symbol',          label: 'Symbol',                        bold: true },
-      { key: 'instrType',       label: 'Тип',                           chip: true, chipColors: { ETF: 'info', Stock: 'default', Other: 'default' } },
+      { key: 'instrType',       label: 'Тип',                           chip: true, chipColors: { ETF: 'primary', Stock: 'default', Other: 'default' } },
       { key: 'datetime',        label: 'Trade Date/Time',               mono: true },
       { key: 'exchange',        label: 'Exchange' },
       { key: 'currency',        label: 'Currency' },
