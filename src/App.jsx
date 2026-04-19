@@ -6,7 +6,7 @@ import { InfoOutlined } from '@mui/icons-material'
 
 import { dayTheme, nightTheme } from './theme.js'
 import { readInput } from './pipeline/readInput.js'
-import { calculateTax } from './domain/tax/taxService.js'
+import { calculate } from './pipeline/calculate.js'
 import { inferPriorPositions } from './services/inferPriorPositions.js'
 import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
 
@@ -155,7 +155,7 @@ export default function App() {
         lastBuyDate: p.lastBuyDateInput || getPrevYearDefaultAcqDate(taxYear),
       }))
 
-      setResult(calculateTax(inputData, priorPositions))
+      setResult(calculate(inputData, priorPositions))
     } catch (e) {
       setError(e.message)
       console.error(e)

@@ -24,7 +24,7 @@ function makeInstrument(trade, instrumentInfo) {
   const exch = IBKR_EXCHANGES[trade.exchange]
   return {
     name: info?.description ?? '',
-    isRegulatedMarket: exch?.regulated ?? false,
+    isRegulatedMarket: exch?.regulated === true && EU_COUNTRY_CODES.has(info?.country),
   }
 }
 
