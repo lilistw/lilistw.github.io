@@ -24,15 +24,15 @@ export default function AppHeader({ nightMode, setNightMode }) {
           cursor: 'pointer',
 
           // 👇 THIS makes it look like a button
-          background: 'rgba(0,0,0,0.35)',
-          backdropFilter: 'blur(8px)',
-          border: '1px solid rgba(255,255,255,0.2)',
+          background: 'rgba(0,0,0,0.18)',
+          backdropFilter: 'blur(6px)',
+          border: '1px solid rgba(255,255,255,0.15)',
 
           color: '#fff',
           transition: 'all 0.2s ease',
 
           '&:hover': {
-            background: 'rgba(0,0,0,0.55)',
+            background: 'rgba(0,0,0,0.28)',
           },
           '&:active': {
             transform: 'scale(0.97)',
