@@ -221,20 +221,19 @@ export default function App() {
               </Box>
             </Box>
 
-          {/* Prior-year positions form — shown when inferred positions exist */}
-          {!result && pendingPositions !== null && pendingPositions.length > 0 && (
-              <PriorYearPositionsForm
-                positions={pendingPositions}
-                onPositionChange={(i, field, value) =>
-                setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
-                }
-                taxYear={taxYear}
-              />
-            )}
-
-          {/* Terms + Calculate button */}
+                      {/* Terms + Calculate button */}
             {csvFile && htmlFile && !result && (
-              <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mt: 1, flexWrap: 'wrap' }}>
+              <Box sx={{ 
+                mb: 1,
+                px: 2,
+                py: 1,
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: 2, 
+                mt: 1, 
+                flexWrap: 'wrap' 
+              }}>
                 <FormControlLabel
                 control={
                   <Checkbox
@@ -263,6 +262,17 @@ export default function App() {
                   {parsing ? t('app.calculating') : t('app.calculate')}
                 </Button>
               </Box>
+            )}
+
+          {/* Prior-year positions form — shown when inferred positions exist */}
+          {!result && pendingPositions !== null && pendingPositions.length > 0 && (
+              <PriorYearPositionsForm
+                positions={pendingPositions}
+                onPositionChange={(i, field, value) =>
+                setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
+                }
+                taxYear={taxYear}
+              />
             )}
 
           {/* Demo load button — shown until files are selected */}
