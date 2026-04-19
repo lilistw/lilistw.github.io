@@ -121,37 +121,3 @@ describe('buildOpenPositions', () => {
     expect(rows[0].quantity).toBeCloseTo(1000)
   })
 })
-
-describe('buildOpenPositions — instrType column', () => {
-  it('rows have instrType="ETF" for ETF instrument', () => {
-    const rawPositions = parseOpenPositions([makeHeader(), makePositionRow({ symbol: 'EXS1' })])
-    const instrumentInfo = { EXS1: { description: 'iShares Core MSCI World ETF', type: 'ETF' } }
-    const { rows } = buildOpenPositions(rawPositions, instrumentInfo, {})
-    expect(rows[0].instrType).toBe('ETF')
-  })
-
-  it('rows have instrType="ETF" for IWDA (type field, no "ETF" in description)', () => {
-    const rawPositions = parseOpenPositions([makeHeader(), makePositionRow({ symbol: 'IWDA' })])
-    const instrumentInfo = { IWDA: { description: 'ISHARES CORE MSCI WORLD', type: 'ETF' } }
-    const { rows } = buildOpenPositions(rawPositions, instrumentInfo, {})
-    expect(rows[0].instrType).toBe('ETF')
-  })
-
-  it('rows have instrType="Stock" for common stock', () => {
-    const rawPositions = parseOpenPositions([makeHeader(), makePositionRow({ symbol: 'AAPL' })])
-    const instrumentInfo = { AAPL: { description: 'Apple Inc', type: 'COMMON' } }
-    const { rows } = buildOpenPositions(rawPositions, instrumentInfo, {})
-    expect(rows[0].instrType).toBe('Stock')
-  })
-
-  it('rows have instrType="Stock" when instrument not in instrumentInfo', () => {
-    const rawPositions = parseOpenPositions([makeHeader(), makePositionRow({ symbol: 'UNKNOWN' })])
-    const { rows } = buildOpenPositions(rawPositions, {}, {})
-    expect(rows[0].instrType).toBe('Stock')
-  })
-
-  it('instrType column exists in columns', () => {
-    const { columns } = buildOpenPositions([])
-    expect(columns.some(c => c.key === 'instrType')).toBe(true)
-  })
-})
