@@ -287,17 +287,11 @@ export class TaxCalculator {
             return {
               type, country, symbol: h.symbol, description, quantity: qty, acquDate,
               costBasis: cost, currency: h.currency,
-              costLcl: acquDate === 'предходна година'
-                ? null
-                : toLcl(cost, h.currency, yearEndDate)?.toNumber() ?? null,
+              costLcl: positionsCostBasis[h.symbol]?.costLcl ?? null,
             }
           }
 
-          if (thisYearQty > 0 && priorQty > 0) return [
-            makeRow(thisYearQty, acquDateStr ?? 'предходна година'),
-            makeRow(priorQty,    'предходна година'),
-          ]
-          return [makeRow(h.quantity, acquDateStr ?? 'предходна година')]
+          return [makeRow(h.quantity, acquDateStr)]
         })
         .sort((a, b) => a.type === b.type ? 0 : a.type === 'Акции' ? -1 : 1),
     }
