@@ -96,8 +96,8 @@ export default function PriorYearPositionsForm({ positions, onPositionChange, ta
                       size="small"
                       variant="standard"
                       inputProps={{ style: { textAlign: 'right', fontFamily: 'monospace', width: 120 } }}
-                      value={p.costBGNInput}
-                      onChange={e => onPositionChange(i, 'costBGNInput', e.target.value)}
+                      value={p.costLclInput}
+                      onChange={e => onPositionChange(i, 'costLclInput', e.target.value)}
                     />
                   </TableCell>
                   <TableCell>

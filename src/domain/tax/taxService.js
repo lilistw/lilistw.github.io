@@ -1,6 +1,6 @@
-import { getTaxStrategy } from './strategyFactory.js'
+import { TaxCalculator } from './TaxCalculator.js'
 
 export function calculateTax(parsedData, priorPositions = []) {
-  const strategy = getTaxStrategy(parsedData.taxYear)
+  const strategy = new TaxCalculator();
   return strategy.calculate(parsedData, priorPositions)
 }

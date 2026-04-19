@@ -69,8 +69,8 @@ export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
                 <>
                   {' \u00b7 '}{t('priorYearWarning.acquisitionCost')}{' '}
                   <strong>{fmtNum(r.costBasis, 2)} {r.currency}</strong>
-                  {r.costBasisBGN != null && (
-                    <> {' \u2248 '}<strong>{fmtNum(r.costBasisBGN, 2)} {lcl}</strong> <em>{t('priorYearWarning.approx')}</em></>
+                  {r.costBasisLcl != null && (
+                    <> {' \u2248 '}<strong>{fmtNum(r.costBasisLcl, 2)} {lcl}</strong> <em>{t('priorYearWarning.approx')}</em></>
                   )}
                 </>
               )}

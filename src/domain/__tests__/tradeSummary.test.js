@@ -11,8 +11,8 @@ function makeSell(fields = {}) {
     commission:      fields.commission      ?? -2,
     fee:             fields.fee             ?? 0,
     totalWithFee:    fields.totalWithFee    ?? 98,
-    totalWithFeeBGN: fields.totalWithFeeBGN ?? 191.67,
-    costBasisBGN:    fields.costBasisBGN    ?? 176.03,
+    totalWithFeeLcl: fields.totalWithFeeLcl ?? 191.67,
+    costBasisLcl:    fields.costBasisLcl    ?? 176.03,
   }
 }
 
@@ -26,8 +26,8 @@ function makeBuy(fields = {}) {
     commission:      fields.commission      ?? -2,
     fee:             fields.fee             ?? 0,
     totalWithFee:    fields.totalWithFee    ?? -102,
-    totalWithFeeBGN: fields.totalWithFeeBGN ?? -199.49,
-    costBasisBGN:    fields.costBasisBGN    ?? null,
+    totalWithFeeLcl: fields.totalWithFeeLcl ?? -199.49,
+    costBasisLcl:    fields.costBasisLcl    ?? null,
   }
 }
 
@@ -38,8 +38,8 @@ describe('buildTradeTotals', () => {
 
   it('builds total rows grouped by taxExemptLabel and currency', () => {
     const rows = [
-      makeSell({ currency: 'USD', taxExemptLabel: 'Облагаем', totalWithFee: 100, totalWithFeeBGN: 195.58 }),
-      makeSell({ currency: 'EUR', taxExemptLabel: 'Облагаем', totalWithFee: 200, totalWithFeeBGN: 391.17 }),
+      makeSell({ currency: 'USD', taxExemptLabel: 'Облагаем', totalWithFee: 100, totalWithFeeLcl: 195.58 }),
+      makeSell({ currency: 'EUR', taxExemptLabel: 'Облагаем', totalWithFee: 200, totalWithFeeLcl: 391.17 }),
     ]
     const totals = buildTradeTotals(rows)
     expect(totals.some(r => r.currency === 'USD' && r.taxExemptLabel === 'Облагаем')).toBe(true)
@@ -47,7 +47,7 @@ describe('buildTradeTotals', () => {
   })
 
   it('includes a BGN grand total row per group', () => {
-    const rows = [makeSell({ currency: 'USD', taxExemptLabel: 'Облагаем', totalWithFeeBGN: 195.58 })]
+    const rows = [makeSell({ currency: 'USD', taxExemptLabel: 'Облагаем', totalWithFeeLcl: 195.58 })]
     const totals = buildTradeTotals(rows, 'BGN')
     expect(totals.some(r => r.currency === 'BGN')).toBe(true)
   })
@@ -72,14 +72,14 @@ describe('buildTradeTotals', () => {
 
   it('handles Освободен (exempt) group separately', () => {
     const rows = [
-      makeSell({ taxExemptLabel: 'Облагаем', totalWithFeeBGN: 100 }),
-      makeSell({ taxExemptLabel: 'Освободен', totalWithFeeBGN: 200 }),
+      makeSell({ taxExemptLabel: 'Облагаем', totalWithFeeLcl: 100 }),
+      makeSell({ taxExemptLabel: 'Освободен', totalWithFeeLcl: 200 }),
     ]
     const totals = buildTradeTotals(rows)
-    const taxableTotal = totals.find(r => r.taxExemptLabel === 'Облагаем' && r.currency === 'BGN')
-    const exemptTotal  = totals.find(r => r.taxExemptLabel === 'Освободен' && r.currency === 'BGN')
-    expect(taxableTotal?.totalWithFeeBGN).toBeCloseTo(100)
-    expect(exemptTotal?.totalWithFeeBGN).toBeCloseTo(200)
+    const taxableTotal = totals.find(r => r.taxExemptLabel === 'Облагаем')
+    const exemptTotal  = totals.find(r => r.taxExemptLabel === 'Освободен')
+    expect(taxableTotal?.totalWithFeeLcl).toBeCloseTo(100)
+    expect(exemptTotal?.totalWithFeeLcl).toBeCloseTo(200)
   })
 
   it('skips currency groups with no trades', () => {
@@ -106,7 +106,7 @@ describe('buildTaxSummary', () => {
 
   it('calculates taxable sell profits in app5', () => {
     const rows = [
-      makeSell({ taxable: true, totalWithFeeBGN: 200, costBasisBGN: 150 }),
+      makeSell({ taxable: true, totalWithFeeLcl: 200, costBasisLcl: 150 }),
     ]
     const { app5 } = buildTaxSummary(rows)
     expect(app5.profits).toBeCloseTo(50)
@@ -115,7 +115,7 @@ describe('buildTaxSummary', () => {
 
   it('calculates taxable sell losses in app5', () => {
     const rows = [
-      makeSell({ taxable: true, totalWithFeeBGN: 100, costBasisBGN: 150 }),
+      makeSell({ taxable: true, totalWithFeeLcl: 100, costBasisLcl: 150 }),
     ]
     const { app5 } = buildTaxSummary(rows)
     expect(app5.profits).toBe(0)
@@ -124,7 +124,7 @@ describe('buildTaxSummary', () => {
 
   it('puts exempt sells into app13, not app5', () => {
     const rows = [
-      makeSell({ taxable: false, totalWithFeeBGN: 200, costBasisBGN: 150 }),
+      makeSell({ taxable: false, totalWithFeeLcl: 200, costBasisLcl: 150 }),
     ]
     const { app5, app13 } = buildTaxSummary(rows)
     expect(app5.profits).toBe(0)
@@ -133,7 +133,7 @@ describe('buildTaxSummary', () => {
 
   it('ignores BUY rows when calculating summaries', () => {
     const rows = [
-      makeBuy({ totalWithFeeBGN: -500, costBasisBGN: null }),
+      makeBuy({ totalWithFeeLcl: -500, costBasisLcl: null }),
     ]
     const { app5, app13 } = buildTaxSummary(rows)
     expect(app5.profits).toBe(0)
@@ -142,21 +142,21 @@ describe('buildTaxSummary', () => {
 
   it('handles mixed profits and losses in the same group', () => {
     const rows = [
-      makeSell({ taxable: true, totalWithFeeBGN: 200, costBasisBGN: 150 }),
-      makeSell({ taxable: true, totalWithFeeBGN: 80,  costBasisBGN: 100 }),
+      makeSell({ taxable: true, totalWithFeeLcl: 200, costBasisLcl: 150 }),
+      makeSell({ taxable: true, totalWithFeeLcl: 80,  costBasisLcl: 100 }),
     ]
     const { app5 } = buildTaxSummary(rows)
     expect(app5.profits).toBeCloseTo(50)
     expect(app5.losses).toBeCloseTo(20)
   })
 
-  it('calculates totalProceedsBGN and totalCostBasisBGN', () => {
+  it('calculates totalProceedsLcl and totalcostBasisLcl', () => {
     const rows = [
-      makeSell({ taxable: true, totalWithFeeBGN: 200, costBasisBGN: 150 }),
-      makeSell({ taxable: true, totalWithFeeBGN: 300, costBasisBGN: 200 }),
+      makeSell({ taxable: true, totalWithFeeLcl: 200, costBasisLcl: 150 }),
+      makeSell({ taxable: true, totalWithFeeLcl: 300, costBasisLcl: 200 }),
     ]
     const { app5 } = buildTaxSummary(rows)
-    expect(app5.totalProceedsBGN).toBeCloseTo(500)
-    expect(app5.totalCostBasisBGN).toBeCloseTo(350)
+    expect(app5.totalProceedsLcl).toBeCloseTo(500)
+    expect(app5.totalcostBasisLcl).toBeCloseTo(350)
   })
 })

@@ -28,7 +28,7 @@ function toD(v) {
  *   instruments   – raw array from parseInstruments
  *   period        – period string e.g. "January 1, 2025 - December 31, 2025"
  *
- * @returns {Array<{ symbol, currency, qty, costUSD, costBGN, lastBuyDate }>}
+ * @returns {Array<{ symbol, currency, qty, costUSD, costLcl, lastBuyDate }>}
  */
 export function inferPriorPositions({ trades, openPositions, csvTrades, instruments = [], period }) {
   const taxYear            = parseTaxYear(period)
@@ -95,14 +95,14 @@ export function inferPriorPositions({ trades, openPositions, csvTrades, instrume
     if (priorQtyD.lte(0)) continue  // all shares were bought in current year
 
     const priorCostD   = openCostD.plus(sym.sellBasisUSD).minus(sym.buyCostUSD)
-    const priorCostBGN = toLocalCurrency(priorCostD, h.currency, prevYearEndDate, taxYear)
+    const priorCostLcl = toLocalCurrency(priorCostD, h.currency, prevYearEndDate, taxYear)
 
     result.push({
       symbol:      h.symbol,
       currency:    h.currency,
       qty:         priorQtyD.toNumber(),
       costUSD:     priorCostD.toNumber(),
-      costBGN:     priorCostBGN ? priorCostBGN.toNumber() : null,
+      costLcl:     priorCostLcl ? priorCostLcl.toNumber() : null,
       lastBuyDate: prevYearDefaultAcqDate,
     })
   }
@@ -119,14 +119,14 @@ export function inferPriorPositions({ trades, openPositions, csvTrades, instrume
     const priorCostD = sym.sellBasisUSD.minus(sym.buyCostUSD)
     if (priorCostD.lte(0)) continue
 
-    const priorCostBGN = toLocalCurrency(priorCostD, sym.currency, prevYearEndDate, taxYear)
+    const priorCostLcl = toLocalCurrency(priorCostD, sym.currency, prevYearEndDate, taxYear)
 
     result.push({
       symbol,
       currency:    sym.currency,
       qty:         priorQtyD.toNumber(),
       costUSD:     priorCostD.toNumber(),
-      costBGN:     priorCostBGN ? priorCostBGN.toNumber() : null,
+      costLcl:     priorCostLcl ? priorCostLcl.toNumber() : null,
       lastBuyDate: prevYearDefaultAcqDate,
     })
   }

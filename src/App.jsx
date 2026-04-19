@@ -94,7 +94,7 @@ export default function App() {
         setPendingPositions(
           inferred.map(p => ({
             ...p,
-            costBGNInput: p.costBGN != null ? String(Number(p.costBGN).toFixed(2)) : '',
+            costLclInput: p.costLcl != null ? String(Number(p.costLcl).toFixed(2)) : '',
             lastBuyDateInput: p.lastBuyDate ?? defaultDate,
           }))
         )
@@ -151,7 +151,7 @@ export default function App() {
         currency: p.currency,
         qty: p.qty,
         costUSD: p.costUSD,
-        costBGN: parseFloat(String(p.costBGNInput).replace(',', '.')) || 0,
+        costLcl: parseFloat(String(p.costLclInput).replace(',', '.')) || 0,
         lastBuyDate: p.lastBuyDateInput || getPrevYearDefaultAcqDate(taxYear),
       }))
 

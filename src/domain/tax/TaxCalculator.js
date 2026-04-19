@@ -1,15 +1,14 @@
 import Decimal from 'decimal.js'
-import { buildOpenPositions } from '../../parser/parseOpenPositions.js'
-import { buildInstrumentInfo, expandByAliases } from '../../parser/parseInstruments.js'
-import { buildCsvTradeBasis } from '../../parser/parseCsvTrades.js'
+import { buildOpenPositions } from '../parser/parseOpenPositions.js'
+import { buildInstrumentInfo, expandByAliases } from '../parser/parseInstruments.js'
+import { buildCsvTradeBasis } from '../parser/parseCsvTrades.js'
 import {
   toLocalCurrency,
   getLocalCurrencyCode, getLocalCurrencyLabel,
   getYearEndDate, getPrevYearEndDate,
-} from '../../fx/fxRates.js'
-import { IBKR_EXCHANGES, EU_COUNTRY_CODES } from '../../constants.js'
-import { isTaxable, getInstrumentTypeLabel } from '../../instrument/classifier.js'
-import { TaxStrategy } from './TaxStrategy.js'
+} from '../fx/fxRates.js'
+import { IBKR_EXCHANGES } from '../constants.js'
+import { isTaxable, getInstrumentTypeLabel } from '../instrument/classifier.js'
 
 const D0 = new Decimal(0)
 const BG_DIVIDEND_TAX_RATE = new Decimal('0.05')
@@ -33,16 +32,16 @@ function makeInstrument(trade, instrumentInfo) {
 
 function summarizeSells(sells) {
   const profits = sells.reduce((s, r) => {
-    const pl = new Decimal(r.proceedsBGN ?? 0).minus(r.costBasisBGN ?? 0)
+    const pl = new Decimal(r.proceedsLcl ?? 0).minus(r.costBasisLcl ?? 0)
     return pl.gt(0) ? s.plus(pl) : s
   }, D0).toNumber()
   const losses = sells.reduce((s, r) => {
-    const pl = new Decimal(r.proceedsBGN ?? 0).minus(r.costBasisBGN ?? 0)
+    const pl = new Decimal(r.proceedsLcl ?? 0).minus(r.costBasisLcl ?? 0)
     return pl.lt(0) ? s.plus(pl.abs()) : s
   }, D0).toNumber()
   return {
-    totalProceedsBGN:  sells.reduce((s, r) => s.plus(r.proceedsBGN  ?? 0), D0).toNumber(),
-    totalCostBasisBGN: sells.reduce((s, r) => s.plus(r.costBasisBGN ?? 0), D0).toNumber(),
+    totalProceedsLcl:  sells.reduce((s, r) => s.plus(r.proceedsLcl  ?? 0), D0).toNumber(),
+    totalCostBasisLcl: sells.reduce((s, r) => s.plus(r.costBasisLcl ?? 0), D0).toNumber(),
     profits,
     losses,
   }
@@ -80,7 +79,7 @@ function matchDividends(rawDividends, rawWithholdingTax, instrumentInfo) {
   })
 }
 
-export class TaxStrategy2025 extends TaxStrategy {
+export class TaxCalculator {
   calculate(input, priorPositions = []) {
     const { taxYear } = input
 
@@ -107,14 +106,14 @@ export class TaxStrategy2025 extends TaxStrategy {
       initialPositions[p.symbol] = {
         qty:     new Decimal(String(p.qty)),
         cost:    new Decimal(String(p.costUSD)),
-        costBGN: new Decimal(String(p.costBGN)),
+        costLcl: new Decimal(String(p.costLcl)),
       }
     }
 
     const { positions, rows: enrichedRows } = sortedTrades.reduce(
       (acc, t, i) => {
         if (!acc.positions[t.symbol]) {
-          acc.positions[t.symbol] = { qty: D0, cost: D0, costBGN: D0 }
+          acc.positions[t.symbol] = { qty: D0, cost: D0, costLcl: D0 }
         }
         const pos = acc.positions[t.symbol]
 
@@ -132,13 +131,13 @@ export class TaxStrategy2025 extends TaxStrategy {
         const rateD     = toLcl(new Decimal(1), t.currency, date)
 
         let costBasis          = null
-        let costBasisBGN       = null
-        let costBasisBGNApprox = false
+        let costBasisLcl       = null
+        let costBasisLclApprox = false
 
         if (t.side === 'BUY') {
           pos.qty     = pos.qty.plus(qtyD)
           pos.cost    = pos.cost.plus(totalD.neg())
-          pos.costBGN = pos.costBGN.plus((totalLclD ?? D0).neg())
+          pos.costLcl = pos.costLcl.plus((totalLclD ?? D0).neg())
         }
 
         if (t.side === 'SELL') {
@@ -146,25 +145,24 @@ export class TaxStrategy2025 extends TaxStrategy {
             const csvBasisD = csvTradeBasis.get(`${t.symbol}|${date}|${qtyD.toFixed(0)}`)
             if (csvBasisD) {
               costBasis          = csvBasisD.toNumber()
-              costBasisBGN       = toLcl(csvBasisD, t.currency, prevYearEndDate)?.toNumber() ?? null
-              costBasisBGNApprox = true
+              costBasisLcl       = toLcl(csvBasisD, t.currency, prevYearEndDate)?.toNumber() ?? null
+              costBasisLclApprox = true
             }
           } else {
             const cbD    = pos.cost.div(pos.qty).times(qtyD)
-            const cbBGND = pos.costBGN.div(pos.qty).times(qtyD)
+            const cbLclD = pos.costLcl.div(pos.qty).times(qtyD)
             costBasis    = cbD.toNumber()
-            costBasisBGN = cbBGND.toNumber()
+            costBasisLcl = cbLclD.toNumber()
             pos.qty     = pos.qty.minus(qtyD)
             pos.cost    = pos.cost.minus(cbD)
-            pos.costBGN = pos.costBGN.minus(cbBGND)
+            pos.costLcl = pos.costLcl.minus(cbLclD)
           }
         }
 
-        const taxable       = t.side !== 'SELL' ? null : !exempt
-        const proceedsBGN   = t.side === 'SELL' && totalLclD ? totalLclD.toNumber() : null
-        const realizedPLBGN = proceedsBGN != null && costBasisBGN != null
-          ? new Decimal(proceedsBGN).minus(costBasisBGN).toNumber() : null
-
+        const taxable    = t.side !== 'SELL' ? null : !exempt
+        const proceedsLcl = t.side === 'SELL' && totalLclD ? totalLclD.toNumber() : null
+        const realizedPLLcl = proceedsLcl != null && costBasisLcl != null
+          ? new Decimal(proceedsLcl).minus(costBasisLcl).toNumber() : null
         
         const securityId = instrumentInfo[t.symbol]?.securityId || null
 
@@ -189,12 +187,12 @@ export class TaxStrategy2025 extends TaxStrategy {
           taxExemptLabel:  t.side !== 'SELL' ? '' : exempt ? 'Освободен' : 'Облагаем',
           rate:            rateD ? rateD.toNumber() : null,
           totalWithFee:    totalD.toNumber(),
-          totalWithFeeBGN: totalLclD ? totalLclD.toNumber() : null,
+          totalWithFeeLcl: totalLclD ? totalLclD.toNumber() : null,
           costBasis,
-          costBasisBGN,
-          costBasisBGNApprox,
-          proceedsBGN,
-          realizedPLBGN,
+          costBasisLcl,
+          costBasisLclApprox,
+          proceedsLcl,
+          realizedPLLcl,
           securityId,
           description:     instrumentInfo[t.symbol]?.description || '',
         })
@@ -208,7 +206,7 @@ export class TaxStrategy2025 extends TaxStrategy {
       Object.fromEntries(
         Object.entries(positions).map(([sym, pos]) => [
           sym,
-          { cost: pos.cost.toNumber(), qty: pos.qty.toNumber(), costBGN: pos.costBGN.toNumber() },
+          { cost: pos.cost.toNumber(), qty: pos.qty.toNumber(), costLcl: pos.costLcl.toNumber() },
         ])
       ),
       instrumentInfo
@@ -217,7 +215,7 @@ export class TaxStrategy2025 extends TaxStrategy {
 
     const dataRows   = [...enrichedRows]
     const sumCols    = ['proceeds', 'commission', 'fee', 'totalWithFee']
-    const sumLclCols = ['totalWithFeeBGN']
+    const sumLclCols = ['totalWithFeeLcl']
 
     for (const cur of ['EUR', 'USD']) {
       const subset = dataRows.filter(r => r.currency === cur)
@@ -269,7 +267,7 @@ export class TaxStrategy2025 extends TaxStrategy {
         { key: 'acquDate',  label: 'Дата и година на придобиване',  shortLabel: 'Дата', mono: true, maxWidth: 80 },
         { key: 'costBasis', label: 'Обща цена в съответната валута', shortLabel: 'Обща цена', align: 'right', mono: true, decimals: 2 },
         { key: 'currency',  label: 'Валута' },
-        { key: 'costBGN',   label: `Обща цена в ${lcl}`,           align: 'right', mono: true, decimals: 2, nullAs: '—' },
+        { key: 'costLcl',   label: `Обща цена в ${lcl}`,           align: 'right', mono: true, decimals: 2, nullAs: '—' },
       ],
       rows: holdings.rows
         .flatMap(h => {
@@ -289,17 +287,11 @@ export class TaxStrategy2025 extends TaxStrategy {
             return {
               type, country, symbol: h.symbol, description, quantity: qty, acquDate,
               costBasis: cost, currency: h.currency,
-              costBGN: acquDate === 'предходна година'
-                ? null
-                : toLcl(cost, h.currency, yearEndDate)?.toNumber() ?? null,
+              costLcl: positionsCostBasis[h.symbol]?.costLcl ?? null,
             }
           }
 
-          if (thisYearQty > 0 && priorQty > 0) return [
-            makeRow(thisYearQty, acquDateStr ?? 'предходна година'),
-            makeRow(priorQty,    'предходна година'),
-          ]
-          return [makeRow(h.quantity, acquDateStr ?? 'предходна година')]
+          return [makeRow(h.quantity, acquDateStr)]
         })
         .sort((a, b) => a.type === b.type ? 0 : a.type === 'Акции' ? -1 : 1),
     }
@@ -316,8 +308,8 @@ export class TaxStrategy2025 extends TaxStrategy {
       const grossD      = toLcl(d.grossAmount, d.currency, d.date)
       const withheldD   = toLcl(d.withheldTax, d.currency, d.date)
 
-      const grossBGN    = grossD ? grossD.toNumber() : 0
-      const withheldBGN = withheldD ? withheldD.toNumber() : 0
+      const grossLcl    = grossD ? grossD.toNumber() : 0
+      const withheldLcl = withheldD ? withheldD.toNumber() : 0
 
       if (!acc[key]) {
         acc[key] = {
@@ -326,49 +318,49 @@ export class TaxStrategy2025 extends TaxStrategy {
           countryName: d.countryName,
           incomeCategoryCode: 8141,
           methodCode: d.taxCode,
-          grossAmountBGN: 0,
-          foreignTaxPaidBGN: 0,
+          grossAmountLcl: 0,
+          foreignTaxPaidLcl: 0,
         }
       }
 
-      acc[key].grossAmountBGN += grossBGN
-      acc[key].foreignTaxPaidBGN += withheldBGN
+      acc[key].grossAmountLcl += grossLcl
+      acc[key].foreignTaxPaidLcl += withheldLcl
 
       return acc
     }, {})
 
     // 2. DERIVED CALCULATIONS (AFTER aggregation)
     const app8Rows = Object.values(grouped).map(d => {
-      const bgTaxBGN =
-        d.grossAmountBGN != null
-          ? new Decimal(d.grossAmountBGN)
+      const bgTaxLcl =
+        d.grossAmountLcl != null
+          ? new Decimal(d.grossAmountLcl)
               .times(BG_DIVIDEND_TAX_RATE)
               .toNumber()
           : null
 
       const partialCredit =
-        bgTaxBGN != null &&
-        d.foreignTaxPaidBGN != null &&
-        d.foreignTaxPaidBGN < bgTaxBGN
-          ? d.foreignTaxPaidBGN
+        bgTaxLcl != null &&
+        d.foreignTaxPaidLcl != null &&
+        d.foreignTaxPaidLcl < bgTaxLcl
+          ? d.foreignTaxPaidLcl
           : null
 
-      const allowableBGN = d.methodCode === 1 ? partialCredit : null
+      const allowableLcl = d.methodCode === 1 ? partialCredit : null
 
-      const dueTaxBGN =
-        bgTaxBGN != null && d.foreignTaxPaidBGN != null
+      const dueTaxLcl =
+        bgTaxLcl != null && d.foreignTaxPaidLcl != null
           ? Math.max(
               0,
-              new Decimal(bgTaxBGN)
-                .minus(d.foreignTaxPaidBGN)
+              new Decimal(bgTaxLcl)
+                .minus(d.foreignTaxPaidLcl)
                 .toNumber()
             )
-          : bgTaxBGN
+          : bgTaxLcl
 
       return {
         ...d,
-        allowableCreditBGN: allowableBGN,
-        dueTaxBGN,
+        allowableCreditLcl: allowableLcl,
+        dueTaxLcl,
       }
     })
 
@@ -381,10 +373,10 @@ export class TaxStrategy2025 extends TaxStrategy {
         { key: 'countryName',        label: 'Държава' },
         { key: 'incomeCategoryCode', label: 'Код вид доход',                                                         shortLabel: 'Код доход' },
         { key: 'methodCode',         label: 'Код за прилагане на метод за избягване на двойното данъчно облагане',   shortLabel: 'Код метод' },
-        { key: 'grossAmountBGN',     label: 'Брутен размер на дохода, включително платения данък (за доходи с код 8141)', shortLabel: `Брутен доход (${lcl})`,    align: 'right', mono: true, decimals: 2, nullAs: '—' },
-        { key: 'foreignTaxPaidBGN',  label: 'Платен данък в чужбина',                                               shortLabel: `Данък в чужбина (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
-        { key: 'allowableCreditBGN', label: 'Допустим размер на данъчния кредит',                                    shortLabel: `Допустим кредит (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
-        { key: 'dueTaxBGN',          label: 'Дължим данък, подлежащ на внасяне по реда на чл. 67, ал. 4 от ЗДДФЛ', shortLabel: `Дължим данък (${lcl})`,      align: 'right', mono: true, decimals: 2, nullAs: '—' },
+        { key: 'grossAmountLcl',     label: 'Брутен размер на дохода, включително платения данък (за доходи с код 8141)', shortLabel: `Брутен доход (${lcl})`,    align: 'right', mono: true, decimals: 2, nullAs: '—' },
+        { key: 'foreignTaxPaidLcl',  label: 'Платен данък в чужбина',                                               shortLabel: `Данък в чужбина (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
+        { key: 'allowableCreditLcl', label: 'Допустим размер на данъчния кредит',                                    shortLabel: `Допустим кредит (${lcl})`, align: 'right', mono: true, decimals: 2, nullAs: '—' },
+        { key: 'dueTaxLcl',          label: 'Дължим данък, подлежащ на внасяне по реда на чл. 67, ал. 4 от ЗДДФЛ', shortLabel: `Дължим данък (${lcl})`,      align: 'right', mono: true, decimals: 2, nullAs: '—' },
       ],
       rows: app8Rows,
     }
@@ -405,8 +397,8 @@ export class TaxStrategy2025 extends TaxStrategy {
 
     const dataInterestRows = input.interest.map(r => ({
       ...r,
-      amount:    parseFloat(r.amount) || 0,
-      amountBGN: toLcl(toD(r.amount), r.currency, r.date)?.toNumber() ?? null,
+      amount:     parseFloat(r.amount) || 0,
+      amountLcl:  toLcl(toD(r.amount), r.currency, r.date)?.toNumber() ?? null,
     }))
     const enrichedInterestRows = [...dataInterestRows]
     for (const cur of ['EUR', 'USD']) {
@@ -415,19 +407,19 @@ export class TaxStrategy2025 extends TaxStrategy {
       enrichedInterestRows.push({
         _total: true, currency: cur, description: 'Общо',
         amount:    subset.reduce((s, r) => s + (r.amount    ?? 0), 0),
-        amountBGN: subset.reduce((s, r) => s + (r.amountBGN ?? 0), 0),
+        amountLcl: subset.reduce((s, r) => s + (r.amountLcl ?? 0), 0),
       })
     }
     enrichedInterestRows.push({
       _total: true, currency: localCurrencyCode, description: 'Общо',
-      amountBGN: dataInterestRows.reduce((s, r) => s + (r.amountBGN ?? 0), 0),
+      amountLcl: dataInterestRows.reduce((s, r) => s + (r.amountLcl ?? 0), 0),
     })
     const interestColumns = [
       { key: 'date',        label: 'Дата',           mono: true },
       { key: 'currency',    label: 'Валута' },
       { key: 'description', label: 'Описание' },
       { key: 'amount',      label: 'Сума',           align: 'right', mono: true, decimals: 2 },
-      { key: 'amountBGN',   label: `Сума (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'amountLcl',   label: `Сума (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
     ]
 
     const holdingSumCols      = ['quantity', 'costBasis', 'costPrice', 'value', 'unrealizedPL']
@@ -458,9 +450,9 @@ export class TaxStrategy2025 extends TaxStrategy {
       { key: 'fee',             label: 'Fee',                           align: 'right', mono: true, decimals: 2 },
       { key: 'totalWithFee',    label: 'Общо + такси (вал)',            align: 'right', mono: true, decimals: 2 },
       { key: 'rate',            label: `Курс (${lcl})`,                align: 'right', mono: true, decimals: 5, nullAs: '—' },
-      { key: 'totalWithFeeBGN', label: `Общо + такси (${lcl})`,        align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'totalWithFeeLcl', label: `Общо + такси (${lcl})`,        align: 'right', mono: true, decimals: 2, nullAs: '—' },
       { key: 'costBasis',       label: 'Цена на придобиване (вал)',     align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'costBasisBGN',    label: `Цена на придобиване (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'costBasisLcl',    label: `Цена на придобиване (${lcl})`,  align: 'right', mono: true, decimals: 2, nullAs: '—' },
     ]
 
     return {

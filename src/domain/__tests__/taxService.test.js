@@ -67,8 +67,8 @@ describe('calculateTax — strategy routing', () => {
   it('2025 result trade columns use BGN-suffixed keys', () => {
     const result = calculateTax(emptyInput(2025))
     const keys = result.trades.columns.map(c => c.key)
-    expect(keys).toContain('totalWithFeeBGN')
-    expect(keys).toContain('costBasisBGN')
+    expect(keys).toContain('totalWithFeeLcl')
+    expect(keys).toContain('costBasisLcl')
   })
 
   it('2026 result trade columns use Lcl-suffixed keys', () => {
@@ -81,8 +81,8 @@ describe('calculateTax — strategy routing', () => {
   it('2026 result trade columns do not contain BGN-suffixed keys', () => {
     const result = calculateTax(emptyInput(2026))
     const keys = result.trades.columns.map(c => c.key)
-    expect(keys).not.toContain('totalWithFeeBGN')
-    expect(keys).not.toContain('costBasisBGN')
+    expect(keys).not.toContain('totalWithFeeLcl')
+    expect(keys).not.toContain('costBasisLcl')
   })
 
   it('2025 localCurrencyCode is BGN', () => {
@@ -95,20 +95,20 @@ describe('calculateTax — strategy routing', () => {
 })
 
 describe('calculateTax — 2025 trade rows use BGN fields', () => {
-  it('BUY row has totalWithFeeBGN field', () => {
+  it('BUY row has totalWithFeeLcl field', () => {
     const input = { ...emptyInput(2025), trades: [buyTrade()] }
     const result = calculateTax(input)
     const row = result.trades.rows[0]
-    expect(row).toHaveProperty('totalWithFeeBGN')
+    expect(row).toHaveProperty('totalWithFeeLcl')
     expect(row).not.toHaveProperty('totalWithFeeLcl')
   })
 
-  it('SELL row has proceedsBGN and costBasisBGN fields', () => {
+  it('SELL row has proceedsBGN and costBasisLcl fields', () => {
     const input = { ...emptyInput(2025), trades: [buyTrade(), sellTrade()] }
     const result = calculateTax(input)
     const sellRow = result.trades.rows.find(r => r.side === 'SELL')
     expect(sellRow).toHaveProperty('proceedsBGN')
-    expect(sellRow).toHaveProperty('costBasisBGN')
+    expect(sellRow).toHaveProperty('costBasisLcl')
     expect(sellRow).not.toHaveProperty('proceedsLcl')
   })
 })
@@ -122,7 +122,7 @@ describe('calculateTax — 2026 trade rows use Lcl fields', () => {
     const result = calculateTax(input)
     const row = result.trades.rows[0]
     expect(row).toHaveProperty('totalWithFeeLcl')
-    expect(row).not.toHaveProperty('totalWithFeeBGN')
+    expect(row).not.toHaveProperty('totalWithFeeLcl')
   })
 
   it('SELL row has proceedsLcl and costBasisLcl fields', () => {

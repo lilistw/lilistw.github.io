@@ -4,14 +4,14 @@
  */
 
 const TRADE_SUM_COLS     = ['proceeds', 'commission', 'fee', 'totalWithFee']
-const TRADE_SUM_BGN_COLS = ['totalWithFeeBGN', 'costBasisBGN']
+const TRADE_SUM_LCL_COLS = ['totalWithFeeLcl', 'costBasisLcl']
 
 /**
  * Build per-group, per-currency total rows for the trades table.
  * Groups by taxExemptLabel ('Облагаем' / 'Освободен'), then by currency,
  * plus a local-currency grand total per group.
  */
-export function buildTradeTotals(dataRows, localCurrencyCode = 'BGN') {
+export function buildTradeTotals(dataRows, localCurrencyCode) {
   const totals = []
   for (const label of ['Облагаем', 'Освободен']) {
     const group = dataRows.filter(r => r.taxExemptLabel === label)
@@ -21,11 +21,11 @@ export function buildTradeTotals(dataRows, localCurrencyCode = 'BGN') {
       if (subset.length === 0) continue
       const row = { _total: true, taxExemptLabel: label, currency: cur }
       TRADE_SUM_COLS.forEach(k    => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
-      TRADE_SUM_BGN_COLS.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
+      TRADE_SUM_LCL_COLS.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
       totals.push(row)
     }
     const lclRow = { _total: true, taxExemptLabel: label, currency: localCurrencyCode }
-    TRADE_SUM_BGN_COLS.forEach(k => { lclRow[k] = group.reduce((s, r) => s + (r[k] ?? 0), 0) })
+    TRADE_SUM_LCL_COLS.forEach(k => { lclRow[k] = group.reduce((s, r) => s + (r[k] ?? 0), 0) })
     totals.push(lclRow)
   }
   return totals
@@ -42,16 +42,16 @@ export function buildTaxSummary(dataRows) {
 
   const summarize = group => {
     const profits = group.reduce((s, r) => {
-      const pl = (r.totalWithFeeBGN ?? 0) - (r.costBasisBGN ?? 0)
+      const pl = (r.totalWithFeeLcl ?? 0) - (r.costBasisLcl ?? 0)
       return pl > 0 ? s + pl : s
     }, 0)
     const losses = group.reduce((s, r) => {
-      const pl = (r.totalWithFeeBGN ?? 0) - (r.costBasisBGN ?? 0)
+      const pl = (r.totalWithFeeLcl ?? 0) - (r.costBasisLcl ?? 0)
       return pl < 0 ? s + Math.abs(pl) : s
     }, 0)
     return {
-      totalProceedsBGN:  group.reduce((s, r) => s + (r.totalWithFeeBGN ?? 0), 0),
-      totalCostBasisBGN: group.reduce((s, r) => s + (r.costBasisBGN    ?? 0), 0),
+      totalProceedsLcl:  group.reduce((s, r) => s + (r.totalWithFeeLcl ?? 0), 0),
+      totalcostBasisLcl: group.reduce((s, r) => s + (r.costBasisLcl    ?? 0), 0),
       profits,
       losses,
     }
