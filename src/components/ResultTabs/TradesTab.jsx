@@ -40,19 +40,32 @@ export default function TradesTab({ result }) {
       ? t('app.taxStatus.taxable')
       : t('app.taxStatus.exempt')
 
-    setPending({ idx, newTaxable, newLabel, row })
+    // ✅ store only minimal data (no stale row)
+    setPending({ idx, newTaxable, newLabel })
   }
 
   function confirm() {
+    if (!pending) return
+
     setRows(prev =>
       prev.map((r, i) =>
         i === pending.idx
-          ? { ...r, taxable: pending.newTaxable, taxExemptLabel: pending.newLabel }
+          ? {
+              ...r,
+              taxable: pending.newTaxable,
+              taxExemptLabel: pending.newLabel,
+            }
           : r
       )
     )
+
     setPending(null)
   }
+
+  // ✅ always derive fresh row from current state
+  const pendingWithRow = pending
+    ? { ...pending, row: rows[pending.idx] }
+    : null
 
   return (
     <>
@@ -70,7 +83,11 @@ export default function TradesTab({ result }) {
       <TaxApp5 summary={taxSummary.app5} localCurrencyLabel={localCurrencyLabel} />
       <TaxApp13 summary={taxSummary.app13} localCurrencyLabel={localCurrencyLabel} />
 
-      <TaxableToggleDialog pending={pending} onClose={() => setPending(null)} onConfirm={confirm} />
+      <TaxableToggleDialog
+        pending={pendingWithRow}
+        onClose={() => setPending(null)}
+        onConfirm={confirm}
+      />
     </>
   )
 }
