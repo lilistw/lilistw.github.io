@@ -14,7 +14,7 @@ Account Information,Data,Base Currency,EUR
 Net Asset Value,Header,Asset Class,Prior Total,Current Long,Current Short,Current Total,Change
 Net Asset Value,Data,Cash,0,7650.75,0,7650.75,7650.75
 Net Asset Value,Data,Stock,0,12458.80,0,12458.80,12458.80
-Net Asset Value,Data,Total,0,20109.55,0,20109.55,20109.55
+Net Asset Value,Data,Total,0,20179.55,0,20179.55,20179.55,
 Net Asset Value,Header,Time Weighted Rate of Return
 Net Asset Value,Data,3.850%
 Change in NAV,Header,Field Name,Field Value
@@ -26,7 +26,7 @@ Change in NAV,Data,Withholding Tax,-5.50
 Change in NAV,Data,Change in Dividend Accruals,0.00
 Change in NAV,Data,Commissions,-52.00
 Change in NAV,Data,Other FX Translations,-16.70
-Change in NAV,Data,Ending Value,20109.55
+Change in NAV,Data,Ending Value,20179.55
 Mark-to-Market Performance Summary,Header,Asset Category,Symbol,Prior Quantity,Current Quantity,Prior Price,Current Price,Mark-to-Market P/L Position,Mark-to-Market P/L Transaction,Mark-to-Market P/L Commissions,Mark-to-Market P/L Other,Mark-to-Market P/L Total,Code
 Mark-to-Market Performance Summary,Data,Stocks,VWCE,20,15,143.00,148.50,75.00,-650.00,0,0,-575.00,
 Mark-to-Market Performance Summary,Data,Stocks,SAP,12,12,148.00,157.50,114.00,0,0,0,114.00,
@@ -36,9 +36,9 @@ Mark-to-Market Performance Summary,Data,Stocks,AAPL,15,15,175.00,186.50,172.50,0
 Mark-to-Market Performance Summary,Data,Stocks,NFLX,8,8,520.00,535.00,120.00,0,0,0,120.00,
 Mark-to-Market Performance Summary,Data,Stocks,AMZN,8,5,520.00,535.00,75.00,60.00,-2.00,0,133.00,
 Mark-to-Market Performance Summary,Data,Stocks,MSFT,5,0,350.00,0.00,0.00,350.00,-2.50,0,347.50,
-Mark-to-Market Performance Summary,Data,Stocks,TSLA,0,0,0.00,0.00,0.00,-45.00,-4.50,0,-49.50,
-Mark-to-Market Performance Summary,Data,Stocks,PYPL,0,0,0.00,0.00,0.00,-40.00,-4.50,0,-44.50,
-Mark-to-Market Performance Summary,Data,Total,,,,,,75.00,-85.00,-13.50,0,1181.50,
+Mark-to-Market Performance Summary,Data,Stocks,TSLA,0,0,0.00,0.00,0.00,-12.50,-4.50,0,-17.00,
+Mark-to-Market Performance Summary,Data,Stocks,PYPL,0,0,0.00,0.00,0.00,-12.00,-4.50,0,-16.50,
+Mark-to-Market Performance Summary,Data,Total,,,,,,75.00,-24.50,-13.50,0,1250.00,
 Realized & Unrealized Performance Summary,Header,Asset Category,Symbol,Cost Adj.,Realized S/T Profit,Realized S/T Loss,Realized L/T Profit,Realized L/T Loss,Realized Total,Unrealized S/T Profit,Unrealized S/T Loss,Unrealized L/T Profit,Unrealized L/T Loss,Unrealized Total,Total,Code
 Realized & Unrealized Performance Summary,Data,Stocks,VWCE,2145.00,0,3.50,0,0,-3.50,82.50,0,0,0,82.50,79.00,
 Realized & Unrealized Performance Summary,Data,Stocks,SAP,1776.00,0,0,0,0,0,114.00,0,0,0,114.00,114.00,
@@ -48,10 +48,9 @@ Realized & Unrealized Performance Summary,Data,Stocks,AAPL,2625.00,0,0,0,0,0,172
 Realized & Unrealized Performance Summary,Data,Stocks,NFLX,4160.00,0,0,0,0,0,120.00,0,0,0,120.00,120.00,
 Realized & Unrealized Performance Summary,Data,Stocks,AMZN,2600.00,103.00,0,0,0,103.00,75.00,0,0,0,75.00,178.00,
 Realized & Unrealized Performance Summary,Data,Stocks,MSFT,0,0,0,347.50,0,347.50,0,0,0,0,0,347.50,
-Realized & Unrealized Performance Summary,Data,Stocks,TSLA,1002.50,0,49.50,0,0,-49.50,0,0,0,0,0,-49.50,
-Realized & Unrealized Performance Summary,Data,Stocks,PYPL,722.00,0,44.50,0,0,-44.50,0,0,0,0,0,-44.50,
-Realized & Unrealized Performance Summary,Data,Total,,23547.50,270.00,97.00,347.50,0,520.50,877.50,0,0,0,877.50,1398.00,
-Cash Report,Header,Currency Summary,Currency,Total,Securities,Futures,
+Realized & Unrealized Performance Summary,Data,Stocks,TSLA,1002.50,0,12.50,0,0,-12.50,0,0,0,0,0,-12.50,
+Realized & Unrealized Performance Summary,Data,Stocks,PYPL,722.00,0,12.00,0,0,-12.00,0,0,0,0,0,-12.00,
+Realized & Unrealized Performance Summary,Data,Total,,23547.50,270.00,24.00,347.50,0,593.50,877.50,0,0,0,877.50,1471.00,Cash Report,Header,Currency Summary,Currency,Total,Securities,Futures,
 Cash Report,Data,Starting Cash,Base Currency Summary,0,0,0,
 Cash Report,Data,Commissions,Base Currency Summary,-52.00,-52.00,0,
 Cash Report,Data,Deposits,Base Currency Summary,20000.00,20000.00,0,
@@ -74,10 +73,10 @@ Cash Report,Data,Starting Cash,USD,0,0,0,
 Cash Report,Data,Commissions,USD,-24.00,-24.00,0,
 Cash Report,Data,Deposits,USD,5000.00,5000.00,0,
 Cash Report,Data,Dividends,USD,40.00,40.00,0,
-Cash Report,Data,Trades (Sales),USD,2435.00,2435.00,0,
+Cash Report,Data,Trades (Sales),USD,2465.00,2465.00,0,
 Cash Report,Data,Trades (Purchase),USD,-6722.00,-6722.00,0,
-Cash Report,Data,Ending Cash,USD,1514.00,1514.00,0,
-Cash Report,Data,Ending Settled Cash,USD,1514.00,1514.00,0,
+Cash Report,Data,Ending Cash,USD,1544.00,1544.00,0,
+Cash Report,Data,Ending Settled Cash,USD,1544.00,1544.00,0,
 Forex Balances,Header,Asset Category,Currency,Description,Quantity,Cost Price,Cost Basis in EUR,Close Price,Value in EUR,Unrealized P/L in EUR,Code
 Forex Balances,Data,Forex,EUR,EUR,200.00,1,200.00,1.00000,200.00,0.00,
 Forex Balances,Data,Forex,EUR,USD,1350.00,0.87100,-1175.85,0.87100,1175.85,-4.50,
@@ -117,15 +116,15 @@ Trades,Data,Order,Stocks,USD,AAPL,"2025-10-08, 14:30:00",10,174.50,175.00,-1745.
 Trades,Data,Order,Stocks,USD,AAPL,"2025-12-18, 16:00:00",5,176.00,186.50,-880.00,-2.00,880.00,0.00,67.50,O
 Trades,Data,Order,Stocks,USD,NFLX,"2025-11-08, 10:00:00",8,519.00,520.00,-4152.00,-3.50,4155.50,0.00,120.00,O
 Trades,Data,Order,Stocks,USD,TSLA,"2025-03-10, 09:00:00",5,200.00,202.00,-1000.00,-2.50,1002.50,0.00,10.00,O
-Trades,Data,Order,Stocks,USD,TSLA,"2025-06-15, 10:30:00",-5,191.00,192.00,955.00,-2.00,-1002.50,-49.50,-5.00,C
+Trades,Data,Order,Stocks,USD,TSLA,"2025-06-15, 10:30:00",-5,198.00,192.00,990.00,-2.00,-1002.50,-12.50,-2.00,C
 Trades,Data,Order,Stocks,USD,PYPL,"2025-02-12, 09:00:00",10,72.00,73.00,-720.00,-2.00,722.00,0.00,10.00,O
-Trades,Data,Order,Stocks,USD,PYPL,"2025-07-22, 11:15:00",-10,68.00,67.50,680.00,-2.50,-722.00,-44.50,-5.00,C
+Trades,Data,Order,Stocks,USD,PYPL,"2025-07-22, 11:15:00",-10,71.00,67.50,710.00,-2.50,-722.00,-12.00,-2.00,C
 Trades,SubTotal,,Stocks,USD,GOOG,,3,,,-7462.00,-7.50,12435.50,13.00,480.00,
 Trades,SubTotal,,Stocks,USD,AAPL,,15,,,-2625.00,-4.50,2627.50,0.00,172.50,
 Trades,SubTotal,,Stocks,USD,NFLX,,8,,,-4152.00,-3.50,4155.50,0.00,120.00,
-Trades,SubTotal,,Stocks,USD,TSLA,,0,,,-45.00,-4.50,0.00,-49.50,-5.00,
-Trades,SubTotal,,Stocks,USD,PYPL,,0,,,-40.00,-4.50,0.00,-44.50,-5.00,
-Trades,Total,,Stocks,USD,,,,-14324.00,-24.50,19218.50,-80.50,772.50,
+Trades,SubTotal,,Stocks,USD,TSLA,,0,,,-10.00,-4.50,0.00,-12.50,-2.00,
+Trades,SubTotal,,Stocks,USD,PYPL,,0,,,-10.00,-4.50,0.00,-12.00,-2.00,
+Trades,Total,,Stocks,USD,,,,-14259.00,-24.50,19218.50,-23.00,848.50,
 Trades,Header,DataDiscriminator,Asset Category,Currency,Symbol,Date/Time,Quantity,T. Price,,Proceeds,Comm in EUR,,,MTM in EUR,Code
 Trades,Data,Order,Forex,USD,EUR.USD,"2025-12-20, 10:00:00",1350,0.87100,,-1175.85,0,,,-4.50,AFx
 Trades,SubTotal,,Forex,USD,EUR.USD,,1350,,,-1175.85,0,,,-4.50,
