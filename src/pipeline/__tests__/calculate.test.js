@@ -423,3 +423,68 @@ describe('calculate — edge cases', () => {
     expect(taxSummary.app5.profits).toBeGreaterThan(0)
   })
 })
+
+describe('calculate — instrType column', () => {
+  it('trade row has instrType="ETF" for ETF instrument', () => {
+    const input = makeInput({
+      instruments: [
+        {
+          assetCategory: 'Stocks', symbol: 'EXS1', description: 'iShares Core MSCI World ETF',
+          conid: '123', securityId: 'IE00B4L5Y983', underlying: '',
+          listingExchange: 'IBIS', multiplier: '1', type: 'ETF', code: '',
+        },
+      ],
+      trades: [makeTrade({ symbol: 'EXS1', side: 'BUY', exchange: 'IBIS' })],
+    })
+    const { trades } = calculate(input)
+    const row = trades.rows.find(r => r.side === 'BUY')
+    expect(row.instrType).toBe('ETF')
+  })
+
+  it('trade row has instrType="ETF" for IWDA (type field, no "ETF" in description)', () => {
+    const input = makeInput({
+      instruments: [
+        {
+          assetCategory: 'Stocks', symbol: 'IWDA', description: 'ISHARES CORE MSCI WORLD',
+          conid: '100292038', securityId: 'IE00B4L5Y983', underlying: '',
+          listingExchange: 'AEB', multiplier: '1', type: 'ETF', code: '',
+        },
+      ],
+      trades: [makeTrade({ symbol: 'IWDA', side: 'BUY', exchange: 'IBIS2' })],
+    })
+    const { trades } = calculate(input)
+    const row = trades.rows.find(r => r.side === 'BUY')
+    expect(row.instrType).toBe('ETF')
+  })
+
+  it('trade row has instrType="Stock" for regular stock', () => {
+    const input = makeInput({
+      instruments: [
+        {
+          assetCategory: 'Stocks', symbol: 'AAPL', description: 'Apple Inc',
+          conid: '456', securityId: 'US0378331005', underlying: '',
+          listingExchange: 'NASDAQ', multiplier: '1', type: 'COMMON', code: '',
+        },
+      ],
+      trades: [makeTrade({ symbol: 'AAPL', side: 'BUY', exchange: 'NASDAQ' })],
+    })
+    const { trades } = calculate(input)
+    const row = trades.rows.find(r => r.side === 'BUY')
+    expect(row.instrType).toBe('Stock')
+  })
+
+  it('trade row has instrType="Stock" when instrument not in instrumentInfo', () => {
+    const input = makeInput({
+      instruments: [],
+      trades: [makeTrade({ symbol: 'AAPL', side: 'BUY', exchange: 'NASDAQ' })],
+    })
+    const { trades } = calculate(input)
+    const row = trades.rows.find(r => r.side === 'BUY')
+    expect(row.instrType).toBe('Stock')
+  })
+
+  it('instrType column exists in tradeColumns', () => {
+    const { trades } = calculate(makeInput())
+    expect(trades.columns.some(c => c.key === 'instrType')).toBe(true)
+  })
+})

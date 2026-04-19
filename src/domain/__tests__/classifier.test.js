@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { classifyInstrument, isTaxable } from '../instrument/classifier.js'
+import { classifyInstrument, isTaxable, getInstrumentTypeLabel } from '../instrument/classifier.js'
 
 describe('classifyInstrument', () => {
   it('detects ETF from name', () => {
@@ -91,5 +91,35 @@ describe('isTaxable', () => {
 
   it('unknown instrument (no props) → облагаем (true)', () => {
     expect(isTaxable({})).toBe(true)
+  })
+})
+
+describe('getInstrumentTypeLabel', () => {
+  it('returns "ETF" for ETF by name', () => {
+    expect(getInstrumentTypeLabel({ name: 'iShares Core MSCI World ETF' })).toBe('ETF')
+  })
+
+  it('returns "ETF" for ETF by type field (IWDA case)', () => {
+    expect(getInstrumentTypeLabel({ name: 'ISHARES CORE MSCI WORLD', type: 'ETF' })).toBe('ETF')
+  })
+
+  it('returns "Stock" for COMMON type', () => {
+    expect(getInstrumentTypeLabel({ name: 'Apple Inc', type: 'COMMON' })).toBe('Stock')
+  })
+
+  it('returns "Stock" for ADR type', () => {
+    expect(getInstrumentTypeLabel({ name: 'Alibaba ADR', type: 'ADR' })).toBe('Stock')
+  })
+
+  it('returns "Stock" when type is empty', () => {
+    expect(getInstrumentTypeLabel({ name: 'Unknown Corp', type: '' })).toBe('Stock')
+  })
+
+  it('returns "Other" for unrecognized type', () => {
+    expect(getInstrumentTypeLabel({ name: 'Some Warrant', type: 'WARRANT' })).toBe('Other')
+  })
+
+  it('returns "Stock" for unknown instrument with no props', () => {
+    expect(getInstrumentTypeLabel({})).toBe('Stock')
   })
 })

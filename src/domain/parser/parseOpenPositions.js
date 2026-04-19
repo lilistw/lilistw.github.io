@@ -1,3 +1,5 @@
+import { getInstrumentTypeLabel } from '../instrument/classifier.js'
+
 /**
  * Parses IBKR "Open Positions" section into a raw array.
  *
@@ -50,10 +52,12 @@ export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsC
     const calcPos  = positionsCostBasis[symbol]
     const costBasis = calcPos?.cost != null ? calcPos.cost : parseNum(r.costBasis)
     const costPrice = quantity ? costBasis / quantity : parseNum(r.costPrice)
+    const instrType = getInstrumentTypeLabel({ name: info.description ?? '', type: info.type ?? '' })
     return {
       assetCategory: r.assetCategory,
       currency:      r.currency,
       symbol,
+      instrType,
       country:      info.countryName || info.country || '',
       quantity,
       multiplier:   parseNum(r.multiplier),
@@ -71,6 +75,7 @@ export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsC
       { key: 'assetCategory', label: 'Категория' },
       { key: 'currency',      label: 'Валута' },
       { key: 'symbol',        label: 'Символ',            bold: true },
+      { key: 'instrType',     label: 'Тип',               chip: true, chipColors: { ETF: 'info', Stock: 'default', Other: 'default' } },
       { key: 'quantity',      label: 'Количество',        align: 'right', mono: true, decimals: 4 },
       { key: 'multiplier',    label: 'Множител',          align: 'right', mono: true, decimals: 2 },
       { key: 'costPrice',     label: 'Цена',              align: 'right', mono: true, decimals: 4, nullAs: '—' },
