@@ -48,47 +48,6 @@ Phase 2  calculate(inputData, priorPositions)  → result
            ↓
          ResultTabs  (Сделки / Позиции / Дивиденти / Лихви)
 ```
-
-### Directory structure
-
-```
-src/
-  App.jsx                 root — ThemeProvider, theme toggle, layout
-  theme.js                makeTheme(isDark) factory → dayTheme / nightTheme
-  index.css               design tokens (:root + [data-theme="night"]),
-                          layout classes (only ~12 classes still used)
-  main.jsx                StrictMode → <App />  (no ThemeProvider here)
-  i18n/
-    i18n.js               i18next init (Bulgarian default)
-    locales/bg.json       all UI strings — ~150 keys
-  components/
-    AboutSection          3-card info + dialog
-    DataTable             generic sortable table with copy-to-Excel
-    Disclaimer            MUI Alert wrapper
-    Dropzone              file drop/pick; reads infoKey from i18n
-    PriorYearApproxWarning  warning when cost basis is estimated
-    PriorYearPositionsForm  editable table for pre-year positions
-    TaxApp5               Приложение №5 summary
-    TaxApp13              Приложение №13 summary
-    TaxApp8Holdings       Приложение №8 holdings table
-    TaxApp8Dividends      Приложение №8 dividends table
-    TaxFormSection        shared section wrapper (title bar + rows)
-    TermsContent          terms of use text
-  domain/
-    constants.js
-    fx/fxRates.js         BNB rate lookup by date; EUR fixed rate logic
-    fx/rates/             2024.json  2025.json  2026.json
-    tradeSummary.js       buildTradeTotals, buildTaxSummary
-    parser/               CSV and HTML parsers
-  pipeline/
-    readInput.js          Phase 1 orchestration
-    calculate.js          Phase 2 orchestration
-  services/
-    inferPriorPositions.js
-  io/                     file read helpers
-  utils/fmt.js            number formatting
-```
-
 ---
 
 ## Theming
