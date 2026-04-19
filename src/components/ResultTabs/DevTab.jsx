@@ -1,29 +1,68 @@
-import CopyButton from './CopyButton'
+import {
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+  Typography,
+  IconButton,
+  Box
+} from '@mui/material'
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
+import ContentCopyIcon from '@mui/icons-material/ContentCopy'
+
+function JsonAccordion({ title, text, defaultExpanded = false }) {
+  const handleCopy = (e) => {
+    e.stopPropagation()
+    navigator.clipboard.writeText(text || '')
+  }
+
+  return (
+    <Accordion defaultExpanded={defaultExpanded} disableGutters>
+      <AccordionSummary 
+        expandIcon={<ExpandMoreIcon />}
+        >
+        <Typography sx={{ flexGrow: 1, fontWeight: 600, fontSize: 15, color: 'text.secondary' }}>
+          {title}
+        </Typography>
+
+        <IconButton size="small" onClick={handleCopy}>
+          <ContentCopyIcon fontSize="inherit" />
+        </IconButton>
+      </AccordionSummary>
+
+      <AccordionDetails sx={{ p: 0 }}>
+        <Box
+          component="pre"
+          sx={{
+            m: 0,
+            p: 2,
+            fontFamily: 'monospace',
+            fontSize: 13,
+            lineHeight: 1.6,
+            overflow: 'auto',
+            maxHeight: '70vh',
+            backgroundColor: 'background.default'
+          }}
+        >
+          {text}
+        </Box>
+      </AccordionDetails>
+    </Accordion>
+  )
+}
 
 export default function DevTab({ inputJsonText, outputJsonText }) {
   return (
     <>
-      <div className="output" style={{ marginBottom: 24 }}>
-        <div className="output-header">
-          <span className="output-count">Input JSON</span>
-          <CopyButton text={inputJsonText} />
-        </div>
+      <JsonAccordion
+        title="Input JSON"
+        text={inputJsonText}
+        defaultExpanded
+      />
 
-        <pre className="json-output">
-          {inputJsonText}
-        </pre>
-      </div>
-
-      <div className="output">
-        <div className="output-header">
-          <span className="output-count">Output JSON</span>
-          <CopyButton text={outputJsonText} />
-        </div>
-
-        <pre className="json-output">
-          {outputJsonText}
-        </pre>
-      </div>
+      <JsonAccordion
+        title="Output JSON"
+        text={outputJsonText}
+      />
     </>
   )
 }

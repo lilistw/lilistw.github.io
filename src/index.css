@@ -189,40 +189,6 @@ p  { margin: 0; }
 .dropzone-icon { color: var(--md-primary); opacity: 0.85; }
 
 /* ── Dev output panel ────────────────────────────────────────────────────── */
-.output {
-  border: 1px solid var(--md-outline-variant);
-  border-radius: 16px;
-  overflow: hidden;
-  box-shadow: var(--shadow);
-  background: var(--bg-surface);
-}
-
-.output-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 8px 12px 8px 16px;
-  background: var(--md-surface-container);
-  border-bottom: 1px solid var(--md-outline-variant);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.4px;
-  color: var(--text-h);
-}
-
-.output-count { display: inline-flex; align-items: center; gap: 8px; }
-
-.json-output {
-  margin: 0;
-  padding: 16px;
-  font-family: var(--mono);
-  font-size: 13px;
-  line-height: 1.6;
-  overflow: auto;
-  max-height: 70vh;
-  background: var(--bg-surface);
-  color: var(--text-h);
-}
 
 /* ── Footer ──────────────────────────────────────────────────────────────── */
 .app-footer {
