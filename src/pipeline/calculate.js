@@ -8,7 +8,7 @@ import {
   getYearEndDate, getPrevYearEndDate,
 } from '../domain/fx/fxRates.js'
 import { IBKR_EXCHANGES, EU_COUNTRY_CODES } from '../domain/constants.js'
-import { isTaxable, getInstrumentTypeLabel } from '../domain/instrument/classifier.js'
+import { isTaxable } from '../domain/instrument/classifier.js'
 
 const D0 = new Decimal(0)
 const BG_DIVIDEND_TAX_RATE = new Decimal('0.05')
@@ -131,9 +131,7 @@ export function calculate(input, priorPositions = []) {
       const pos = acc.positions[t.symbol]
 
       const date      = t.datetime.split(/[,\s]/)[0]
-      const instr     = makeInstrument(t, instrumentInfo)
-      const exempt    = t.side === 'SELL' && !isTaxable(instr)
-      const instrType = getInstrumentTypeLabel(instr)
+      const exempt    = t.side === 'SELL' && !isTaxable(makeInstrument(t, instrumentInfo))
       const proceedsD = toD(t.proceeds)
       const commD     = toD(t.commission)
       const feeD      = toD(t.fee)
@@ -197,7 +195,6 @@ export function calculate(input, priorPositions = []) {
         commission:      commD.toNumber(),
         fee:             feeD.toNumber(),
         // Computed fields
-        instrType,
         taxable,
         taxExemptLabel:  t.side !== 'SELL' ? '' : exempt ? 'Освободен' : 'Облагаем',
         rate:            rateD ? rateD.toNumber() : null,
@@ -425,7 +422,6 @@ export function calculate(input, priorPositions = []) {
     { key: 'taxable',         label: 'Облагаем?',                     editable: 'checkbox' },
     { key: 'taxExemptLabel',  label: 'Данъчен статус',                chip: true, chipColors: { 'Освободен': 'success', 'Облагаем': 'default' } },
     { key: 'symbol',          label: 'Symbol',                        bold: true },
-    { key: 'instrType',       label: 'Тип',                           chip: true, chipColors: { ETF: 'info', Stock: 'default', Other: 'default' } },
     { key: 'datetime',        label: 'Trade Date/Time',               mono: true },
     { key: 'exchange',        label: 'Exchange' },
     { key: 'currency',        label: 'Currency' },

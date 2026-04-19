@@ -8,7 +8,7 @@ import {
   getYearEndDate, getPrevYearEndDate,
 } from '../../fx/fxRates.js'
 import { IBKR_EXCHANGES, EU_COUNTRY_CODES } from '../../constants.js'
-import { isTaxable, getInstrumentTypeLabel } from '../../instrument/classifier.js'
+import { isTaxable } from '../../instrument/classifier.js'
 import { TaxStrategy } from './TaxStrategy.js'
 
 const D0 = new Decimal(0)
@@ -25,7 +25,6 @@ function makeInstrument(trade, instrumentInfo) {
   const exch = IBKR_EXCHANGES[trade.exchange]
   return {
     name: info?.description ?? '',
-    type: info?.type ?? '',
     isRegulatedMarket: exch?.regulated ?? false,
   }
 }
@@ -118,9 +117,7 @@ export class TaxStrategy2026 extends TaxStrategy {
         const pos = acc.positions[t.symbol]
 
         const date      = t.datetime.split(/[,\s]/)[0]
-        const instr     = makeInstrument(t, instrumentInfo)
-        const exempt    = t.side === 'SELL' && !isTaxable(instr)
-        const instrType = getInstrumentTypeLabel(instr)
+        const exempt    = t.side === 'SELL' && !isTaxable(makeInstrument(t, instrumentInfo))
         const proceedsD = toD(t.proceeds)
         const commD     = toD(t.commission)
         const feeD      = toD(t.fee)
@@ -180,7 +177,6 @@ export class TaxStrategy2026 extends TaxStrategy {
           proceeds:        proceedsD.toNumber(),
           commission:      commD.toNumber(),
           fee:             feeD.toNumber(),
-          instrType,
           taxable,
           taxExemptLabel:  t.side !== 'SELL' ? '' : exempt ? 'Освободен' : 'Облагаем',
           rate:            rateD ? rateD.toNumber() : null,
@@ -397,7 +393,6 @@ export class TaxStrategy2026 extends TaxStrategy {
       { key: 'taxable',         label: 'Облагаем?',                     editable: 'checkbox' },
       { key: 'taxExemptLabel',  label: 'Данъчен статус',                chip: true, chipColors: { 'Освободен': 'success', 'Облагаем': 'default' } },
       { key: 'symbol',          label: 'Symbol',                        bold: true },
-      { key: 'instrType',       label: 'Тип',                           chip: true, chipColors: { ETF: 'info', Stock: 'default', Other: 'default' } },
       { key: 'datetime',        label: 'Trade Date/Time',               mono: true },
       { key: 'exchange',        label: 'Exchange' },
       { key: 'currency',        label: 'Currency' },
