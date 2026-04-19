@@ -26,6 +26,7 @@ function makeInstrument(trade, instrumentInfo) {
   return {
     name: info?.description ?? '',
     type: info?.type ?? '',
+    securityId: info?.securityId ?? '',
     isRegulatedMarket: exch?.regulated ?? false,
   }
 }
@@ -164,6 +165,9 @@ export class TaxStrategy2025 extends TaxStrategy {
         const realizedPLBGN = proceedsBGN != null && costBasisBGN != null
           ? new Decimal(proceedsBGN).minus(costBasisBGN).toNumber() : null
 
+        
+        const securityId = instrumentInfo[t.symbol]?.securityId || null
+
         acc.rows.push({
           symbol:          t.symbol,
           datetime:        t.datetime,
@@ -191,6 +195,8 @@ export class TaxStrategy2025 extends TaxStrategy {
           costBasisBGNApprox,
           proceedsBGN,
           realizedPLBGN,
+          securityId,
+          description:     instrumentInfo[t.symbol]?.description || '',
         })
 
         return acc
@@ -398,8 +404,9 @@ export class TaxStrategy2025 extends TaxStrategy {
       { key: 'taxExemptLabel',  label: 'Данъчен статус',                chip: true, chipColors: { 'Освободен': 'success', 'Облагаем': 'default' } },
       { key: 'symbol',          label: 'Symbol',                        bold: true },
       { key: 'instrType',       label: 'Тип',                           chip: true, chipColors: { ETF: 'primary', Stock: 'default', Other: 'default' } },
-      { key: 'datetime',        label: 'Trade Date/Time',               mono: true },
+      { key: 'securityId',      label: 'ISIN',                   tooltip: 'description' },
       { key: 'exchange',        label: 'Exchange' },
+      { key: 'datetime',        label: 'Trade Date/Time',               mono: true },
       { key: 'currency',        label: 'Currency' },
       { key: 'side',            label: 'Type',                          chip: true, chipColors: { BUY: 'primary', SELL: 'secondary' } },
       { key: 'quantityDisplay', label: 'Quantity',                      align: 'right', mono: true },
