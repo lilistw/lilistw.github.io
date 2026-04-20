@@ -6,7 +6,7 @@ import { InfoOutlined } from '@mui/icons-material'
 
 import { dayTheme, nightTheme } from './theme.js'
 import { readInput } from './pipeline/readInput.js'
-import { calculateTax } from './domain/tax/taxService.js'
+import { calculateTax } from './services/taxService.js'
 import { inferPriorPositions } from './services/inferPriorPositions.js'
 import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
 
