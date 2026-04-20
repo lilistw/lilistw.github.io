@@ -1,27 +1,34 @@
 import { useState, useMemo } from 'react'
 import { useTranslation } from 'react-i18next'
-import DataTable from '../DataTable'
-import TaxApp5 from './TaxApp5'
-import TaxApp13 from './TaxApp13'
+import DataTable from './DataTable'
+import TaxSummary from './TaxSummary'
 import PriorYearApproxWarning from '../PriorYearApproxWarning'
 import { buildTradeTotals, buildTaxSummary } from '../../domain/tradeSummary'
 import TaxableToggleDialog from './TaxableToggleDialog'
 import { alpha } from '@mui/material/styles'
 import { Box, Typography } from '@mui/material'
 import { WarningOutlined } from '@mui/icons-material'
+import { TradePresenter } from '../../presentation/TradePresenter.js'
 
 
 export default function TradesTab({ result }) {
   const { t } = useTranslation()
 
   const { taxYear, localCurrencyCode, localCurrencyLabel } = result
+  
+  
+  const tradePresenter = new TradePresenter({
+    lcl: localCurrencyLabel,
+  })
+
+  const tradesTable = tradePresenter.buildTable(result.trades)
 
   const [rows, setRows] = useState(
-    result.trades.rows.filter(r => !r._total)
+    tradesTable.rows.filter(r => !r._total)
   )
 
   const trades = useMemo(() => ({
-    columns: result.trades.columns,
+    columns: tradesTable.columns,
     rows: [...rows, ...buildTradeTotals(rows, localCurrencyCode)],
   }), [rows, localCurrencyCode])
 
@@ -31,7 +38,6 @@ export default function TradesTab({ result }) {
     () => rows.filter(r => r.side === 'SELL' && r.costBasisLclApprox),
     [rows]
   )
-
 
   const [pending, setPending] = useState(null)
 
@@ -44,7 +50,7 @@ export default function TradesTab({ result }) {
       ? t('app.taxStatus.taxable')
       : t('app.taxStatus.exempt')
 
-    // ✅ store only minimal data (no stale row)
+    // store only minimal data (no stale row)
     setPending({ idx, newTaxable, newLabel })
   }
 
@@ -101,8 +107,7 @@ export default function TradesTab({ result }) {
 
       <PriorYearApproxWarning rows={approxRows} taxYear={taxYear} />
 
-      <TaxApp5 summary={taxSummary.app5} localCurrencyLabel={localCurrencyLabel} />
-      <TaxApp13 summary={taxSummary.app13} localCurrencyLabel={localCurrencyLabel} />
+      <TaxSummary taxSummary={taxSummary} localCurrencyLabel={localCurrencyLabel} />
 
       <TaxableToggleDialog
         pending={pendingWithRow}

@@ -1,4 +1,4 @@
-import { parseCSV } from '../io/readCsv.js'
+import { parseCSV } from './readCsv.js'
 import { parseStatementInfo } from '../domain/parser/parseStatementInfo.js'
 import { parseInstruments } from '../domain/parser/parseInstruments.js'
 import { parseDividends, parseWithholdingTax } from '../domain/parser/parseDividends.js'

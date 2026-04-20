@@ -1,8 +1,9 @@
 import { Box, Paper, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ArticleOutlined } from '@mui/icons-material'
+import { fmt } from '../../presentation/fmt.js'
 
-export function TaxFormSection({ title, subtitle, children }) {
+export function TaxFormSection({ title, subtitle, rows }) {
   return (
     <Paper
       variant="outlined"
@@ -31,7 +32,15 @@ export function TaxFormSection({ title, subtitle, children }) {
           )}
         </Box>
       </Box>
-      <Box sx={{ px: 2, pt: 1, pb: 1.5 }}>{children}</Box>
+      <Box sx={{ px: 2, pt: 1, pb: 1.5 }}>{
+        rows?.map((r, i) => (
+          <TaxRow
+            key={i}
+            label={r.label}
+            value={fmt(r.value)}
+            color={r.color}
+          />
+        ))}</Box>
     </Paper>
   )
 }

@@ -1,48 +1,40 @@
+// HoldingsCalculator.js
 import { expandByAliases } from '../parser/parseInstruments.js'
 import { buildOpenPositions } from '../parser/parseOpenPositions.js'
 
 export class HoldingsCalculator {
-  constructor({ instrumentInfo, lcl }) {
+  constructor({ instrumentInfo }) {
     this.instrumentInfo = instrumentInfo
-    this.lcl = lcl
   }
 
-calculate({ openPositions, positions, priorPositions = [], trades = [] }) {
-  if (!openPositions || openPositions.length === 0) {
-    return {
-      holdings: { columns: [], rows: [] },
-      app8Holdings: { columns: [], rows: [] },
+  calculate({ openPositions, positions, priorPositions = [], trades = [] }) {
+    if (!openPositions?.length) {
+      return {
+        holdingsRows: [],
+        app8Rows: [],
+      }
     }
+
+    const positionsCostBasis = this.#mapPositions(positions)
+
+    const holdings = buildOpenPositions(
+      openPositions,
+      this.instrumentInfo,
+      positionsCostBasis
+    )
+
+    const holdingsRows = this.#addTotals(holdings.rows)
+
+    const app8Rows = this.#buildApp8Rows({
+      holdingsRows: holdings.rows,
+      positionsCostBasis,
+      priorPositions,
+      trades,
+    })
+
+    return app8Rows
   }
 
-  const positionsCostBasis = this.#mapPositions(positions)
-
-  const holdings = buildOpenPositions(
-    openPositions,
-    this.instrumentInfo,
-    positionsCostBasis
-  )
-
-  const enrichedRows = this.#addTotals(holdings.rows)
-
-  const app8Holdings = this.#buildApp8Holdings({
-    holdingsRows: holdings.rows,
-    positionsCostBasis,
-    priorPositions,
-    trades,
-  })
-
-  return {
-    holdings: {
-      columns: holdings.columns,
-      rows: enrichedRows,
-    },
-    app8Holdings,
-  }
-}
-
-  // -------------------------
-  // PRIVATE
   // -------------------------
 
   #mapPositions(positions) {
@@ -65,11 +57,14 @@ calculate({ openPositions, positions, priorPositions = [], trades = [] }) {
     const result = [...rows]
     const sumCols = ['quantity', 'costBasis', 'costPrice', 'value', 'unrealizedPL']
 
-    for (const cur of ['EUR', 'USD']) {
-      const subset = rows.filter(r => r.currency === cur)
-      if (!subset.length) continue
+    const byCurrency = rows.reduce((acc, r) => {
+      if (!acc[r.currency]) acc[r.currency] = []
+      acc[r.currency].push(r)
+      return acc
+    }, {})
 
-      const row = { _total: true, currency: cur }
+    for (const [currency, subset] of Object.entries(byCurrency)) {
+      const row = { _total: true, currency }
 
       sumCols.forEach(k => {
         row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0)
@@ -81,70 +76,36 @@ calculate({ openPositions, positions, priorPositions = [], trades = [] }) {
     return result
   }
 
-  #buildApp8Holdings({ holdingsRows, positionsCostBasis, priorPositions, trades }) {
+  #buildApp8Rows({ holdingsRows, positionsCostBasis, priorPositions, trades }) {
     const lastBuyDate = this.#computeLastBuyDate(priorPositions, trades)
     const netBuyQty = this.#computeNetBuyQty(trades)
 
     const lastBuyDateExpanded = expandByAliases(lastBuyDate, this.instrumentInfo)
     const netBuyQtyExpanded = expandByAliases(netBuyQty, this.instrumentInfo)
 
-    return {
-      columns: [
-        { key: 'symbol', label: 'Символ', bold: true, tooltip: 'description' },
-        { key: 'type', label: 'Вид', bold: true },
-        { key: 'country', label: 'Държава' },
-        { key: 'quantity', label: 'Брой', align: 'right', mono: true, decimals: 0 },
-        {
-          key: 'acquDate',
-          label: 'Дата и година на придобиване',
-          shortLabel: 'Дата',
-          mono: true,
-          maxWidth: 80,
-        },
-        {
-          key: 'costBasis',
-          label: 'Обща цена в съответната валута',
-          shortLabel: 'Обща цена',
-          align: 'right',
-          mono: true,
-          decimals: 2,
-        },
-        { key: 'currency', label: 'Валута' },
-        {
-          key: 'costLcl',
-          label: `Обща цена в ${this.lcl}`,
-          align: 'right',
-          mono: true,
-          decimals: 2,
-          nullAs: '—',
-        },
-      ],
-      rows: holdingsRows
-        .map(h => this.#buildApp8Row(h, positionsCostBasis, lastBuyDateExpanded, netBuyQtyExpanded))
-        .sort((a, b) => (a.type === b.type ? 0 : a.type === 'Акции' ? -1 : 1)),
-    }
+    return holdingsRows.map(h =>
+      this.#buildApp8Row(
+        h,
+        positionsCostBasis,
+        lastBuyDateExpanded,
+        netBuyQtyExpanded
+      )
+    )
   }
 
-  #buildApp8Row(h, positionsCostBasis, lastBuyDateExpanded, netBuyQtyExpanded) {
+  #buildApp8Row(h, positionsCostBasis, lastBuyDateExpanded) {
     const info = this.instrumentInfo[h.symbol] || {}
 
-    const type = info.type === 'ETF' ? 'Дялове' : 'Акции'
-    const country = info.countryName || h.currency
-    const description = info.description ?? ''
-
-    const acquDate = lastBuyDateExpanded[h.symbol]
-      ? lastBuyDateExpanded[h.symbol].split('-').reverse().join('.')
-      : null
+    const acquDate = lastBuyDateExpanded[h.symbol] ?? null
 
     const costPerShare = h.quantity ? h.costBasis / h.quantity : 0
-
     const cost = Math.round(h.quantity * costPerShare * 100) / 100
 
     return {
       symbol: h.symbol,
-      type,
-      country,
-      description,
+      type: info.type,          // raw, not localized
+      country: info.countryName || h.currency,
+      description: info.description ?? '',
       quantity: h.quantity,
       acquDate,
       costBasis: cost,

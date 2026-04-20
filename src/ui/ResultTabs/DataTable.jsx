@@ -190,11 +190,12 @@ export default function DataTable({ title, data, countLabel, hint, embedded = fa
                   <TableCell key={col.key} align={col.align ?? 'left'}>
                     {col.editable === 'checkbox' && !row._total
                       ? onCheckChange
-                        ? <Checkbox size="small" sx={{ p: 0 }}
+                        ? (row[col.key] !== null &&
+                          <Checkbox size="small" sx={{ p: 0 }}
                             checked={row[col.key] === true}
                             disabled={row[col.key] === null}
                             onChange={() => onCheckChange(i)}
-                          />
+                          />)
                         : <Checkbox size="small" sx={{ p: 0 }}
                             checked={checkState[col.key]?.[i] ?? true}
                             onChange={() => handleCheck(col.key, i)}

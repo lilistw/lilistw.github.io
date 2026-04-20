@@ -5,18 +5,18 @@ import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from
 import { InfoOutlined } from '@mui/icons-material'
 
 import { dayTheme, nightTheme } from './theme.js'
-import { readInput } from './pipeline/readInput.js'
-import { calculateTax } from './services/taxService.js'
-import { inferPriorPositions } from './services/inferPriorPositions.js'
+import { readInput } from './application/readInput.js'
+import { calculateTax } from './application/calculateTax.js'
+import { inferPriorPositions } from './application/inferPriorPositions.js'
 import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
 
-import AppHeader from './components/AppHeader.jsx'
-import AppFooter from './components/AppFooter.jsx'
-import Disclaimer from './components/Disclaimer.jsx'
-import TermsModal from './components/TermsModal.jsx'
-import Dropzone from './components/Dropzone.jsx'
-import ResultTabs from './components/ResultTabs/ResultTabs.jsx'
-import PriorYearPositionsForm from './components/PriorYearPositionsForm.jsx'
+import AppHeader from './ui/AppHeader.jsx'
+import AppFooter from './ui/AppFooter.jsx'
+import Disclaimer from './ui/Disclaimer.jsx'
+import TermsModal from './ui/TermsModal.jsx'
+import Dropzone from './ui/Dropzone.jsx'
+import ResultTabs from './ui/ResultTabs/ResultTabs.jsx'
+import PriorYearPositionsForm from './ui/PriorYearPositionsForm.jsx'
 
 export default function App() {
   const { t } = useTranslation()

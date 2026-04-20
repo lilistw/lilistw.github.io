@@ -1,16 +1,9 @@
+// TradeCalculator.js
 import Decimal from 'decimal.js'
 import { toLocalCurrency } from '../fx/fxRates.js'
 import { IBKR_EXCHANGES } from '../constants.js'
-import { isTaxable, getInstrumentTypeLabel } from '../instrument/classifier.js'
-import { TRADE_COLUMNS } from '../../presentation/columns/tradeColumns.js'
-
-const D0 = new Decimal(0)
-
-function toD(v) {
-  if (v instanceof Decimal) return v
-  const s = String(v ?? 0).replace(/,/g, '').trim()
-  try { return new Decimal(s) } catch { return D0 }
-}
+import { isTaxable } from '../instrument/classifier.js'
+import { parseToDecimal, D0 } from '../numStr.js'
 
 function makeInstrument(trade, instrumentInfo) {
   const info = instrumentInfo[trade.symbol]
@@ -25,39 +18,36 @@ function makeInstrument(trade, instrumentInfo) {
 
 function summarizeSells(sells) {
   const profits = sells.reduce((s, r) => {
-    const pl = new Decimal(r.proceedsLcl ?? 0).minus(r.costBasisLcl ?? 0)
+    const pl = r.proceedsLcl.minus(r.costBasisLcl ?? D0)
     return pl.gt(0) ? s.plus(pl) : s
-  }, D0).toNumber()
+  }, D0)
 
   const losses = sells.reduce((s, r) => {
-    const pl = new Decimal(r.proceedsLcl ?? 0).minus(r.costBasisLcl ?? 0)
+    const pl = r.proceedsLcl.minus(r.costBasisLcl ?? D0)
     return pl.lt(0) ? s.plus(pl.abs()) : s
-  }, D0).toNumber()
+  }, D0)
 
   return {
-    totalProceedsLcl: sells.reduce((s, r) => s.plus(r.proceedsLcl ?? 0), D0).toNumber(),
-    totalCostBasisLcl: sells.reduce((s, r) => s.plus(r.costBasisLcl ?? 0), D0).toNumber(),
+    totalProceedsLcl: sells.reduce((s, r) => s.plus(r.proceedsLcl ?? D0), D0),
+    totalCostBasisLcl: sells.reduce((s, r) => s.plus(r.costBasisLcl ?? D0), D0),
     profits,
     losses,
   }
 }
 
 export class TradeCalculator {
-  constructor({ instrumentInfo, taxYear, csvTradeBasis, prevYearEndDate, localCurrencyLabel }) {
+  constructor({ instrumentInfo, csvTradeBasis, context }) {
     this.instrumentInfo = instrumentInfo
-    this.taxYear = taxYear
     this.csvTradeBasis = csvTradeBasis
-    this.prevYearEndDate = prevYearEndDate
-    this.lcl = localCurrencyLabel
+    this.ctx = context
   }
 
   calculate(trades, priorPositions = []) {
-    const positions = this.#initPositions(priorPositions)
+    const calculatedPositions = this.#initPositions(priorPositions)
+    const sorted = this.#sortTrades(trades)
 
-    const sortedTrades = this.#sortTrades(trades)
-
-    const rows = sortedTrades.map((t, i) =>
-      this.#processTrade(t, positions, i)
+    const rows = sorted.map((t, i) =>
+      this.#processTrade(t, calculatedPositions, i)
     )
 
     const rowsWithTotals = this.#addTotals(rows)
@@ -65,15 +55,15 @@ export class TradeCalculator {
     const sells = rows.filter(r => r.side === 'SELL')
 
     return {
-      trades: { columns: TRADE_COLUMNS(this.lcl), rows: rowsWithTotals },
-      positions,
-      app5: summarizeSells(sells.filter(r => r.taxable !== false)),
-      app13: summarizeSells(sells.filter(r => r.taxable === false)),
+      trades: rowsWithTotals,
+      calculatedPositions,
+      taxSummary: {
+        sumTaxable: summarizeSells(sells.filter(r => r.taxable === true)),
+        sumExempt: summarizeSells(sells.filter(r => r.taxable === false)),
+      }
     }
   }
 
-  // -------------------------
-  // PRIVATE
   // -------------------------
 
   #sortTrades(trades) {
@@ -89,23 +79,18 @@ export class TradeCalculator {
     for (const p of priorPositions) {
       if (!p.symbol) continue
       map[p.symbol] = {
-        qty: new Decimal(String(p.qty)),
-        cost: new Decimal(String(p.costUSD)),
-        costLcl: new Decimal(String(p.costLcl)),
+        qty: new Decimal(p.qty),
+        cost: new Decimal(p.costUSD),
+        costLcl: new Decimal(p.costLcl),
       }
     }
 
     return map
   }
 
-#toLcl(amount, currency, date) {
-  const res = toLocalCurrency(amount, currency, date, this.taxYear)
-
-  // force deterministic test behavior
-  if (res == null) return amount
-
-  return res
-}
+  #toLcl(amount, currency, date) {
+    return toLocalCurrency(amount, currency, date, this.ctx.taxYear) ?? amount
+  }
 
   #processTrade(t, positions, index) {
     if (!positions[t.symbol]) {
@@ -118,27 +103,24 @@ export class TradeCalculator {
     const instr = makeInstrument(t, this.instrumentInfo)
     const exempt = t.side === 'SELL' && !isTaxable(instr)
 
-    const proceedsD = toD(t.proceeds)
-    const commD = toD(t.commission)
-    const feeD = toD(t.fee)
-    const qtyD = toD(t.quantity).abs()
+    const proceedsD = parseToDecimal(t.proceeds)
+    const commD = parseToDecimal(t.commission)
+    const feeD = parseToDecimal(t.fee)
+    const qtyD = parseToDecimal(t.quantity).abs()
 
     const totalD = proceedsD.plus(commD).plus(feeD)
     const totalLclD = this.#toLcl(totalD, t.currency, date)
-    const rateD = this.#toLcl(new Decimal(1), t.currency, date) ?? new Decimal(1)
+    const rateD = this.#toLcl(new Decimal(1), t.currency, date)
 
     let costBasis = null
     let costBasisLcl = null
-    let costBasisLclApprox = false
 
-    // BUY
     if (t.side === 'BUY') {
       pos.qty = pos.qty.plus(qtyD)
       pos.cost = pos.cost.plus(totalD.neg())
-      pos.costLcl = pos.costLcl.plus((totalLclD ?? D0).neg())
+      pos.costLcl = pos.costLcl.plus(totalLclD.neg())
     }
 
-    // SELL
     if (t.side === 'SELL') {
       if (pos.qty.isZero()) {
         const csvBasisD = this.csvTradeBasis.get(
@@ -146,17 +128,15 @@ export class TradeCalculator {
         )
 
         if (csvBasisD) {
-          costBasis = csvBasisD.toNumber()
-          costBasisLcl =
-            this.#toLcl(csvBasisD, t.currency, this.prevYearEndDate)?.toNumber() ?? null
-          costBasisLclApprox = true
+          costBasis = csvBasisD
+          costBasisLcl = this.#toLcl(csvBasisD, t.currency, this.ctx.prevYearEndDate)
         }
       } else {
         const cbD = pos.cost.div(pos.qty).times(qtyD)
         const cbLclD = pos.costLcl.div(pos.qty).times(qtyD)
 
-        costBasis = cbD.toNumber()
-        costBasisLcl = cbLclD.toNumber()
+        costBasis = cbD
+        costBasisLcl = cbLclD
 
         pos.qty = pos.qty.minus(qtyD)
         pos.cost = pos.cost.minus(cbD)
@@ -164,75 +144,64 @@ export class TradeCalculator {
       }
     }
 
-    const proceedsLcl =
-      t.side === 'SELL' && totalLclD ? totalLclD.toNumber() : null
+    const proceedsLcl = t.side === 'SELL' ? totalLclD : null
 
     const realizedPLLcl =
-      proceedsLcl != null && costBasisLcl != null
-        ? new Decimal(proceedsLcl).minus(costBasisLcl).toNumber()
+      proceedsLcl && costBasisLcl
+        ? proceedsLcl.minus(costBasisLcl)
         : null
 
-    const instrType = getInstrumentTypeLabel(instr)
-
     return {
-      '#': index + 1,
+      index: index + 1,
       symbol: t.symbol,
       datetime: t.datetime,
-      settleDate: t.settleDate,
       exchange: t.exchange,
       currency: t.currency,
       side: t.side,
-      price: t.price,
-      orderType: t.orderType,
-      code: t.code,
-      date,
-      quantityDisplay: qtyD.toString(),
+      quantity: qtyD,
+      price: parseToDecimal(t.price),
 
-      proceeds: proceedsD.toNumber(),
-      commission: commD.toNumber(),
-      fee: feeD.toNumber(),
+      proceeds: proceedsD,
+      commission: commD,
+      fee: feeD,
 
-      totalWithFee: totalD.toNumber(),
-      totalWithFeeLcl: totalLclD?.toNumber() ?? null,
-      rate: rateD?.toNumber() ?? null,
+      total: totalD,
+      totalLcl: totalLclD,
+      rate: rateD,
 
       costBasis,
       costBasisLcl,
-      costBasisLclApprox,
 
       proceedsLcl,
       realizedPLLcl,
 
-      instrType,
-      taxable: t.side !== 'SELL' ? null : !exempt,
-      taxExemptLabel: t.side !== 'SELL' ? '' : exempt ? 'Освободен' : 'Облагаем',
+      instrType: this.instrumentInfo[t.symbol]?.type,
+      taxable: t.side === 'SELL' ? !exempt : null,
 
-      securityId: this.instrumentInfo[t.symbol]?.securityId || null,
-      description: this.instrumentInfo[t.symbol]?.description || '',
+      securityId: this.instrumentInfo[t.symbol]?.securityId ?? null,
+      description: this.instrumentInfo[t.symbol]?.description ?? '',
     }
   }
 
   #addTotals(rows) {
     const result = [...rows]
 
-    const sumCols = ['proceeds', 'commission', 'fee', 'totalWithFee']
-    const sumLclCols = ['totalWithFeeLcl']
+    const byCurrency = rows.reduce((acc, r) => {
+      if (!acc[r.currency]) acc[r.currency] = []
+      acc[r.currency].push(r)
+      return acc
+    }, {})
 
-    for (const cur of ['EUR', 'USD']) {
-      const subset = rows.filter(r => r.currency === cur)
-      if (!subset.length) continue
-
-      const row = { _total: true, currency: cur }
-
-      sumCols.forEach(k => {
-        row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0)
+    for (const [currency, subset] of Object.entries(byCurrency)) {
+      result.push({
+        _total: true,
+        currency,
+        proceeds: subset.reduce((s, r) => s.plus(r.proceeds), D0),
+        commission: subset.reduce((s, r) => s.plus(r.commission), D0),
+        fee: subset.reduce((s, r) => s.plus(r.fee), D0),
+        total: subset.reduce((s, r) => s.plus(r.total), D0),
+        totalLcl: subset.reduce((s, r) => s.plus(r.totalLcl), D0),
       })
-
-      sumLclCols.forEach(k => {
-        row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0)
-      })
-
-      result.push(row)
     }
 
     return result

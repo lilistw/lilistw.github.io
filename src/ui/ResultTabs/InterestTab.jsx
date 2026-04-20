@@ -2,12 +2,16 @@ import { useTranslation, Trans } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
-import DataTable from '../DataTable'
+import DataTable from './DataTable'
+import { InterestPresenter } from '../../presentation/InterestPresenter.js'
 
 export default function InterestTab({ result }) {
   const { t } = useTranslation()
-
   const { localCurrencyLabel, localCurrencyCode } = result
+
+  const interestTable = new InterestPresenter({
+    lcl: localCurrencyLabel,
+  }).buildTable(result.interest)
 
   return (
     <>
@@ -64,7 +68,7 @@ export default function InterestTab({ result }) {
 
       <DataTable
         title={t('app.tabs.interest')}
-        data={result.interest}
+        data={interestTable}
         countLabel={t('app.countLabel.payments')}
       />
     </>
