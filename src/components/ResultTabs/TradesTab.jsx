@@ -4,9 +4,12 @@ import DataTable from '../DataTable'
 import TaxApp5 from './TaxApp5'
 import TaxApp13 from './TaxApp13'
 import PriorYearApproxWarning from '../PriorYearApproxWarning'
-import EtfClassificationWarning from '../EtfClassificationWarning'
 import { buildTradeTotals, buildTaxSummary } from '../../domain/tradeSummary'
 import TaxableToggleDialog from './TaxableToggleDialog'
+import { alpha } from '@mui/material/styles'
+import { Box, Typography } from '@mui/material'
+import { WarningOutlined } from '@mui/icons-material'
+
 
 export default function TradesTab({ result }) {
   const { t } = useTranslation()
@@ -29,12 +32,6 @@ export default function TradesTab({ result }) {
     [rows]
   )
 
-  const hasTaxFreeTrades = useMemo(
-    () => result.trades.rows.some(
-      r => !r._total && r.side === 'SELL' && r.taxable === false
-    ),
-    [] // important: empty deps = only once on the first render
-  )
 
   const [pending, setPending] = useState(null)
 
@@ -76,13 +73,30 @@ export default function TradesTab({ result }) {
 
   return (
     <>
-      {hasTaxFreeTrades && <EtfClassificationWarning />}
-
       <DataTable
         title={t('app.tradesTableTitle')}
         data={trades}
         countLabel={t('app.countLabel.trades')}
         onCheckChange={handleToggle}
+        hint={
+          <Box sx={{
+            display: 'flex', alignItems: 'flex-start', gap: 1,
+            px: 2, py: 1,
+            bgcolor: (theme) => theme.palette.mode === 'dark'
+              ? alpha(theme.palette.primary.main, 0.10)
+              : '#EFF6FF',
+            borderBottom: '1px solid', borderColor: 'divider',
+          }}>
+            <WarningOutlined sx={{ fontSize: 15, color: 'warning.main', mt: 0.2, flexShrink: 0 }} />
+            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6 }}>
+              <strong>{t('etfClassificationWarning.title')}</strong>{' '}
+              {t('etfClassificationWarning.line1')}{' '}
+              {t('etfClassificationWarning.line2')}{' '}
+              <strong>{t('etfClassificationWarning.attention')}</strong>{' '}
+              {t('etfClassificationWarning.line3')}
+            </Typography>
+          </Box>
+        }
       />
 
       <PriorYearApproxWarning rows={approxRows} taxYear={taxYear} />
