@@ -1,11 +1,10 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { alpha } from '@mui/material/styles'
 import {
   Box, Button, Checkbox, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Tooltip, Typography,
 } from '@mui/material'
-import { Check, ContentCopyOutlined, ExpandLess, ExpandMore, InfoOutlined } from '@mui/icons-material'
+import { Check, ContentCopyOutlined, ExpandLess, ExpandMore } from '@mui/icons-material'
 
 const PREVIEW_ROWS = 5
 
@@ -119,7 +118,7 @@ function CopyExcelButton({ columns, rows }) {
   )
 }
 
-export default function DataTable({ title, data, countLabel, embedded = false, sx, onCheckChange }) {
+export default function DataTable({ title, data, countLabel, hint, embedded = false, sx, onCheckChange }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const { columns, rows } = data
@@ -160,30 +159,8 @@ export default function DataTable({ title, data, countLabel, embedded = false, s
           </Box>
         </Box>
 
-        {/* Checkbox hint — only for trades table */}
-        {onCheckChange && (
-          <Box sx={{
-            display: 'flex', alignItems: 'flex-start', gap: 1,
-            px: 2, py: 1,
-            bgcolor: (theme) => theme.palette.mode === 'dark'
-              ? alpha(theme.palette.primary.main, 0.10)
-              : '#EFF6FF',
-            borderBottom: '1px solid', borderColor: 'divider',
-          }}>
-            <InfoOutlined sx={{ fontSize: 15, color: 'primary.main', mt: 0.2, flexShrink: 0 }} />
-            <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-              <strong>{t('dataTable.hint.label')}</strong>{' '}
-              {t('dataTable.hint.column') /* "Облагаем" */ && (
-                <>Отметката в колона <em>{t('dataTable.hint.column')}</em> определя третирането на сделката.{' '}</>
-              )}
-              <strong>{t('dataTable.hint.checked')}</strong>{' '}
-              – {t('dataTable.hint.checkedDesc')} <strong>{t('dataTable.hint.app5Ref')}</strong>.{' '}
-              <strong>{t('dataTable.hint.unchecked')}</strong>{' '}
-              – {t('dataTable.hint.uncheckedDesc')} <strong>{t('dataTable.hint.app13Ref')}</strong>.{' '}
-              {t('dataTable.hint.clickInstruction')}
-            </Typography>
-          </Box>
-        )}
+        {/* Info text below the table header */}
+        {hint}
 
         <TableContainer>
         <Table size="small">

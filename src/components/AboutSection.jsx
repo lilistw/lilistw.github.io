@@ -151,6 +151,7 @@ export default function AboutSection() {
               <Button
                   size="small"
                   variant="text"
+                  component="span"
                 >
                   {t('about.actions.moreInfo')}
                 </Button>
