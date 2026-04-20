@@ -14,7 +14,7 @@
   --bg-surface: #FFFFFF;
   --shadow:     0 1px 2px rgba(0,28,90,0.12), 0 2px 8px rgba(0,28,90,0.06);
 
-  --sans: Roboto, system-ui, 'Segoe UI', sans-serif;
+  --sans: 'Roboto', system-ui, 'Segoe UI', sans-serif;
   --mono: 'Roboto Mono', ui-monospace, Consolas, monospace;
 
   font: 16px/150% var(--sans);
@@ -49,7 +49,10 @@
 }
 
 /* ── Global ─────────────────────────────────────────────────────────────── */
-body { margin: 0; background: #C8D0DC; }
+body { 
+  margin: 0; 
+  background: #C8D0DC; 
+}
 [data-theme="night"] body { background: #08061A; }
 
 #root {
@@ -153,7 +156,7 @@ p  { margin: 0; }
   align-items: center;
 }
 
-.app-header h1 { color: #ffffff; font-weight: 600; letter-spacing: -0.5px; font-family: var(--mono), 'Montserrat', sans-serif; }
+.app-header h1 { color: #ffffff; font-weight: 600; letter-spacing: -0.5px; font-family: 'Inter', var(--sans); }
 .app-header p  { color: var(--text); font-size: 14px; letter-spacing: 0.25px; }
 
 /* ── Content ─────────────────────────────────────────────────────────────── */
