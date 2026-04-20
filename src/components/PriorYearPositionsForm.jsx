@@ -95,7 +95,9 @@ export default function PriorYearPositionsForm({ positions, onPositionChange, ta
                     <TextField
                       size="small"
                       variant="standard"
-                      inputProps={{ style: { textAlign: 'right', fontFamily: 'monospace', width: 120 } }}
+                      slotProps={{
+                       input: {style: { textAlign: 'right', fontFamily: 'monospace', width: 120 }}
+                      }}
                       value={p.costLclInput}
                       onChange={e => onPositionChange(i, 'costLclInput', e.target.value)}
                     />
@@ -105,7 +107,13 @@ export default function PriorYearPositionsForm({ positions, onPositionChange, ta
                       size="small"
                       variant="standard"
                       type="date"
-                      inputProps={{ style: { fontFamily: 'monospace' } }}
+                      slotProps={{
+                        input: {
+                          style: {
+                            fontFamily: 'monospace',
+                          },
+                        },
+                      }}
                       value={p.lastBuyDateInput}
                       onChange={e => onPositionChange(i, 'lastBuyDateInput', e.target.value)}
                     />

@@ -24,7 +24,7 @@ function JsonAccordion({ title, text, defaultExpanded = false }) {
           {title}
         </Typography>
 
-        <IconButton size="small" onClick={handleCopy}>
+        <IconButton size="small" component="span" onClick={handleCopy}>
           <ContentCopyIcon fontSize="inherit" />
         </IconButton>
       </AccordionSummary>
