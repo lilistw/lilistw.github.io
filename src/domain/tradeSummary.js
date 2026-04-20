@@ -57,5 +57,5 @@ export function buildTaxSummary(dataRows) {
     }
   }
 
-  return { app5: summarize(taxable), app13: summarize(exempt) }
+  return { sumTaxable: summarize(taxable), sumExempt: summarize(exempt) }
 }

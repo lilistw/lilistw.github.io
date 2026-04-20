@@ -1,3 +1,4 @@
+// InterestCalculator.js
 import { toLocalCurrency } from '../fx/fxRates.js'
 import Decimal from 'decimal.js'
 
@@ -8,53 +9,30 @@ function toD(v) {
 }
 
 export class InterestCalculator {
-  constructor({ taxYear, localCurrencyCode, localCurrencyLabel }) {
-    this.taxYear = taxYear
-    this.localCurrencyCode = localCurrencyCode
-    this.localCurrencyLabel = localCurrencyLabel
+  constructor({ context }) {
+    this.ctx = context
   }
 
   calculate({ interest = [] }) {
     const rows = this.#mapRows(interest)
-    const enriched = this.#addTotals(rows)
-
-    return {
-      columns: this.#buildColumns(),
-      rows: enriched,
-    }
+    return this.#addTotals(rows)
   }
 
   // -------------------------
   // PRIVATE
   // -------------------------
 
-  #buildColumns() {
-    return [
-      { key: 'date',        label: 'Дата', mono: true },
-      { key: 'currency',    label: 'Валута' },
-      { key: 'description', label: 'Описание' },
-      { key: 'amount',      label: 'Сума', align: 'right', mono: true, decimals: 2 },
-      {
-        key: 'amountLcl',
-        label: `Сума (${this.localCurrencyLabel})`,
-        align: 'right',
-        mono: true,
-        decimals: 2,
-        nullAs: '—',
-      },
-    ]
-  }
-
   #mapRows(interest) {
     return interest.map(r => {
-      const amount = parseFloat(r.amount) || 0
+      const amount = toD(r.amount)
 
-      const amountLcl = toLocalCurrency(
-        toD(amount),
-        r.currency,
-        r.date,
-        this.taxYear
-      )?.toNumber() ?? null
+      const amountLcl =
+        toLocalCurrency(
+          amount,
+          r.currency,
+          r.date,
+          this.ctx.taxYear
+        ) ?? new Decimal(0)
 
       return {
         ...r,
@@ -67,26 +45,28 @@ export class InterestCalculator {
   #addTotals(rows) {
     const result = [...rows]
 
-    // per currency totals
-    for (const cur of ['EUR', 'USD']) {
-      const subset = rows.filter(r => r.currency === cur)
-      if (subset.length === 0) continue
+    // group by currency dynamically (not hardcoded EUR/USD)
+    const byCurrency = rows.reduce((acc, r) => {
+      const cur = r.currency || 'UNKNOWN'
+      if (!acc[cur]) acc[cur] = []
+      acc[cur].push(r)
+      return acc
+    }, {})
 
+    for (const [currency, subset] of Object.entries(byCurrency)) {
       result.push({
         _total: true,
-        currency: cur,
-        description: 'Общо',
-        amount: subset.reduce((s, r) => s + (r.amount ?? 0), 0),
-        amountLcl: subset.reduce((s, r) => s + (r.amountLcl ?? 0), 0),
+        currency,
+        amount: subset.reduce((s, r) => s.plus(r.amount), new Decimal(0)),
+        amountLcl: subset.reduce((s, r) => s.plus(r.amountLcl), new Decimal(0)),
       })
     }
 
     // grand total (local currency)
     result.push({
       _total: true,
-      currency: this.localCurrencyCode,
-      description: 'Общо',
-      amountLcl: rows.reduce((s, r) => s + (r.amountLcl ?? 0), 0),
+      currency: this.ctx.localCurrencyCode,
+      amountLcl: rows.reduce((s, r) => s.plus(r.amountLcl), new Decimal(0)),
     })
 
     return result

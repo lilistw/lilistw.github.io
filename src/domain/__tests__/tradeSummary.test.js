@@ -91,53 +91,53 @@ describe('buildTradeTotals', () => {
 })
 
 describe('buildTaxSummary', () => {
-  it('returns app5 and app13 summaries', () => {
+  it('returns sumTaxable and sumExempt summaries', () => {
     const result = buildTaxSummary([])
-    expect(result).toHaveProperty('app5')
-    expect(result).toHaveProperty('app13')
+    expect(result).toHaveProperty('sumTaxable')
+    expect(result).toHaveProperty('sumExempt')
   })
 
   it('returns zeros for empty input', () => {
-    const { app5, app13 } = buildTaxSummary([])
-    expect(app5.profits).toBe(0)
-    expect(app5.losses).toBe(0)
-    expect(app13.profits).toBe(0)
+    const { sumTaxable, sumExempt } = buildTaxSummary([])
+    expect(sumTaxable.profits).toBe(0)
+    expect(sumTaxable.losses).toBe(0)
+    expect(sumExempt.profits).toBe(0)
   })
 
-  it('calculates taxable sell profits in app5', () => {
+  it('calculates taxable sell profits in sumTaxable', () => {
     const rows = [
       makeSell({ taxable: true, totalWithFeeLcl: 200, costBasisLcl: 150 }),
     ]
-    const { app5 } = buildTaxSummary(rows)
-    expect(app5.profits).toBeCloseTo(50)
-    expect(app5.losses).toBe(0)
+    const { sumTaxable } = buildTaxSummary(rows)
+    expect(sumTaxable.profits).toBeCloseTo(50)
+    expect(sumTaxable.losses).toBe(0)
   })
 
-  it('calculates taxable sell losses in app5', () => {
+  it('calculates taxable sell losses in sumTaxable', () => {
     const rows = [
       makeSell({ taxable: true, totalWithFeeLcl: 100, costBasisLcl: 150 }),
     ]
-    const { app5 } = buildTaxSummary(rows)
-    expect(app5.profits).toBe(0)
-    expect(app5.losses).toBeCloseTo(50)
+    const { sumTaxable } = buildTaxSummary(rows)
+    expect(sumTaxable.profits).toBe(0)
+    expect(sumTaxable.losses).toBeCloseTo(50)
   })
 
-  it('puts exempt sells into app13, not app5', () => {
+  it('puts exempt sells into sumExempt, not sumTaxable', () => {
     const rows = [
       makeSell({ taxable: false, totalWithFeeLcl: 200, costBasisLcl: 150 }),
     ]
-    const { app5, app13 } = buildTaxSummary(rows)
-    expect(app5.profits).toBe(0)
-    expect(app13.profits).toBeCloseTo(50)
+    const { sumTaxable, sumExempt } = buildTaxSummary(rows)
+    expect(sumTaxable.profits).toBe(0)
+    expect(sumExempt.profits).toBeCloseTo(50)
   })
 
   it('ignores BUY rows when calculating summaries', () => {
     const rows = [
       makeBuy({ totalWithFeeLcl: -500, costBasisLcl: null }),
     ]
-    const { app5, app13 } = buildTaxSummary(rows)
-    expect(app5.profits).toBe(0)
-    expect(app13.profits).toBe(0)
+    const { sumTaxable, sumExempt } = buildTaxSummary(rows)
+    expect(sumTaxable.profits).toBe(0)
+    expect(sumExempt.profits).toBe(0)
   })
 
   it('handles mixed profits and losses in the same group', () => {
@@ -145,9 +145,9 @@ describe('buildTaxSummary', () => {
       makeSell({ taxable: true, totalWithFeeLcl: 200, costBasisLcl: 150 }),
       makeSell({ taxable: true, totalWithFeeLcl: 80,  costBasisLcl: 100 }),
     ]
-    const { app5 } = buildTaxSummary(rows)
-    expect(app5.profits).toBeCloseTo(50)
-    expect(app5.losses).toBeCloseTo(20)
+    const { sumTaxable } = buildTaxSummary(rows)
+    expect(sumTaxable.profits).toBeCloseTo(50)
+    expect(sumTaxable.losses).toBeCloseTo(20)
   })
 
   it('calculates totalProceedsLcl and totalcostBasisLcl', () => {
@@ -155,8 +155,8 @@ describe('buildTaxSummary', () => {
       makeSell({ taxable: true, totalWithFeeLcl: 200, costBasisLcl: 150 }),
       makeSell({ taxable: true, totalWithFeeLcl: 300, costBasisLcl: 200 }),
     ]
-    const { app5 } = buildTaxSummary(rows)
-    expect(app5.totalProceedsLcl).toBeCloseTo(500)
-    expect(app5.totalcostBasisLcl).toBeCloseTo(350)
+    const { sumTaxable } = buildTaxSummary(rows)
+    expect(sumTaxable.totalProceedsLcl).toBeCloseTo(500)
+    expect(sumTaxable.totalcostBasisLcl).toBeCloseTo(350)
   })
 })

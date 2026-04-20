@@ -1,5 +1,7 @@
 import Decimal from 'decimal.js'
 
+export const D0 = new Decimal(0)
+
 /**
  * Parse a raw numeric string (may contain commas) to a Decimal.
  * Returns null for blank / non-numeric input.

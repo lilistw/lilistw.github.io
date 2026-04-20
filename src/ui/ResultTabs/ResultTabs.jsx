@@ -18,9 +18,9 @@ export default function ResultTabs({ result, inputJsonText, outputJsonText }) {
   const { t } = useTranslation()
   const [tab, setTab] = useState(0)
 
-  const hasDividends = result.dividends.rows.length > 0
+  const hasDividends = result.dividends.length > 0
   const hasInterest =
-    result.interest.rows.filter(r => !r._total).length > 0
+    result.interest.filter(r => !r._total).length > 0
 
   const tabs = [
     { label: t('app.tabs.trades') },
