@@ -23,16 +23,12 @@ export class HoldingsCalculator {
       positionsCostBasis
     )
 
-    const holdingsRows = this.#addTotals(holdings.rows)
-
-    const app8Rows = this.#buildApp8Rows({
+    return this.#buildHoldingsRows({
       holdingsRows: holdings.rows,
       positionsCostBasis,
       priorPositions,
       trades,
     })
-
-    return app8Rows
   }
 
   // -------------------------
@@ -53,30 +49,7 @@ export class HoldingsCalculator {
     )
   }
 
-  #addTotals(rows) {
-    const result = [...rows]
-    const sumCols = ['quantity', 'costBasis', 'costPrice', 'value', 'unrealizedPL']
-
-    const byCurrency = rows.reduce((acc, r) => {
-      if (!acc[r.currency]) acc[r.currency] = []
-      acc[r.currency].push(r)
-      return acc
-    }, {})
-
-    for (const [currency, subset] of Object.entries(byCurrency)) {
-      const row = { _total: true, currency }
-
-      sumCols.forEach(k => {
-        row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0)
-      })
-
-      result.push(row)
-    }
-
-    return result
-  }
-
-  #buildApp8Rows({ holdingsRows, positionsCostBasis, priorPositions, trades }) {
+  #buildHoldingsRows({ holdingsRows, positionsCostBasis, priorPositions, trades }) {
     const lastBuyDate = this.#computeLastBuyDate(priorPositions, trades)
     const netBuyQty = this.#computeNetBuyQty(trades)
 
@@ -84,7 +57,7 @@ export class HoldingsCalculator {
     const netBuyQtyExpanded = expandByAliases(netBuyQty, this.instrumentInfo)
 
     return holdingsRows.map(h =>
-      this.#buildApp8Row(
+      this.#buildRow(
         h,
         positionsCostBasis,
         lastBuyDateExpanded,
@@ -93,7 +66,7 @@ export class HoldingsCalculator {
     )
   }
 
-  #buildApp8Row(h, positionsCostBasis, lastBuyDateExpanded) {
+  #buildRow(h, positionsCostBasis, lastBuyDateExpanded) {
     const info = this.instrumentInfo[h.symbol] || {}
 
     const acquDate = lastBuyDateExpanded[h.symbol] ?? null

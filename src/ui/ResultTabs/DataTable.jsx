@@ -4,7 +4,7 @@ import {
   Box, Button, Checkbox, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Tooltip, Typography,
 } from '@mui/material'
-import { Check, ContentCopyOutlined, ExpandLess, ExpandMore } from '@mui/icons-material'
+import { Check, ContentCopyOutlined, ExpandLess, ExpandMore, InfoOutlined } from '@mui/icons-material'
 
 const PREVIEW_ROWS = 5
 
@@ -56,12 +56,30 @@ function CellContent({ col, value, tooltipText }) {
     ? fmt(Number(value), decimals)
     : value
 
+  const href = col.link && col.link(value)
+
   const content = (
     <Box
-      component="span"
+      component={col.link ? "a" : "span"}
+      href={href}
       sx={{
         fontFamily: col.mono ? 'monospace' : 'inherit',
         fontWeight: col.bold ? 700 : 'inherit',
+        color: 'text.primary',
+        textDecoration: 'none',
+        borderBottom: col.link ? '1px dotted' : 'inherit',
+
+        // optional but recommended UX
+        cursor: col.link ? 'pointer' : 'default',
+
+        '&:hover': col.link && {
+          textDecoration: 'underline',
+          color: 'primary.main',
+        },
+
+        '&:visited': {
+          color: 'text.primary',
+        },
       }}
     >
       {displayValue}
@@ -170,7 +188,12 @@ export default function DataTable({ title, data, countLabel, hint, embedded = fa
                 <TableCell key={col.key} align={col.align ?? 'left'}
                   sx={col.maxWidth ? { maxWidth: col.maxWidth, width: col.maxWidth } : undefined}>
                   {col.shortLabel
-                    ? <Tooltip title={col.label} placement="top" arrow><span style={{ cursor: 'help', borderBottom: '1px dotted' }}>{col.shortLabel}</span></Tooltip>
+                    ? <Tooltip title={col.label} placement="top" arrow>
+                        <Box  sx={{ display: 'inline-flex', alignItems: 'center', cursor: 'help', borderBottom: '1px dotted', borderColor: 'text.disabled' }}>
+                          {col.shortLabel}
+                          <InfoOutlined sx={{ ml: 0.5, fontSize: 14, color: 'text.secondary', cursor: 'help' }} /> 
+                        </Box>
+                      </Tooltip>
                     : col.label}
                 </TableCell>
               ))}
