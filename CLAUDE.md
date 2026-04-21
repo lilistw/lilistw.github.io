@@ -1,74 +1,70 @@
-#  IBKR Данъчен калкулатор — Claude guidance
+# IBKR Данъчен калкулатор — Claude guidance
 
-## Project overview
+## 1) Project overview
 
-React 19 + Vite SPA deployed to GitHub Pages. Parses Interactive Brokers
-**Activity Statement (CSV)** and **Trade Confirmation (HTML)** files entirely
-client-side, then calculates Bulgarian tax figures for the annual declaration.
+React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers **Activity Statement (CSV)** and **Trade Confirmation (HTML)** files entirely client-side, then calculates Bulgarian tax figures for the annual declaration.
 
-**No server.** No uploads. Everything runs in the browser.
+**No server. No uploads. Everything runs in the browser.**
 
-### Stack
+## 2) Stack
 
-| Layer | Choice |
-|---|---|
-| UI framework | React 19 |
-| Build | Vite |
-| Component library | Material UI (MUI) v6 |
-| i18n | i18next + react-i18next |
-| Arithmetic | Decimal.js (precision-critical tax math) |
-| Styling | MUI `sx` + single `index.css` for layout/tokens |
+| Layer             | Choice                                            |
+| ----------------- | ------------------------------------------------- |
+| UI framework      | React 19                                          |
+| Build             | Vite                                              |
+| Component library | Material UI (MUI) v6                              |
+| i18n              | i18next + react-i18next                           |
+| Arithmetic        | Decimal.js                                        |
+| Styling           | MUI `sx` + a single `index.css` for layout/tokens |
 
-### Key domain concepts
+## 3) Core domain concepts
 
-- **Activity Statement CSV** — IBKR export with open positions, instruments,
-  IBKR-held cost basis, and prior trades.
-- **Trade Confirmation HTML** — per-trade detail: quantity, price, commissions,
-  fees. This is the authoritative trade source.
-- **Среднопретеглена цена** — weighted-average cost basis per symbol, the
-  legally required method in Bulgaria.
-- **BGN conversion** — non-BGN value for cost basis is converted at the BNB (Bulgarian
-  National Bank) rate for the exact trade date. EUR uses a fixed rate.
-- **App5 / App13 split** — taxable gains go to Приложение №5 (Код 508);
-  exempt gains from EU-regulated-market ETFs go to Приложение №13.
-- **App8 Holdings** — all foreign positions held at 31 Dec must be declared regardless of realised income.
-- **App8 Dividends** — foreign dividends taxed at 5%; foreign withholding tax
-  is credited against Bulgarian tax owed.
+* **Activity Statement CSV** — IBKR export with open positions, instruments, IBKR-held cost basis, and prior trades.
+* **Trade Confirmation HTML** — authoritative per-trade source for quantity, price, commissions, and fees.
+* **Среднопретеглена цена** — weighted-average cost basis per symbol; this is the legally required method in Bulgaria.
+* **BGN conversion** — non-BGN amounts are converted at the BNB rate for the exact trade date. EUR uses a fixed rate.
+* **App5 / App13 split** — taxable gains go to Приложение №5 (Код 508); exempt gains from EU-regulated-market ETFs go to Приложение №13.
+* **App8 Holdings** — all foreign positions held on 31 Dec must be declared, regardless of realised income.
+* **App8 Dividends** — foreign dividends are taxed at 5%; foreign withholding tax is credited against Bulgarian tax owed.
 
-### Processing pipeline (two phases)
+## 4) Processing pipeline
 
 ```
-Phase 1  readInput()        parse CSV + HTML → inputData
-           ↓
-         inferPriorPositions()  detect pre-year positions → pendingPositions
-           ↓
-         PriorYearPositionsForm  user reviews / edits cost basis + dates
+Phase 1  readInput() → parse CSV + HTML → inputData
+          ↓
+         inferPriorPositions() → detect pre-year positions → pendingPositions
+          ↓
+         PriorYearPositionsForm → user reviews/edits cost basis + dates
 
-Phase 2  calculate(inputData, priorPositions)  → result
-           ↓
-         ResultTabs  (Сделки / Позиции / Дивиденти / Лихви)
+Phase 2  calculate(inputData, priorPositions) → result
+          ↓
+         ResultTabs → Сделки / Позиции / Дивиденти / Лихви
 ```
----
 
-## Theming
+## 5) Theming
 
-Two themes exported from `theme.js`: `dayTheme` (blue) and `nightTheme`
-(purple `#9B6DE3`). Both built by `makeTheme(isDark)`.
+Two themes are exported from `theme.js`:
 
-`App.jsx` owns `nightMode` state and passes the active theme to
-`<ThemeProvider>`. It also sets `document.documentElement`
-`data-theme="night"|"day"` so the CSS-variable layer (`index.css`) can
-override the handful of non-MUI styles (header gradient, dropzone, footer).
+* `dayTheme` (blue)
+* `nightTheme` (purple `#9B6DE3`)
+
+Both are built by `makeTheme(isDark)`.
+
+`App.jsx` owns `nightMode` and passes the active theme into `ThemeProvider`. It also sets:
+
+```js
+ document.documentElement.dataset.theme = 'night' | 'day'
+```
+
+This allows `index.css` to override a small set of non-MUI styles (header gradient, dropzone, footer).
 
 ### Info-box colour pattern
 
-All warning/info callout boxes use `alpha()` callbacks so they adapt to the
-active theme automatically. Day values are preserved exactly:
+All warning/info callout boxes must use `alpha()` callbacks so they adapt automatically to the active theme. Day values must stay exact.
 
 ```jsx
 import { alpha } from '@mui/material/styles'
 
-// amber warning box
 sx={{
   bgcolor: (theme) => theme.palette.mode === 'dark'
     ? alpha(theme.palette.warning.main, 0.10)
@@ -78,7 +74,6 @@ sx={{
     : '#FCD34D',
 }}
 
-// blue info box
 sx={{
   bgcolor: (theme) => theme.palette.mode === 'dark'
     ? alpha(theme.palette.primary.main, 0.10)
@@ -86,303 +81,195 @@ sx={{
 }}
 ```
 
-Never hardcode `#FFFBEB`, `#EFF6FF`, or `#FCD34D` in new code — use the
-pattern above so any future theme works automatically.
+Do not hardcode `#FFFBEB`, `#EFF6FF`, or `#FCD34D` in new code. Use the pattern above so future themes work automatically.
 
----
+## 6) i18n rules
 
-## i18n rules
+* All visible strings live in `src/i18n/locales/bg.json`.
+* Components call `const { t } = useTranslation()` and use `t('key')`.
+* Use `t('key', { returnObjects: true })` for arrays and structured content.
+* Use `<Trans i18nKey="...">` only when JSX elements such as bold text or links must be embedded inside a translated sentence.
+* `dropzoneInfo.js` is deleted. Dropzone info lives under `dropzoneInfo.csv.*` and `dropzoneInfo.htm.*`; pass `infoKey="csv" | "htm"`.
 
-- **All visible strings live in `src/i18n/locales/bg.json`.**
-- Components call `const { t } = useTranslation()` and use `t('key')`.
-- Use `t('key', { returnObjects: true })` for arrays (steps, sections).
-- Use `<Trans i18nKey="...">` only when JSX elements (bold, links) must be
-  embedded inside a translated sentence.
-- `dropzoneInfo.js` was deleted. Dropzone info content lives under
-  `dropzoneInfo.csv.*` and `dropzoneInfo.htm.*`; pass `infoKey="csv"|"htm"`.
-
----
-
-## React 19 best practices (2026)
+## 7) React 19 guidelines
 
 ### Hooks and composition
 
-- Prefer `useActionState` (React 19) over manual loading/error state pairs for
-  any form or async action that produces a result.
-- Use `useOptimistic` for instant UI feedback while an async operation is
-  in-flight. Revert automatically if the operation fails.
-- Use `use(promise)` to unwrap promises inside a component suspended by
-  `<Suspense>`. Avoids boilerplate `useEffect` + state combos for data
-  fetching.
-- Use `use(Context)` as a drop-in for `useContext` — it works inside
-  conditionals and loops where hooks normally cannot appear.
-- `ref` is a plain prop in React 19 — no `forwardRef` wrapper needed.
-- `<Context>` is now a valid provider — `<Context.Provider>` still works but
-  the shorter form is preferred.
+* Prefer `useActionState` over manual loading/error pairs for forms or async actions that produce a result.
+* Use `useOptimistic` for instant UI feedback while async work is in flight.
+* Use `use(promise)` inside components suspended by `<Suspense>` instead of `useEffect` + state for data fetching.
+* Use `use(Context)` as the preferred form of context access where appropriate.
+* In React 19, `ref` is a plain prop; `forwardRef` is not needed unless required for compatibility.
+* `<Context>` is the preferred provider form; `<Context.Provider>` still works.
 
 ### Memoisation
 
-React Compiler (shipping with React 19 toolchains) handles most memoisation
-automatically. Follow these rules:
-
-- **Do not add `useMemo` / `useCallback` pre-emptively.** Let the compiler
-  decide. Add them only after profiling shows a real problem.
-- **Do** keep components and hooks pure (no side-effects during render) so the
-  compiler can safely reorder renders.
-- If you are in a codebase that has not yet enabled the React Compiler,
-  continue to memoize expensive derived values (`useMemo`) and stable callback
-  references (`useCallback`) when passed as props to heavy children.
+* Do not add `useMemo` or `useCallback` pre-emptively.
+* Keep components and hooks pure so the React Compiler can optimise safely.
+* If the compiler is not enabled in a given path, keep memoisation only where profiling shows it matters.
 
 ### State
 
-- Co-locate state: keep state as close to where it is used as possible.
-  Lift only when two siblings genuinely need to share it.
-- For complex state that involves multiple sub-values that change together,
-  prefer a single `useReducer` over several `useState` calls.
-- Avoid storing derived data in state. Compute it during render (or with
-  `useMemo` if expensive). This project's `trades`, `taxSummary`, and
-  `approxRows` are good examples of in-render derivation.
+* Keep state as close as possible to where it is used.
+* Use a single `useReducer` when several values change together.
+* Do not store derived data in state. Compute it during render, or memoise only if it is truly expensive.
 
 ### Effects
 
-- `useEffect` is for synchronising with external systems (DOM, timers,
-  subscriptions, browser APIs). It is **not** for transforming data — do that
-  during render.
-- Effects that fetch data belong in the router loader, a `use(promise)` call,
-  or a library like TanStack Query. Avoid `useEffect` fetch waterfalls.
-- Always return a cleanup function when the effect sets up a subscription or
-  timer. Use a `cancelled` flag pattern (as in this project's Phase 1 effect)
-  to prevent setting state after unmount:
+* Use `useEffect` only for external synchronisation: DOM, timers, subscriptions, browser APIs.
+* Do not use effects to transform data.
+* Avoid fetch waterfalls in effects. Prefer router loaders, `use(promise)`, or a data library.
+* Always clean up subscriptions and timers.
+* Use the `cancelled` flag pattern when async work can outlive the component:
 
-  ```js
-  useEffect(() => {
-    let cancelled = false
-    doAsync().then(result => { if (!cancelled) setState(result) })
-    return () => { cancelled = true }
-  }, [dep])
-  ```
+```js
+useEffect(() => {
+  let cancelled = false
+  doAsync().then(result => {
+    if (!cancelled) setState(result)
+  })
+  return () => {
+    cancelled = true
+  }
+}, [dep])
+```
 
-### Async / Transitions
+### Async / transitions
 
-- Wrap non-urgent state updates (navigation, background recalculations) in
-  `startTransition` so React can keep the UI responsive during the update.
-- Use `useDeferredValue` to keep a fast version of a value for rendering while
-  a slow re-render catches up.
+* Wrap non-urgent updates in `startTransition`.
+* Use `useDeferredValue` when a slower render should lag behind a fast-changing value.
 
 ### Forms
 
-- React 19 `<form action={asyncFn}>` natively supports async server/client
-  actions. Use `useFormStatus` inside the form to read pending state in child
-  components without prop drilling.
-- For client-only forms, `useActionState(action, initialState)` replaces the
-  pattern of `useState` + `useEffect` + manual error handling.
+* Prefer `<form action={asyncFn}>` and `useFormStatus` where appropriate.
+* For client-only forms, `useActionState(action, initialState)` replaces the old `useState` + `useEffect` + manual error pattern.
 
-### Performance
+## 8) Performance
 
-- **Profile before optimising.** Use the React DevTools Profiler to identify
-  actual bottlenecks.
-- Virtualise long lists (TanStack Virtual, MUI DataGrid virtual scroll) rather
-  than windowing with manual slice state.
-- Lazy-load heavy routes with `React.lazy` + `<Suspense>`.
-- Large JSON imports (rate tables, translation files) should be code-split or
-  fetched at runtime if they affect initial bundle size.
+* Profile before optimising.
+* Virtualise long lists instead of manually slicing large arrays.
+* Lazy-load heavy routes with `React.lazy` + `<Suspense>`.
+* Code-split large JSON imports when they affect initial bundle size.
 
-### MUI-specific (v6)
+## 9) MUI v6 rules
 
-- Use `sx` prop for one-off styles. Extract to `styled()` only when the same
-  variant is used in three or more places.
-- Pass theme callbacks `(theme) => value` to `sx` when you need dynamic values
-  that depend on palette/mode — this is the canonical way, no CSS-in-JS
-  runtime cost.
-- `alpha(color, opacity)` from `@mui/material/styles` is the correct way to
-  create transparent palette-derived colours. Never hardcode `rgba()` values
-  that should track a theme color.
-- Keep MUI component overrides in the theme (`makeTheme`), not scattered in
-  `sx` props across components.
-- `grey.50` / `grey.100` in the theme are overridden to match the surface
-  token system — do not use them as generic grey; they carry semantic meaning
-  (surface / surface-container).
+* Use `sx` for one-off styles.
+* Extract to `styled()` only when the same variant appears in three or more places.
+* Use theme callbacks `(theme) => value` for dynamic styling.
+* Use `alpha(color, opacity)` from `@mui/material/styles` for transparent palette-derived colours.
+* Keep MUI overrides in the theme (`makeTheme`) instead of scattering them through components.
+* `grey.50` / `grey.100` have semantic meaning in this project and should not be used as generic grey.
 
-### File and module organisation
+## 10) File and module organisation
 
-- One component per file. The filename is the component name.
-- Domain logic (parsers, tax calculations, FX rates) lives in `src/domain/`
-  and `src/pipeline/` — keep it free of React imports.
-- UI-only utilities (formatting) live in `src/utils/`.
-- Avoid barrel files (`index.js` re-exports) — they defeat tree-shaking and
-  slow down HMR.
+* One component per file. The filename should match the component name.
+* Keep domain logic in `src/domain/` and `src/pipeline/` with no React imports.
+* Keep UI-only utilities in `src/utils/`.
+* Avoid barrel files (`index.js` re-exports) because they hurt tree-shaking and HMR.
 
-### Code style
+## 11) Code style
 
-- No comments that describe *what* the code does — names should do that.
-  Comment only *why*: hidden constraints, legal references, workarounds.
-- Default exports for components; named exports for utilities and types.
-- Prefer `const` arrow functions for components:
-  `export default function Foo()` is fine too — pick one per project and
-  stay consistent.
-- Financial arithmetic: always use `Decimal.js`. Native `Number` accumulates
-  floating-point error across many trades.
+* Comments should explain **why**, not **what**.
+* Use named exports for utilities and types.
+* Use default exports for components.
+* Pick one component declaration style and stay consistent.
+* Use `Decimal.js` for all financial arithmetic. Do not rely on native `Number` for calculations that can accumulate rounding error.
 
-### Unit Testing Guidelines
+## 12) Unit testing
 
-#### Framework
+### Framework
 
-- Use Vitest as the default testing framework
-- Do NOT introduce Jest unless explicitly requested
-- All tests must run via:
-  npm test
+* Use Vitest.
+* Do not introduce Jest unless explicitly requested.
+* Tests must run via `npm test`.
 
----
+### Scope
 
-#### Scope of Testing
+Test business logic only:
 
-Focus on business logic only:
+* parser functions in `src/domain/parser`
+* tax calculation logic and strategies
 
-Test:
+Do not test:
 
-- Parser functions ("src/domain/parser")
-- Tax calculation logic ("taxService", strategies)
+* UI components
+* styling
+* trivial rendering
 
-Do NOT test:
+### Structure
 
-- UI components
-- Styling
-- trivial rendering
+* Place tests next to code or under `src/__tests__/`.
+* Use `*.test.js` naming.
 
----
+### Quality
 
-#### Test Structure
+Tests must verify real behaviour and cover:
 
-- Place tests next to code or under:
-  src/__tests__/
-- File naming:
-  *.test.js
+* normal cases
+* edge cases
+* invalid input
 
----
+Avoid meaningless assertions and implementation-detail tests.
 
-#### Test Quality Requirements
+### Determinism
 
-Tests must:
+* Tests must be deterministic.
+* No randomness.
+* No network calls.
 
-- Verify real behavior (not superficial checks)
-- Cover:
-  - normal cases
-  - edge cases
-  - invalid input
+### Mocking
 
-Avoid:
+* Use Vitest mocking via `vi`.
+* Mock only external dependencies.
 
-- meaningless assertions (e.g. "expect(true).toBe(true)")
-- testing implementation details
+### Coverage priority
 
----
+* tax calculations
+* parsing correctness
 
-#### Example Expectations
+## 13) Git workflow
 
-Good:
+### Branching
 
-expect(result.totalProfit).toBe(50)
+* Always create a new branch for each issue.
+* Always branch from `master`.
+* Never commit directly to `master`.
 
-Bad:
+### Branch naming
 
-expect(result).toBeDefined()
+Use one of these formats:
 
----
-
-#### Determinism
-
-- Tests must be deterministic
-- No randomness
-- No reliance on external APIs or network
-
----
-
-#### Mocking
-
-- Use Vitest mocking:
-  import { vi } from 'vitest'
-- Mock only external dependencies (not core logic)
-
----
-
-#### Coverage
-
-- Prioritize:
-  - tax calculations
-  - parsing correctness
-- Target meaningful coverage, not just % numbers
-
----
-
-### Git Workflow Rules
-
-#### Branching
-
-- ALWAYS create a new branch for each issue
-- ALWAYS branch from "master"
-- NEVER commit directly to "master"
-
----
-
-#### Branch naming
-
-Use format:
-
-feature/<short-description>
-fix/<short-description>
-refactor/<short-description>
+* `feature/<short-description>`
+* `fix/<short-description>`
+* `refactor/<short-description>`
 
 Examples:
 
-- "feature/pdf-support"
-- "fix/tax-classification"
-- "refactor/strategy-pattern"
+* `feature/pdf-support`
+* `fix/tax-classification`
+* `refactor/strategy-pattern`
 
----
+### Process
 
-#### Process
+1. `git checkout master`
+2. `git pull`
+3. `git checkout -b <branch-name>`
+4. Implement the change
+5. Commit with a meaningful message
+6. Open a PR into `master`
 
-For every new issue:
+### PR requirements
 
-1. Checkout latest master:
-   
-   git checkout master
-git pull
+Any PR that changes logic must:
 
-2. Create new branch:
-   
-   git checkout -b <branch-name>
+* reference the issue
+* include or update tests
+* not break existing tests
+* pass `npm test`
 
-3. Implement changes
+### Anti-patterns
 
-4. Commit with meaningful message
-
-5. Open Pull Request into "master"
-
----
-
-#### Restrictions
-
-- Do NOT reuse old branches
-- Do NOT commit unrelated changes in same branch
-- One issue = one branch
-
----
-
-#### PR Requirements
-
-Any PR involving logic changes must:
-
-- PR must reference the issue
-- include or update tests
-- not break existing tests
-- run successfully with "npm test"
-
----
-
-#### Anti-Patterns (Do NOT do)
-
-- Mixing test frameworks (Jest + Vitest)
-- Testing UI instead of logic
-- Writing tests without assertions
-- Copy-pasting tests without understanding logic
+* mixing Jest and Vitest
+* testing UI instead of logic
+* writing tests without assertions
+* copy-pasting tests without understanding the logic
