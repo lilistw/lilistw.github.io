@@ -14,6 +14,7 @@ import AppHeader from './ui/AppHeader.jsx'
 import AppFooter from './ui/AppFooter.jsx'
 import Disclaimer from './ui/Disclaimer.jsx'
 import TermsModal from './ui/TermsModal.jsx'
+import PrivacyPolicyModal from './ui/PrivacyPolicyModal.jsx'
 import Dropzone from './ui/Dropzone.jsx'
 import ResultTabs from './ui/ResultTabs/ResultTabs.jsx'
 import PriorYearPositionsForm from './ui/PriorYearPositionsForm.jsx'
@@ -21,11 +22,15 @@ import PriorYearPositionsForm from './ui/PriorYearPositionsForm.jsx'
 export default function App() {
   const { t } = useTranslation()
 
-  const [nightMode, setNightMode] = useState(false)
+  const [nightMode, setNightMode] = useState(
+    () => localStorage.getItem('theme') === 'night'
+  )
 
-  // Theme attribute
+  // Theme attribute + persist preference
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', nightMode ? 'night' : 'day')
+    const value = nightMode ? 'night' : 'day'
+    document.documentElement.setAttribute('data-theme', value)
+    localStorage.setItem('theme', value)
   }, [nightMode])
 
   // Files
@@ -45,6 +50,7 @@ export default function App() {
 
   const [agreed, setAgreed] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
 
   const taxYear = inputData?.taxYear ?? 2025
 
@@ -315,9 +321,10 @@ export default function App() {
           </main>
         </div>
 
-        <AppFooter onShowTerms={() => setShowTerms(true)} />
+        <AppFooter onShowTerms={() => setShowTerms(true)} onShowPrivacy={() => setShowPrivacy(true)} />
 
         {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
+        {showPrivacy && <PrivacyPolicyModal onClose={() => setShowPrivacy(false)} />}
       </div>
     </ThemeProvider>
   )
