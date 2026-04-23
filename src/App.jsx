@@ -115,6 +115,10 @@ export default function App() {
   // File handlers
   function selectCsvFile(file) {
     if (!file) return
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setError(t('errors.invalidFileTypeCsv'))
+      return
+    }
     setCsvFile(file)
     setResult(null)
     setError(null)
@@ -127,6 +131,12 @@ export default function App() {
   }
 
   function selectHtmlFile(file) {
+    if (!file) return
+    const name = file.name.toLowerCase()
+    if (!name.endsWith('.htm') && !name.endsWith('.html')) {
+      setError(t('errors.invalidFileTypeHtml'))
+      return
+    }
     setHtmlFile(file)
     setResult(null)
     setError(null)
