@@ -131,6 +131,14 @@
       }
     ]
   },
+  "errors": {
+    "invalidFileTypeCsv": "Невалиден тип файл. Очаква се .csv файл.",
+    "invalidFileTypeHtml": "Невалиден тип файл. Очаква се .htm или .html файл.",
+    "invalidCsvFormat": "Невалиден файл. Очаква се Activity Statement CSV от IBKR.",
+    "invalidHtmlFormat": "Невалиден файл. Очаква се Trade Confirmation HTML от IBKR.",
+    "unsupportedCurrency": "Неподдържана валута: {{currency}}. Поддържат се само USD и EUR.",
+    "missingRequiredData": "Липсват задължителни данни: {{field}}."
+  },
   "app": {
     "title": "IBKR Данъчен калкулатор",
     "copyJson": "Копирай JSON",
