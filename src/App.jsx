@@ -284,20 +284,22 @@ export default function App() {
 
           {/* Prior-year positions form — shown when inferred positions exist */}
           {!result && pendingPositions !== null && pendingPositions.length > 0 && (
-              <>
-                <PriorYearPositionsForm
-                  positions={pendingPositions}
-                  onPositionChange={(i, field, value) =>
-                  setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
-                  }
-                  taxYear={taxYear}
-                />
-                <CostBasisStrategySelector
-                  value={costBasisStrategy}
-                  onChange={setCostBasisStrategy}
-                />
-              </>
+              <PriorYearPositionsForm
+                positions={pendingPositions}
+                onPositionChange={(i, field, value) =>
+                setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
+                }
+                taxYear={taxYear}
+              />
             )}
+
+          {/* Cost basis strategy — shown whenever files are loaded */}
+          {!result && inputData && (
+            <CostBasisStrategySelector
+              value={costBasisStrategy}
+              onChange={setCostBasisStrategy}
+            />
+          )}
 
           {/* Demo load button — shown until files are selected */}
             {(!csvFile || !htmlFile) && (
