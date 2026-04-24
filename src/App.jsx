@@ -13,8 +13,7 @@ import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
 import AppHeader from './ui/AppHeader.jsx'
 import AppFooter from './ui/AppFooter.jsx'
 import Disclaimer from './ui/Disclaimer.jsx'
-import TermsModal from './ui/TermsModal.jsx'
-import PrivacyPolicyModal from './ui/PrivacyPolicyModal.jsx'
+import InfoModal from './ui/InfoModal.jsx'
 import Dropzone from './ui/Dropzone.jsx'
 import ResultTabs from './ui/ResultTabs/ResultTabs.jsx'
 import PriorYearPositionsForm from './ui/PriorYearPositionsForm.jsx'
@@ -323,8 +322,8 @@ export default function App() {
 
         <AppFooter onShowTerms={() => setShowTerms(true)} onShowPrivacy={() => setShowPrivacy(true)} />
 
-        {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
-        {showPrivacy && <PrivacyPolicyModal onClose={() => setShowPrivacy(false)} />}
+        {showTerms && <InfoModal titleKey="terms.title" sectionsKey="terms.sections" onClose={() => setShowTerms(false)} />}
+        {showPrivacy && <InfoModal titleKey="privacy.title" sectionsKey="privacy.sections" onClose={() => setShowPrivacy(false)} />}
       </div>
     </ThemeProvider>
   )
