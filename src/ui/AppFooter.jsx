@@ -40,10 +40,8 @@ export default function AppFooter({ onShowTerms, onShowPrivacy }) {
           {t('app.footer.privacyLink')}
         </button>
 
-        <span className="footer-sep">·</span>
-
+        <span className="footer-sep footer-sep-before-support">·</span>
         <span className="footer-break" aria-hidden="true" />
-        <span className="footer-sep footer-sep-support">·</span>
 
         <Tooltip title={t('app.footer.supportTooltip')} arrow>
           <a
