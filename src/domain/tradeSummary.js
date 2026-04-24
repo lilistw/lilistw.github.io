@@ -51,7 +51,7 @@ export function buildTaxSummary(dataRows) {
     }, 0)
     return {
       totalProceedsLcl:  group.reduce((s, r) => s + (r.totalWithFeeLcl ?? 0), 0),
-      totalcostBasisLcl: group.reduce((s, r) => s + (r.costBasisLcl    ?? 0), 0),
+      totalCostBasisLcl: group.reduce((s, r) => s + (r.costBasisLcl    ?? 0), 0),
       profits,
       losses,
     }
