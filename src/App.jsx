@@ -17,11 +17,13 @@ import TermsModal from './ui/TermsModal.jsx'
 import Dropzone from './ui/Dropzone.jsx'
 import ResultTabs from './ui/ResultTabs/ResultTabs.jsx'
 import PriorYearPositionsForm from './ui/PriorYearPositionsForm.jsx'
+import CostBasisStrategySelector from './ui/CostBasisStrategySelector.jsx'
 
 export default function App() {
   const { t } = useTranslation()
 
   const [nightMode, setNightMode] = useState(false)
+  const [costBasisStrategy, setCostBasisStrategy] = useState('ibkr')
 
   // Theme attribute
   useEffect(() => {
@@ -156,7 +158,7 @@ export default function App() {
         lastBuyDate: p.lastBuyDateInput || getPrevYearDefaultAcqDate(taxYear),
       }))
 
-      setResult(calculateTax(inputData, priorPositions))
+      setResult(calculateTax(inputData, priorPositions, { strategy: costBasisStrategy }))
     } catch (e) {
       setError(e.message)
       console.error(e)
@@ -267,13 +269,19 @@ export default function App() {
 
           {/* Prior-year positions form — shown when inferred positions exist */}
           {!result && pendingPositions !== null && pendingPositions.length > 0 && (
-              <PriorYearPositionsForm
-                positions={pendingPositions}
-                onPositionChange={(i, field, value) =>
-                setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
-                }
-                taxYear={taxYear}
-              />
+              <>
+                <PriorYearPositionsForm
+                  positions={pendingPositions}
+                  onPositionChange={(i, field, value) =>
+                  setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
+                  }
+                  taxYear={taxYear}
+                />
+                <CostBasisStrategySelector
+                  value={costBasisStrategy}
+                  onChange={setCostBasisStrategy}
+                />
+              </>
             )}
 
           {/* Demo load button — shown until files are selected */}
