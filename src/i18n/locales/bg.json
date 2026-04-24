@@ -147,8 +147,13 @@
       "positions": "Позиции",
       "dividends": "Дивиденти",
       "interest": "Лихви",
-      "dev": "Dev"
+      "dev": "Dev",
+      "summary": "Обобщение"
     },
+    "copyExcel": "Копирай в Excel",
+    "copyExcelDone": "Копирано",
+    "copyExcelError": "Грешка при копиране",
+    "copyExcelTooltip": "Копира данните от всички раздели",
     "tradesTableTitle": "Trade Confirmation – Сделки",
     "countLabel": {
       "trades": "сделки",

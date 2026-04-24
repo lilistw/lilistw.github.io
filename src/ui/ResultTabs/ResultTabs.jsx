@@ -7,6 +7,7 @@ import HoldingsTab from './HoldingsTab'
 import DividendsTab from './DividendsTab'
 import InterestTab from './InterestTab'
 import DevTab from './DevTab'
+import ExcelCopyButton from './ExcelCopyButton'
 
 const DEV_MODE = import.meta.env.VITE_DEV_MODE === 'true'
 
@@ -39,17 +40,35 @@ export default function ResultTabs({ result, inputJsonText, outputJsonText }) {
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Tabs
-        value={tab}
-        onChange={(_, v) => setTab(v)}
-        variant="scrollable"
-        scrollButtons="auto"
-        sx={{ borderBottom: 1, borderColor: 'divider' }}
-      >
-        {tabs.map((tItem, i) => (
-          <Tab key={i} label={tItem.label} />
-        ))}
-      </Tabs>
+      <Box sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'flex-end',
+        borderBottom: 1,
+        borderColor: 'divider',
+      }}>
+        <Tabs
+          value={tab}
+          onChange={(_, v) => setTab(v)}
+          variant="scrollable"
+          scrollButtons="auto"
+          sx={{ flex: { xs: '0 0 100%', sm: 1 }, order: { xs: 2, sm: 1 } }}
+        >
+          {tabs.map((tItem, i) => (
+            <Tab key={i} label={tItem.label} />
+          ))}
+        </Tabs>
+        <Box sx={{
+          order: { xs: 1, sm: 2 },
+          display: 'flex',
+          width: { xs: '100%', sm: 'auto' },
+          justifyContent: 'flex-end',
+          pb: 0.5,
+          pl: { sm: 1 },
+        }}>
+          <ExcelCopyButton result={result} />
+        </Box>
+      </Box>
 
       <TabPanel value={tab} index={TAB_TRADES}>
         <TradesTab result={result} />
