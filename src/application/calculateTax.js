@@ -26,7 +26,7 @@ function buildTaxContext(taxYear) {
 // -------------------------
 // SERVICE
 // -------------------------
-export function calculateTax(input, priorPositions = []) {
+export function calculateTax(input, priorPositions = [], { strategy = 'ibkr' } = {}) {
   const { taxYear } = input
 
   const context = buildTaxContext(taxYear)
@@ -35,7 +35,7 @@ export function calculateTax(input, priorPositions = []) {
   const csvTradeBasis = buildCsvTradeBasis(input.csvTrades)
 
   // --- TRADES ---
-  const tradeCalc = new TradeCalculator({ instrumentInfo, csvTradeBasis, context })
+  const tradeCalc = new TradeCalculator({ instrumentInfo, csvTradeBasis, context, strategy })
   const { trades, calculatedPositions, taxSummary } = tradeCalc.calculate(input.trades, priorPositions)
 
   // --- HOLDINGS ---

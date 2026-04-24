@@ -88,8 +88,16 @@ export default function PriorYearPositionsForm({ positions, onPositionChange, ta
                   <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
                     {fmtNum(p.qty, 0)}
                   </TableCell>
-                  <TableCell align="right" sx={{ fontFamily: 'monospace' }}>
-                    {fmtNum(p.costUSD, 2)}
+                  <TableCell align="right">
+                    <TextField
+                      size="small"
+                      variant="standard"
+                      slotProps={{
+                        input: { style: { textAlign: 'right', fontFamily: 'monospace', width: 120 } }
+                      }}
+                      value={p.costUSDInput}
+                      onChange={e => onPositionChange(i, 'costUSDInput', e.target.value)}
+                    />
                   </TableCell>
                   <TableCell align="right">
                     <TextField
