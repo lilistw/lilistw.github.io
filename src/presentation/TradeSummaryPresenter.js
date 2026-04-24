@@ -22,7 +22,9 @@ export class TradeSummaryPresenter {
     const s = this.#normalize(summary)
 
     const netTaxable = s.profits - s.losses
-    const taxDue = Math.max(netTaxable, 0) * 0.10
+    // чл. 33, ал. 3: 10% recognised expenses reduce the taxable base before the 10% rate
+    const taxableBase = Math.max(netTaxable, 0) * 0.90
+    const taxDue = taxableBase * 0.10
 
     return {
       title: this.t('taxApp5.title'),
@@ -38,6 +40,7 @@ export class TradeSummaryPresenter {
           netTaxable,
           netTaxable >= 0 ? 'success.main' : 'error.main'
         ),
+        this.#row(this.t('taxApp5.taxableBase', { lcl: this.lcl }), taxableBase),
         this.#row(this.t('taxApp5.taxDue', { lcl: this.lcl }), taxDue, 'warning.dark'),
       ],
 
