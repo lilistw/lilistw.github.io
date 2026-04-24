@@ -4,6 +4,7 @@ import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
 import DataTable from './DataTable.jsx'
 import { HoldingPresenter } from '../../presentation/HoldingPresenter.js'
+import ThresholdWarning from '../ThresholdWarning.jsx'
 
 const COLUMNS_WITHOUT_TYPE = (columns) =>
   columns.filter(c => c.key !== 'type')
@@ -59,6 +60,11 @@ export default function TaxApp8Holdings({ result }) {
       </Box>
       <HoldingsSubTable label={t('taxApp8Holdings.shares')} data={data} type="Акции" countLabel={t('taxApp8Holdings.countLabel')} />
       <HoldingsSubTable label={t('taxApp8Holdings.funds')}  data={data} type="Дялове" countLabel={t('taxApp8Holdings.countLabel')} />
+      <ThresholdWarning
+        holdings={result.holdings}
+        localCurrencyLabel={result.localCurrencyLabel}
+        localCurrencyCode={result.localCurrencyCode}
+      />
     </Box>
   )
 }
