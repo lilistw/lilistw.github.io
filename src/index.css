@@ -232,4 +232,12 @@ p  { margin: 0; }
   font-family: inherit;
 }
 
-.footer-copy { font-size: 11px; color: var(--text-muted); opacity: 0.65; }
+.footer-copy  { font-size: 11px; color: var(--text-muted); opacity: 0.65; }
+.footer-break { display: none; }
+
+@media (max-width: 600px) {
+  .app-footer                  { padding: 8px 12px 0; gap: 8px; }
+  .footer-links                { flex-wrap: wrap; justify-content: center; }
+  .footer-break                { display: block; flex-basis: 100%; height: 0; }
+  .footer-sep-before-support   { display: none; }
+}
