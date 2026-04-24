@@ -133,8 +133,11 @@
   },
   "errors": {
     "invalidFileTypeCsv": "Невалиден тип файл. Очаква се .csv файл.",
+    "invalidFileTypeCsvOrPdf": "Невалиден тип файл. Очаква се .csv или .pdf файл.",
     "invalidFileTypeHtml": "Невалиден тип файл. Очаква се .htm или .html файл.",
     "invalidCsvFormat": "Невалиден файл. Очаква се Activity Statement CSV от IBKR.",
+    "invalidPdfFormat": "Невалиден PDF файл. Очаква се Activity Statement от IBKR.",
+    "pdfParseError": "Грешка при четене на PDF файл.",
     "invalidHtmlFormat": "Невалиден файл. Очаква се Trade Confirmation HTML от IBKR.",
     "unsupportedCurrency": "Неподдържана валута: {{currency}}. Поддържат се само USD и EUR.",
     "missingRequiredData": "Липсват задължителни данни: {{field}}."
@@ -188,7 +191,7 @@
     }
   },
   "dropzone": {
-    "csvLabel": "Activity Statement CSV тук",
+    "csvLabel": "Activity Statement CSV / PDF тук",
     "htmlLabel": "Trade Confirmation HTML тук",
     "openFile": "Отвори файл",
     "downloadFile": "Свали файл",
@@ -203,7 +206,8 @@
         "Отидете на Performance & Reports > Statements",
         "Изберете Activity Statement",
         "Във формата изберете желания период — \"Annual\"",
-        "Генерирайте и изтеглете CSV файла"
+        "Генерирайте и изтеглете CSV файла",
+        "Алтернативно — изтеглете PDF версията на Activity Statement"
       ]
     },
     "htm": {

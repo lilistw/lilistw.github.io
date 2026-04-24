@@ -1,7 +1,7 @@
 import { useState, useRef } from 'react'
 import { useTranslation } from 'react-i18next'
 import {
-  Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
+  Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
   Link, Typography,
 } from '@mui/material'
 import { ArticleOutlined, Close, CloudUpload, InfoOutlined } from '@mui/icons-material'
@@ -11,6 +11,7 @@ export default function Dropzone({
   accept = '.csv', label,
   showInfo: showInfoProp = true,
   infoKey = 'csv',
+  fileType,
 }) {
   const { t } = useTranslation()
   const [showInfo, setShowInfo] = useState(false)
@@ -56,6 +57,9 @@ export default function Dropzone({
             <Link href={fileUrl} download={file.name} underline="hover" color="text.primary" sx={{ fontWeight: 600, fontSize: 14 }}>
               {file.name}
             </Link>
+            {fileType && (
+              <Chip label={fileType} size="small" variant="outlined" sx={{ fontSize: 11, height: 20 }} />
+            )}
             <IconButton size="small" onClick={handleClearFile} aria-label={t('dropzone.removeFile')} sx={{ ml: 'auto' }}>
               <Close fontSize="small" />
             </IconButton>

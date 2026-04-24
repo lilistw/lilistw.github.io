@@ -19,6 +19,7 @@
     "decimal.js": "^10.6.0",
     "i18next": "^26.0.5",
     "papaparse": "^5.5.3",
+    "pdfjs-dist": "^5.6.205",
     "react": "^19.2.4",
     "react-dom": "^19.2.4",
     "react-i18next": "^17.0.4"

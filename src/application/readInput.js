@@ -1,5 +1,7 @@
 import { parseCSV } from './readCsv.js'
-import { validateCsvContent, validateHtmlContent, validateTradeCurrencies } from './validateInput.js'
+import { validateCsvContent, validateHtmlContent, validatePdfContent, validateTradeCurrencies } from './validateInput.js'
+import { readPdfText } from '../io/readPdf.js'
+import { PdfToCsvAdapter } from '../domain/parser/pdf/PdfToCsvAdapter.js'
 import { parseStatementInfo } from '../domain/parser/parseStatementInfo.js'
 import { parseInstruments } from '../domain/parser/parseInstruments.js'
 import { parseDividends, parseWithholdingTax } from '../domain/parser/parseDividends.js'
@@ -10,21 +12,30 @@ import { parseInterest } from '../domain/parser/parseInterest.js'
 import { parseTaxYear } from '../domain/parser/parseTaxYear.js'
 
 /**
- * Read both uploaded files and parse them into a raw InputData object.
+ * Read uploaded files and parse them into a raw InputData object.
+ * Accepts either { csvFile, htmlFile } or { pdfFile, htmlFile } —
+ * pdfFile is an Activity Statement PDF and substitutes for csvFile.
  * No tax calculations are performed here — only parsing close to the source.
  * All financial values are raw strings matching the input files.
  *
- * @param {{ csvFile: File, htmlFile: File }} files
+ * @param {{ csvFile?: File, htmlFile: File, pdfFile?: File }} files
  * @returns {Promise<InputData>}
  */
-export async function readInput({ csvFile, htmlFile }) {
-  const [htmlText, csvText] = await Promise.all([
-    htmlFile.text(),
-    csvFile.text(),
-  ])
+export async function readInput({ csvFile, htmlFile, pdfFile }) {
+  let csvRows
+  let htmlText
 
-  const csvRows = parseCSV(csvText)
-  validateCsvContent(csvRows)
+  if (pdfFile) {
+    const [pdfText, html] = await Promise.all([readPdfText(pdfFile), htmlFile.text()])
+    csvRows = new PdfToCsvAdapter().adapt(pdfText)
+    validatePdfContent(csvRows)
+    htmlText = html
+  } else {
+    const [html, csvText] = await Promise.all([htmlFile.text(), csvFile.text()])
+    csvRows = parseCSV(csvText)
+    validateCsvContent(csvRows)
+    htmlText = html
+  }
 
   const htmlDoc = new DOMParser().parseFromString(htmlText, 'text/html')
   validateHtmlContent(htmlDoc)

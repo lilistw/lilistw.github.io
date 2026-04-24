@@ -34,12 +34,14 @@ export default function App() {
     localStorage.setItem('theme', value)
   }, [nightMode])
 
-  // Files
+  // Files — csvFile holds either a CSV or PDF Activity Statement
   const [csvFile, setCsvFile] = useState(null)
   const [htmlFile, setHtmlFile] = useState(null)
 
   const [csvFileUrl, setCsvFileUrl] = useState('')
   const [htmlFileUrl, setHtmlFileUrl] = useState('')
+
+  const isPdf = csvFile?.name?.toLowerCase().endsWith('.pdf') ?? false
 
   // Data pipeline
   const [inputData, setInputData] = useState(null)
@@ -82,7 +84,11 @@ export default function App() {
     setParsing(true)
     setError(null)
 
-    readInput({ csvFile, htmlFile })
+    readInput({
+      csvFile: isPdf ? undefined : csvFile,
+      pdfFile: isPdf ? csvFile : undefined,
+      htmlFile,
+    })
       .then(data => {
         if (cancelled) return
 
@@ -123,8 +129,9 @@ export default function App() {
   // File handlers
   function selectCsvFile(file) {
     if (!file) return
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      setError(t('errors.invalidFileTypeCsv'))
+    const name = file.name.toLowerCase()
+    if (!name.endsWith('.csv') && !name.endsWith('.pdf')) {
+      setError(t('errors.invalidFileTypeCsvOrPdf'))
       return
     }
     setCsvFile(file)
@@ -217,7 +224,8 @@ export default function App() {
                 <Dropzone
                 file={csvFile} fileUrl={csvFileUrl}
                 onFileSelect={selectCsvFile} onClearFile={clearCsvFile}
-                accept=".csv" label={t('dropzone.csvLabel')} infoKey="csv"
+                accept=".csv,.pdf" label={t('dropzone.csvLabel')} infoKey="csv"
+                fileType={csvFile ? (isPdf ? 'PDF' : 'CSV') : undefined}
                 />
               <Typography variant="caption" color="text.secondary"
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>

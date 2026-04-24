@@ -44,6 +44,19 @@ export function validateHtmlContent(doc) {
 }
 
 /**
+ * Validates that adapted PDF rows contain the IBKR Statement marker.
+ * Throws if the PDF was not an Activity Statement or extraction failed.
+ *
+ * @param {string[][]} rows - result of PdfToCsvAdapter.adapt()
+ */
+export function validatePdfContent(rows) {
+  const hasIbkrMarker = rows.some(r => r[0] === 'Statement' && r[1] === 'Data')
+  if (!hasIbkrMarker) {
+    throw new Error('Невалиден PDF файл. Очаква се Activity Statement от IBKR.')
+  }
+}
+
+/**
  * Validates that all parsed HTML trades use a supported currency (USD or EUR).
  * FX rates are only available for these two currencies.
  *
