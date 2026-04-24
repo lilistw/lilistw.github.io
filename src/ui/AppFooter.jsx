@@ -42,6 +42,9 @@ export default function AppFooter({ onShowTerms, onShowPrivacy }) {
 
         <span className="footer-sep">·</span>
 
+        <span className="footer-break" aria-hidden="true" />
+        <span className="footer-sep footer-sep-support">·</span>
+
         <Tooltip title={t('app.footer.supportTooltip')} arrow>
           <a
             href="https://dmsbg.com/7997/dms-divite/"
