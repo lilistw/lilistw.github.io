@@ -40,19 +40,34 @@ export default function ResultTabs({ result, inputJsonText, outputJsonText }) {
 
   return (
     <Box sx={{ mt: 2 }}>
-      <Box sx={{ display: 'flex', alignItems: 'flex-end', borderBottom: 1, borderColor: 'divider' }}>
+      <Box sx={{
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'flex-end',
+        borderBottom: 1,
+        borderColor: 'divider',
+      }}>
         <Tabs
           value={tab}
           onChange={(_, v) => setTab(v)}
           variant="scrollable"
           scrollButtons="auto"
-          sx={{ flex: 1 }}
+          sx={{ flex: { xs: '0 0 100%', sm: 1 }, order: { xs: 2, sm: 1 } }}
         >
           {tabs.map((tItem, i) => (
             <Tab key={i} label={tItem.label} />
           ))}
         </Tabs>
-        <ExcelCopyButton result={result} />
+        <Box sx={{
+          order: { xs: 1, sm: 2 },
+          display: 'flex',
+          width: { xs: '100%', sm: 'auto' },
+          justifyContent: 'flex-end',
+          pb: 0.5,
+          pl: { sm: 1 },
+        }}>
+          <ExcelCopyButton result={result} />
+        </Box>
       </Box>
 
       <TabPanel value={tab} index={TAB_TRADES}>

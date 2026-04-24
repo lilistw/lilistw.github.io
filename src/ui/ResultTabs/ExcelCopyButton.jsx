@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { useTranslation } from 'react-i18next'
-import { Button } from '@mui/material'
+import { Button, Tooltip } from '@mui/material'
 import { ContentCopyOutlined, CheckOutlined, ErrorOutlineOutlined } from '@mui/icons-material'
 import { ExcelPresenter } from '../../presentation/ExcelPresenter.js'
 
@@ -35,15 +35,17 @@ export default function ExcelCopyButton({ result }) {
   const color = status === 'ok' ? 'success' : status === 'error' ? 'error' : 'primary'
 
   return (
-    <Button
-      size="small"
-      variant="outlined"
-      color={color}
-      startIcon={icon}
-      onClick={handleCopy}
-      sx={{ ml: 1, mb: 0.5, whiteSpace: 'nowrap', alignSelf: 'flex-end', flexShrink: 0 }}
-    >
-      {label}
-    </Button>
+    <Tooltip title={t('app.copyExcelTooltip')} placement="left">
+      <Button
+        size="small"
+        variant="outlined"
+        color={color}
+        startIcon={icon}
+        onClick={handleCopy}
+        sx={{ whiteSpace: 'nowrap' }}
+      >
+        {label}
+      </Button>
+    </Tooltip>
   )
 }
