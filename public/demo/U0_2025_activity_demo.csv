@@ -88,7 +88,7 @@ Open Positions,Data,Summary,Stocks,EUR,IWDA,8,1,189.00,1512.00,196.00,1568.00,56
 Open Positions,Total,,Stocks,EUR,,,,,5433.00,5685.50,252.50,
 Open Positions,Data,Summary,Stocks,USD,GOOG,3,1,2480.00,7440.00,2560.00,7680.00,240.00,
 Open Positions,Data,Summary,Stocks,USD,META,15,1,175.00,2625.00,186.50,2797.50,172.50,
-Open Positions,Data,Summary,Stocks,USD,AAPL,15,1,175.00,2625.00,186.50,2797.50,172.50,
+Open Positions,Data,Summary,Stocks,USD,AAPL,15,1,175.30,2629.50,186.50,2797.50,168.00,
 Open Positions,Data,Summary,Stocks,USD,NFLX,8,1,520.00,4160.00,535.00,4280.00,120.00,
 Open Positions,Data,Summary,Stocks,USD,AMZN,5,1,520.00,2600.00,535.00,2675.00,75.00,
 Open Positions,Total,,Stocks,USD,,,,,16825.00,17357.50,532.50,
@@ -113,6 +113,7 @@ Trades,Data,Order,Stocks,USD,GOOG,"2025-09-10, 11:20:00",2,2475.00,2480.00,-4950
 Trades,Data,Order,Stocks,USD,GOOG,"2025-11-05, 13:45:00",-1,2488.00,2510.00,2488.00,-2.00,-2490.00,13.00,13.00,C
 Trades,Data,Order,Stocks,USD,GOOG,"2025-12-12, 09:15:00",2,2500.00,2560.00,-5000.00,-3.00,5003.00,0.00,240.00,O
 Trades,Data,Order,Stocks,USD,AAPL,"2025-10-08, 14:30:00",10,174.50,175.00,-1745.00,-2.50,1747.50,0.00,105.00,O
+Trades,Data,Order,Stocks,USD,AAPL,"2025-10-20, 11:00:00",-5,180.00,186.50,900.00,-2.00,-800.00,98.00,32.50,C
 Trades,Data,Order,Stocks,USD,AAPL,"2025-12-18, 16:00:00",5,176.00,186.50,-880.00,-2.00,880.00,0.00,67.50,O
 Trades,Data,Order,Stocks,USD,NFLX,"2025-11-08, 10:00:00",8,519.00,520.00,-4152.00,-3.50,4155.50,0.00,120.00,O
 Trades,Data,Order,Stocks,USD,TSLA,"2025-03-10, 09:00:00",5,200.00,202.00,-1000.00,-2.50,1002.50,0.00,10.00,O
@@ -120,7 +121,7 @@ Trades,Data,Order,Stocks,USD,TSLA,"2025-06-15, 10:30:00",-5,198.00,192.00,990.00
 Trades,Data,Order,Stocks,USD,PYPL,"2025-02-12, 09:00:00",10,72.00,73.00,-720.00,-2.00,722.00,0.00,10.00,O
 Trades,Data,Order,Stocks,USD,PYPL,"2025-07-22, 11:15:00",-10,71.00,67.50,710.00,-2.50,-722.00,-12.00,-2.00,C
 Trades,SubTotal,,Stocks,USD,GOOG,,3,,,-7462.00,-7.50,12435.50,13.00,480.00,
-Trades,SubTotal,,Stocks,USD,AAPL,,15,,,-2625.00,-4.50,2627.50,0.00,172.50,
+Trades,SubTotal,,Stocks,USD,AAPL,,10,,,-1725.00,-6.50,1827.50,98.00,205.00,
 Trades,SubTotal,,Stocks,USD,NFLX,,8,,,-4152.00,-3.50,4155.50,0.00,120.00,
 Trades,SubTotal,,Stocks,USD,TSLA,,0,,,-10.00,-4.50,0.00,-12.50,-2.00,
 Trades,SubTotal,,Stocks,USD,PYPL,,0,,,-10.00,-4.50,0.00,-12.00,-2.00,
