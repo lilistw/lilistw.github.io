@@ -157,6 +157,6 @@ describe('buildTaxSummary', () => {
     ]
     const { sumTaxable } = buildTaxSummary(rows)
     expect(sumTaxable.totalProceedsLcl).toBeCloseTo(500)
-    expect(sumTaxable.totalcostBasisLcl).toBeCloseTo(350)
+    expect(sumTaxable.totalCostBasisLcl).toBeCloseTo(350)
   })
 })
