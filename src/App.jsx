@@ -13,19 +13,25 @@ import { getPrevYearDefaultAcqDate } from './domain/fx/fxRates.js'
 import AppHeader from './ui/AppHeader.jsx'
 import AppFooter from './ui/AppFooter.jsx'
 import Disclaimer from './ui/Disclaimer.jsx'
-import TermsModal from './ui/TermsModal.jsx'
+import InfoModal from './ui/InfoModal.jsx'
 import Dropzone from './ui/Dropzone.jsx'
 import ResultTabs from './ui/ResultTabs/ResultTabs.jsx'
 import PriorYearPositionsForm from './ui/PriorYearPositionsForm.jsx'
+import CostBasisStrategySelector from './ui/CostBasisStrategySelector.jsx'
 
 export default function App() {
   const { t } = useTranslation()
 
-  const [nightMode, setNightMode] = useState(false)
+  const [nightMode, setNightMode] = useState(
+    () => localStorage.getItem('theme') === 'night'
+  )
+  const [costBasisStrategy, setCostBasisStrategy] = useState('ibkr')
 
-  // Theme attribute
+  // Theme attribute + persist preference
   useEffect(() => {
-    document.documentElement.setAttribute('data-theme', nightMode ? 'night' : 'day')
+    const value = nightMode ? 'night' : 'day'
+    document.documentElement.setAttribute('data-theme', value)
+    localStorage.setItem('theme', value)
   }, [nightMode])
 
   // Files
@@ -45,6 +51,7 @@ export default function App() {
 
   const [agreed, setAgreed] = useState(false)
   const [showTerms, setShowTerms] = useState(false)
+  const [showPrivacy, setShowPrivacy] = useState(false)
 
   const taxYear = inputData?.taxYear ?? 2025
 
@@ -94,6 +101,7 @@ export default function App() {
         setPendingPositions(
           inferred.map(p => ({
             ...p,
+            costUSDInput: p.costUSD != null ? String(Number(p.costUSD).toFixed(2)) : '',
             costLclInput: p.costLcl != null ? String(Number(p.costLcl).toFixed(2)) : '',
             lastBuyDateInput: p.lastBuyDate ?? defaultDate,
           }))
@@ -115,6 +123,10 @@ export default function App() {
   // File handlers
   function selectCsvFile(file) {
     if (!file) return
+    if (!file.name.toLowerCase().endsWith('.csv')) {
+      setError(t('errors.invalidFileTypeCsv'))
+      return
+    }
     setCsvFile(file)
     setResult(null)
     setError(null)
@@ -127,6 +139,12 @@ export default function App() {
   }
 
   function selectHtmlFile(file) {
+    if (!file) return
+    const name = file.name.toLowerCase()
+    if (!name.endsWith('.htm') && !name.endsWith('.html')) {
+      setError(t('errors.invalidFileTypeHtml'))
+      return
+    }
     setHtmlFile(file)
     setResult(null)
     setError(null)
@@ -150,12 +168,12 @@ export default function App() {
         symbol: p.symbol,
         currency: p.currency,
         qty: p.qty,
-        costUSD: p.costUSD,
+        costUSD: parseFloat(String(p.costUSDInput).replace(',', '.')) || 0,
         costLcl: parseFloat(String(p.costLclInput).replace(',', '.')) || 0,
         lastBuyDate: p.lastBuyDateInput || getPrevYearDefaultAcqDate(taxYear),
       }))
 
-      setResult(calculateTax(inputData, priorPositions))
+      setResult(calculateTax(inputData, priorPositions, { strategy: costBasisStrategy }))
     } catch (e) {
       setError(e.message)
       console.error(e)
@@ -266,13 +284,19 @@ export default function App() {
 
           {/* Prior-year positions form — shown when inferred positions exist */}
           {!result && pendingPositions !== null && pendingPositions.length > 0 && (
-              <PriorYearPositionsForm
-                positions={pendingPositions}
-                onPositionChange={(i, field, value) =>
-                setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
-                }
-                taxYear={taxYear}
-              />
+              <>
+                <PriorYearPositionsForm
+                  positions={pendingPositions}
+                  onPositionChange={(i, field, value) =>
+                  setPendingPositions(prev => prev.map((p, idx) => idx === i ? { ...p, [field]: value } : p))
+                  }
+                  taxYear={taxYear}
+                />
+                <CostBasisStrategySelector
+                  value={costBasisStrategy}
+                  onChange={setCostBasisStrategy}
+                />
+              </>
             )}
 
           {/* Demo load button — shown until files are selected */}
@@ -315,9 +339,10 @@ export default function App() {
           </main>
         </div>
 
-        <AppFooter onShowTerms={() => setShowTerms(true)} />
+        <AppFooter onShowTerms={() => setShowTerms(true)} onShowPrivacy={() => setShowPrivacy(true)} />
 
-        {showTerms && <TermsModal onClose={() => setShowTerms(false)} />}
+        {showTerms && <InfoModal titleKey="terms.title" sectionsKey="terms.sections" onClose={() => setShowTerms(false)} />}
+        {showPrivacy && <InfoModal titleKey="privacy.title" sectionsKey="privacy.sections" onClose={() => setShowPrivacy(false)} />}
       </div>
     </ThemeProvider>
   )

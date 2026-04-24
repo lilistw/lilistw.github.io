@@ -1,8 +1,8 @@
 import { useTranslation } from 'react-i18next';
 import { Tooltip } from '@mui/material';
-import { GitHub, InfoOutlined, Favorite } from '@mui/icons-material';
+import { GitHub, InfoOutlined, Favorite, PrivacyTipOutlined } from '@mui/icons-material';
 
-export default function AppFooter({ onShowTerms }) {
+export default function AppFooter({ onShowTerms, onShowPrivacy }) {
   const { t } = useTranslation();
 
   return (
@@ -30,6 +30,18 @@ export default function AppFooter({ onShowTerms }) {
         </button>
 
         <span className="footer-sep">·</span>
+
+        <button
+          type="button"
+          className="footer-link footer-btn"
+          onClick={onShowPrivacy}
+        >
+          <PrivacyTipOutlined sx={{ fontSize: 16 }} />
+          {t('app.footer.privacyLink')}
+        </button>
+
+        <span className="footer-sep footer-sep-before-support">·</span>
+        <span className="footer-break" aria-hidden="true" />
 
         <Tooltip title={t('app.footer.supportTooltip')} arrow>
           <a

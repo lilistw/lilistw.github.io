@@ -1,4 +1,5 @@
 import { parseCSV } from './readCsv.js'
+import { validateCsvContent, validateHtmlContent, validateTradeCurrencies } from './validateInput.js'
 import { parseStatementInfo } from '../domain/parser/parseStatementInfo.js'
 import { parseInstruments } from '../domain/parser/parseInstruments.js'
 import { parseDividends, parseWithholdingTax } from '../domain/parser/parseDividends.js'
@@ -22,11 +23,19 @@ export async function readInput({ csvFile, htmlFile }) {
     csvFile.text(),
   ])
 
-  const csvRows            = parseCSV(csvText)
+  const csvRows = parseCSV(csvText)
+  validateCsvContent(csvRows)
+
+  const htmlDoc = new DOMParser().parseFromString(htmlText, 'text/html')
+  validateHtmlContent(htmlDoc)
+
   const { statement, account } = parseStatementInfo(csvRows)
 
   // Validate year early for user feedback — throws if unsupported
   const taxYear = parseTaxYear(statement.period)
+
+  const trades = parseTradesFromHtml(htmlText)
+  validateTradeCurrencies(trades)
 
   return {
     statement,
@@ -35,7 +44,7 @@ export async function readInput({ csvFile, htmlFile }) {
     instruments:    parseInstruments(csvRows),
     dividends:      parseDividends(csvRows),
     withholdingTax: parseWithholdingTax(csvRows),
-    trades:         parseTradesFromHtml(htmlText),
+    trades,
     openPositions:  parseOpenPositions(csvRows),
     csvTrades:      parseCsvTrades(csvRows),
     interest:       parseInterest(csvRows),

@@ -4,6 +4,7 @@ import { toLocalCurrency } from '../fx/fxRates.js'
 import { IBKR_EXCHANGES } from '../constants.js'
 import { isTaxable } from '../instrument/classifier.js'
 import { parseToDecimal, D0 } from '../numStr.js'
+import { createCostBasisStrategy } from './costBasis/createCostBasisStrategy.js'
 
 function makeInstrument(trade, instrumentInfo) {
   const info = instrumentInfo[trade.symbol]
@@ -36,10 +37,15 @@ function summarizeSells(sells) {
 }
 
 export class TradeCalculator {
-  constructor({ instrumentInfo, csvTradeBasis, context }) {
+  constructor({ instrumentInfo, csvTradeBasis, context, strategy = 'ibkr' }) {
     this.instrumentInfo = instrumentInfo
     this.csvTradeBasis = csvTradeBasis
     this.ctx = context
+    this.costBasisStrategy = createCostBasisStrategy(strategy, {
+      csvTradeBasis,
+      ctx: context,
+      toLcl: (amount, currency, date) => this.#toLcl(amount, currency, date),
+    })
   }
 
   calculate(trades, priorPositions = []) {
@@ -122,24 +128,17 @@ export class TradeCalculator {
     }
 
     if (t.side === 'SELL') {
-      if (pos.qty.isZero()) {
-        const csvBasisD = this.csvTradeBasis.get(
-          `${t.symbol}|${date}|${qtyD.toFixed(0)}`
-        )
+      const { costBasis: cbResult, costBasisLcl: cbLclResult } =
+        this.costBasisStrategy.computeSell({ pos, qtyD, date, currency: t.currency, symbol: t.symbol })
 
-        if (csvBasisD) {
-          costBasis = csvBasisD
-          costBasisLcl = this.#toLcl(csvBasisD, t.currency, this.ctx.prevYearEndDate)
-        }
-      } else {
-        const cbD = pos.cost.div(pos.qty).times(qtyD)
+      costBasis    = cbResult
+      costBasisLcl = cbLclResult
+
+      if (!pos.qty.isZero()) {
+        const cbD    = pos.cost.div(pos.qty).times(qtyD)
         const cbLclD = pos.costLcl.div(pos.qty).times(qtyD)
-
-        costBasis = cbD
-        costBasisLcl = cbLclD
-
-        pos.qty = pos.qty.minus(qtyD)
-        pos.cost = pos.cost.minus(cbD)
+        pos.qty     = pos.qty.minus(qtyD)
+        pos.cost    = pos.cost.minus(cbD)
         pos.costLcl = pos.costLcl.minus(cbLclD)
       }
     }
