@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+import { t } from '../../localization/translate.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
@@ -19,8 +19,6 @@ export default function TaxApp8Holdings({ result }) {
   })
 
   const data = holdingsPresenter.buildHoldings(result.holdings)
-
-  const { t } = useTranslation()
   if (!data || data.rows.length === 0) return null
   return (
     <Box>

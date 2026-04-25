@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+import { t } from '../localization/translate.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
@@ -16,7 +16,6 @@ function fmtNum(n) {
 }
 
 export default function ThresholdWarning({ holdings, localCurrencyLabel, localCurrencyCode }) {
-  const { t } = useTranslation()
 
   const totalLcl = holdings.reduce((sum, h) => sum + (h.costLcl ?? 0), 0)
   if (totalToEur(totalLcl, localCurrencyCode) <= SPB8_THRESHOLD_EUR) return null

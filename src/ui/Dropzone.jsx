@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { useTranslation } from 'react-i18next'
+import { t } from '../localization/translate.js'
 import {
   Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
   Link, Typography,
@@ -13,7 +13,6 @@ export default function Dropzone({
   infoKey = 'csv',
   fileType,
 }) {
-  const { t } = useTranslation()
   const [showInfo, setShowInfo] = useState(false)
   const inputRef = useRef(null)
 

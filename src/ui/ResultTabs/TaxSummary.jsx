@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+import { t } from '../../localization/translate.js'
 import { Box, Typography } from '@mui/material'
 import { InfoOutlined } from '@mui/icons-material'
 import { TaxFormSection, TaxRow } from './TaxFormSection.jsx'
@@ -6,7 +6,6 @@ import { TradeSummaryPresenter } from '../../presentation/TradeSummaryPresenter.
 
 
 export default function TaxSummary({ taxSummary, localCurrencyLabel = 'лв' }) {
-  const { t } = useTranslation()
 
   const presenter = new TradeSummaryPresenter({
     t,

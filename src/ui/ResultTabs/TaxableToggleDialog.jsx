@@ -1,9 +1,8 @@
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton } from '@mui/material'
 import { Close } from '@mui/icons-material'
-import { useTranslation } from 'react-i18next'
+import { t } from '../../localization/translate.js'
 
 export default function TaxableToggleDialog({ pending, onClose, onConfirm }) {
-  const { t } = useTranslation()
 
   if (!pending) return null
 

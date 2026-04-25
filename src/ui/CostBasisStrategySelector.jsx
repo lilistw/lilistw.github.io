@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+import { t } from '../localization/translate.js'
 import { alpha } from '@mui/material/styles'
 import {
   Box, FormControl, FormControlLabel, FormLabel,
@@ -7,7 +7,6 @@ import {
 import { InfoOutlined } from '@mui/icons-material'
 
 export default function CostBasisStrategySelector({ value, onChange }) {
-  const { t } = useTranslation()
 
   return (
     <Box sx={{ mt: 1, mb: 1 }}>

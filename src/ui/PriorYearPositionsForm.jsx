@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+import { t } from '../localization/translate.js'
 import { alpha } from '@mui/material/styles'
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer,
@@ -33,7 +33,6 @@ function fmtDate(dateStr) {
  *   taxYear         – current tax year (determines currency label and prev-year date)
  */
 export default function PriorYearPositionsForm({ positions, onPositionChange, taxYear = 2025 }) {
-  const { t } = useTranslation()
   const lcl             = getLocalCurrencyLabel(taxYear)
   const prevYearEndDate = getPrevYearEndDate(taxYear)
   const prevRate        = findUsdRate(prevYearEndDate)

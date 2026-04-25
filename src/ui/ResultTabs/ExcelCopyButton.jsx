@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { t } from '../../localization/translate.js'
 import { Button, Tooltip } from '@mui/material'
 import { ContentCopyOutlined, CheckOutlined, ErrorOutlineOutlined } from '@mui/icons-material'
 import { ExcelPresenter } from '../../presentation/ExcelPresenter.js'
@@ -7,7 +7,6 @@ import { ExcelPresenter } from '../../presentation/ExcelPresenter.js'
 const RESET_DELAY = 2500
 
 export default function ExcelCopyButton({ result }) {
-  const { t } = useTranslation()
   const [status, setStatus] = useState('idle')
 
   async function handleCopy() {

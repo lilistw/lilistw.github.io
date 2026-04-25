@@ -17,10 +17,9 @@ import {
   TrendingUp,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+import { t } from '../localization/translate.js'
 
 export default function AboutSection() {
-  const { t } = useTranslation();
   const [open, setOpen] = useState(false);
 
   const cardSx = {
