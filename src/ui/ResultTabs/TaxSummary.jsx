@@ -1,11 +1,11 @@
-import { t } from '../../localization/translate.js'
+import { t } from '../../localization/i18n.js'
 import { Box, Typography } from '@mui/material'
 import { InfoOutlined } from '@mui/icons-material'
 import { TaxFormSection, TaxRow } from './TaxFormSection.jsx'
 import { TradeSummaryPresenter } from '../../presentation/TradeSummaryPresenter.js'
 
 
-export default function TaxSummary({ taxSummary, localCurrencyLabel = 'лв' }) {
+export default function TaxSummary({ taxSummary, localCurrencyLabel = t('currencyLabels.bgnShort') }) {
 
   const presenter = new TradeSummaryPresenter({
     t,

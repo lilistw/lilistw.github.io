@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { t } from '../localization/translate.js'
+import { t } from '../localization/i18n.js'
 import { SUPPORTED_FORMATS } from '../config.js'
 import { readInputFromFiles } from '../platform/web/fileReader.js'
 import { calculateTax } from '../application/calculateTax.js'

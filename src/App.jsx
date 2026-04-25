@@ -1,4 +1,4 @@
-import { t } from './localization/translate.js'
+import { t } from './localization/i18n.js'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from '@mui/material'
 import { InfoOutlined } from '@mui/icons-material'

@@ -6,6 +6,7 @@ import {
   IconButton,
   Box
 } from '@mui/material'
+import { t } from '../../localization/i18n.js'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 
@@ -54,13 +55,13 @@ export default function DevTab({ inputJsonText, outputJsonText }) {
   return (
     <>
       <JsonAccordion
-        title="Input JSON"
+        title={t('app.dev.inputJson')}
         text={inputJsonText}
         defaultExpanded
       />
 
       <JsonAccordion
-        title="Output JSON"
+        title={t('app.dev.outputJson')}
         text={outputJsonText}
       />
     </>

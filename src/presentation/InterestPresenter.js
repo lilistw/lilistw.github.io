@@ -1,4 +1,6 @@
 // InterestPresenter.js
+import { t } from '../localization/i18n.js'
+
 export class InterestPresenter {
   constructor({ lcl }) {
     this.lcl = lcl
@@ -15,13 +17,13 @@ export class InterestPresenter {
 
   #buildColumns() {
     return [
-      { key: 'date',        label: 'Дата', mono: true },
-      { key: 'currency',    label: 'Валута' },
-      { key: 'description', label: 'Описание' },
-      { key: 'amount',      label: 'Сума', align: 'right', mono: true, decimals: 2 },
+      { key: 'date',        label: t('interestTableCols.date'), mono: true },
+      { key: 'currency',    label: t('interestTableCols.currency') },
+      { key: 'description', label: t('interestTableCols.description') },
+      { key: 'amount',      label: t('interestTableCols.amount'), align: 'right', mono: true, decimals: 2 },
       {
         key: 'amountLcl',
-        label: `Сума (${this.lcl})`,
+        label: t('interestTableCols.amountLcl', { lcl: this.lcl }),
         align: 'right',
         mono: true,
         decimals: 2,
@@ -35,7 +37,7 @@ export class InterestPresenter {
       ...r,
       amount: r.amount?.toNumber?.() ?? null,
       amountLcl: r.amountLcl?.toNumber?.() ?? null,
-      description: r._total ? 'Общо' : r.description,
+      description: r._total ? t('interestTableCols.total') : r.description,
     }))
   }
 }

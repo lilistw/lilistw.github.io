@@ -1,6 +1,6 @@
 import { Alert } from '@mui/material'
 import { WarningAmber } from '@mui/icons-material'
-import { t } from '../localization/translate.js'
+import { t } from '../localization/i18n.js'
 
 export default function Disclaimer() {
 

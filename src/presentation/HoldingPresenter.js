@@ -1,4 +1,6 @@
 // HoldingsPresenter.js
+import { t } from '../localization/i18n.js'
+
 export class HoldingPresenter {
   constructor({ lcl }) {
     this.lcl = lcl
@@ -6,18 +8,18 @@ export class HoldingPresenter {
 
   buildHoldings(rows) {
     const sortedRows = this.#mapRows(rows).sort((a, b) =>
-      a.type === b.type ? 0 : a.type === 'Акции' ? -1 : 1
+      a.type === b.type ? 0 : a.type === t('taxApp8Holdings.shares') ? -1 : 1
     )
-    const shares = sortedRows.filter(r => r.type === 'Акции')
-    const funds = sortedRows.filter(r => r.type === 'Дялове')
+    const shares = sortedRows.filter(r => r.type === t('taxApp8Holdings.shares'))
+    const funds = sortedRows.filter(r => r.type === t('taxApp8Holdings.funds'))
     const groupedRows = []
 
     if (shares.length > 0) {
-      groupedRows.push({ _subtitle: true, label: 'Акции' })
+      groupedRows.push({ _subtitle: true, label: t('taxApp8Holdings.shares') })
       groupedRows.push(...shares)
     }
     if (funds.length > 0) {
-      groupedRows.push({ _subtitle: true, label: 'Дялове' })
+      groupedRows.push({ _subtitle: true, label: t('taxApp8Holdings.funds') })
       groupedRows.push(...funds)
     }
 
@@ -33,28 +35,28 @@ export class HoldingPresenter {
 
   #columns() {
     return [
-      { key: 'symbol', label: 'Символ', bold: true, tooltip: 'description' },
-      { key: 'type', label: 'Вид', bold: true },
-      { key: 'country', label: 'Държава' },
-      { key: 'quantity', label: 'Брой', align: 'right', mono: true, decimals: 0 },
+      { key: 'symbol', label: t('holdingTableCols.symbol'), bold: true, tooltip: 'description' },
+      { key: 'type', label: t('holdingTableCols.type'), bold: true },
+      { key: 'country', label: t('holdingTableCols.country') },
+      { key: 'quantity', label: t('holdingTableCols.quantity'), align: 'right', mono: true, decimals: 0 },
       {
         key: 'acquDate',
-        label: 'Дата и година на придобиване',
-        shortLabel: 'Дата',
+        label: t('holdingTableCols.acquDate'),
+        shortLabel: t('holdingTableCols.acquDateShort'),
         mono: true,
         maxWidth: 80,
       },
       {
         key: 'costBasis',
-        label: 'Обща цена в съответната валута',
+        label: t('holdingTableCols.costBasis'),
         align: 'right',
         mono: true,
         decimals: 2,
       },
-      { key: 'currency', label: 'Валута' },
+      { key: 'currency', label: t('holdingTableCols.currency') },
       {
         key: 'costLcl',
-        label: `Обща цена в ${this.lcl}`,
+        label: t('holdingTableCols.costLcl', { lcl: this.lcl }),
         align: 'right',
         mono: true,
         decimals: 2,
@@ -66,7 +68,7 @@ export class HoldingPresenter {
   #mapRows(rows) {
     return rows.map(r => ({
       ...r,
-      type: r.type === 'ETF' ? 'Дялове' : 'Акции',
+      type: r.type === 'ETF' ? t('taxApp8Holdings.funds') : t('taxApp8Holdings.shares'),
       acquDate: r.acquDate
         ? r.acquDate.split('-').reverse().join('.')
         : null,

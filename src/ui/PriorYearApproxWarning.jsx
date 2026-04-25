@@ -1,4 +1,4 @@
-import { t } from '../localization/translate.js'
+import { t } from '../localization/i18n.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'

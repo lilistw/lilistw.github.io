@@ -1,4 +1,4 @@
-import { t } from '../localization/translate.js'
+import { t } from '../localization/i18n.js'
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton } from '@mui/material';
 import { Close } from '@mui/icons-material';
 

@@ -1,4 +1,4 @@
-import { t } from '../localization/translate.js'
+import { t } from '../localization/i18n.js'
 import { alpha } from '@mui/material/styles'
 import {
   Box, Paper, Table, TableBody, TableCell, TableContainer,

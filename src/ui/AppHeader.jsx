@@ -1,4 +1,4 @@
-import { t } from '../localization/translate.js'
+import { t } from '../localization/i18n.js'
 import { Typography, Box } from '@mui/material';
 import { LightModeOutlined, DarkModeOutlined } from '@mui/icons-material';
 import AboutSection from './AboutSection';

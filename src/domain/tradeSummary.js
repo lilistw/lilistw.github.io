@@ -2,6 +2,7 @@
  * Reactive trade summaries — recomputed whenever the user toggles taxable status.
  * Both functions are pure and operate on the current trade data rows from App state.
  */
+import { t } from '../localization/i18n.js'
 
 const TRADE_SUM_COLS     = ['proceeds', 'commission', 'fee', 'totalWithFee']
 const TRADE_SUM_LCL_COLS = ['totalWithFeeLcl', 'costBasisLcl']
@@ -13,7 +14,7 @@ const TRADE_SUM_LCL_COLS = ['totalWithFeeLcl', 'costBasisLcl']
  */
 export function buildTradeTotals(dataRows, localCurrencyCode) {
   const totals = []
-  for (const label of ['Облагаем', 'Освободен']) {
+  for (const label of [t('app.taxStatus.taxable'), t('app.taxStatus.exempt')]) {
     const group = dataRows.filter(r => r.taxExemptLabel === label)
     if (group.length === 0) continue
     for (const cur of ['EUR', 'USD']) {
