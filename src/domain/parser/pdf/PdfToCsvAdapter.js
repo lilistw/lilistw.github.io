@@ -1,3 +1,5 @@
+import { t } from '../../../localization/i18n.js'
+
 /**
  * Adapts IBKR Activity Statement PDF page data to string[][] rows,
  * matching the format that PapaParse produces from the CSV Activity Statement.
@@ -15,9 +17,7 @@ export class PdfToCsvAdapter {
    */
   adapt(pages) {
     if (!pages || pages.length === 0) {
-      throw new Error(
-        'Невалиден PDF файл. Не са намерени познати секции от IBKR Activity Statement.',
-      )
+      throw new Error(t('errors.invalidPdfFormat'))
     }
 
     const colMid = (pages[0]?.colWidth ?? 792) / 2
@@ -32,9 +32,7 @@ export class PdfToCsvAdapter {
 
     const hasStatementMarker = rows.some(r => r[0] === 'Statement' && r[1] === 'Data')
     if (!hasStatementMarker) {
-      throw new Error(
-        'Невалиден PDF файл. Не са намерени познати секции от IBKR Activity Statement.',
-      )
+      throw new Error(t('errors.invalidPdfFormat'))
     }
 
     return rows

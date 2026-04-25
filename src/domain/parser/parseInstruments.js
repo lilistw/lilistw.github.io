@@ -1,4 +1,4 @@
-import { COUNTRY_NAMES_BG } from '../constants.js'
+import { t } from '../../localization/i18n.js'
 
 /**
  * Parses "Financial Instrument Information" section into a raw array.
@@ -48,7 +48,7 @@ export function buildInstrumentInfo(instruments) {
     const info = {
       securityId:   inst.securityId,
       country,
-      countryName:  COUNTRY_NAMES_BG[country] || country,
+      countryName:  t(`countryNames.${country}`) !== `countryNames.${country}` ? t(`countryNames.${country}`) : country,
       type:         inst.type,
       listingExch:  inst.listingExchange,
       description:  inst.description,

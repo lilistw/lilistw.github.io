@@ -5,7 +5,7 @@ import { TaxFormSection, TaxRow } from './TaxFormSection.jsx'
 import { TradeSummaryPresenter } from '../../presentation/TradeSummaryPresenter.js'
 
 
-export default function TaxSummary({ taxSummary, localCurrencyLabel = 'лв' }) {
+export default function TaxSummary({ taxSummary, localCurrencyLabel = t('currencyLabels.bgnShort') }) {
 
   const presenter = new TradeSummaryPresenter({
     t,

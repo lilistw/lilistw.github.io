@@ -1,3 +1,5 @@
+import { t } from '../localization/i18n.js'
+
 const SUPPORTED_CURRENCIES = new Set(['USD', 'EUR'])
 
 /**
@@ -9,7 +11,7 @@ const SUPPORTED_CURRENCIES = new Set(['USD', 'EUR'])
 export function validateCsvContent(csvRows) {
   const hasIbkrMarker = csvRows.some(r => r[0] === 'Statement' && r[1] === 'Data')
   if (!hasIbkrMarker) {
-    throw new Error('Невалиден файл. Очаква се Activity Statement CSV от IBKR.')
+    throw new Error(t('errors.invalidCsvFormat'))
   }
 }
 
@@ -34,12 +36,12 @@ export function validateHtmlContent(doc) {
   const hasTable = doc.querySelector('table') !== null
 
   if (!hasIbkrTable && !hasTable) {
-    throw new Error('Невалиден файл. Очаква се Trade Confirmation HTML от IBKR.')
+    throw new Error(t('errors.invalidHtmlFormat'))
   }
 
   if (!hasIbkrTable && hasTable) {
     // Has tables but no IBKR-specific markers — likely wrong file type
-    throw new Error('Невалиден файл. Очаква се Trade Confirmation HTML от IBKR.')
+    throw new Error(t('errors.invalidHtmlFormat'))
   }
 }
 
@@ -52,7 +54,7 @@ export function validateHtmlContent(doc) {
 export function validatePdfContent(rows) {
   const hasIbkrMarker = rows.some(r => r[0] === 'Statement' && r[1] === 'Data')
   if (!hasIbkrMarker) {
-    throw new Error('Невалиден PDF файл. Очаква се Activity Statement от IBKR.')
+    throw new Error(t('errors.invalidPdfFormat'))
   }
 }
 
@@ -65,9 +67,7 @@ export function validatePdfContent(rows) {
 export function validateTradeCurrencies(trades) {
   for (const trade of trades) {
     if (trade.currency && !SUPPORTED_CURRENCIES.has(trade.currency)) {
-      throw new Error(
-        `Неподдържана валута: ${trade.currency}. Поддържат се само USD и EUR.`
-      )
+      throw new Error(t('errors.unsupportedCurrency', { currency: trade.currency }))
     }
   }
 }
