@@ -66,6 +66,14 @@ export function parseTradePdf(pages) {
       const quantity = pick(450, 510)
       if (!quantity) continue // non-parseable row (page header, totals, etc.)
 
+      // Normalise side to uppercase to match parseTradesFromHtml output
+      const rawSide = pick(378, 435)
+      const side = rawSide.toUpperCase() === 'SELL' ? 'SELL' : 'BUY'
+
+      // Normalise quantity sign: negative for SELL, positive for BUY (HTML convention)
+      const qtyStr = quantity.replace(/^-/, '')
+      const normQty = side === 'SELL' ? `-${qtyStr}` : qtyStr
+
       trades.push({
         asset:      asset    ?? '',
         currency:   currency ?? '',
@@ -73,8 +81,8 @@ export function parseTradePdf(pages) {
         datetime:   pick(170, 225),
         settleDate: pick(248, 300),
         exchange,
-        side:       pick(378, 435),
-        quantity,
+        side,
+        quantity:   normQty,
         price:      pick(510, 565),
         proceeds:   pick(563, 625),
         commission: pick(615, 655),

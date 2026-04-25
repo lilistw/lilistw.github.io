@@ -19,8 +19,11 @@ export function parseCsvTrades(rows) {
     if (name) colIndex[name] = i
   }
 
+  const assetCatIdx = colIndex['Asset Category']
+
   return rows
     .filter(r => r[0] === 'Trades' && r[1] === 'Data' && r[2] === 'Order')
+    .filter(r => (r[assetCatIdx] || '').trim() !== 'Forex')
     .map(r => ({
       assetCategory: (r[colIndex['Asset Category']]    || '').trim(),
       currency:      (r[colIndex['Currency']]          || '').trim(),
