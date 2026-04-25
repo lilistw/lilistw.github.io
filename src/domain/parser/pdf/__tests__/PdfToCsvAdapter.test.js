@@ -28,7 +28,6 @@ describe('TableSectionExtractor', () => {
     const rows = extractor.extract('Trades', lines)
     expect(rows).toHaveLength(3)
     expect(rows[1][1]).toBe('Data')
-    // row layout: [section, "Data", discriminator, assetCat, currency, symbol]
     expect(rows[1][5]).toBe('AAPL')
     expect(rows[2][5]).toBe('MSFT')
   })
@@ -75,63 +74,92 @@ describe('KeyValueSectionExtractor', () => {
 })
 
 // ---------------------------------------------------------------------------
+// PdfToCsvAdapter helpers
+// ---------------------------------------------------------------------------
+
+/** Minimal page that produces Statement,Data rows */
+function makeStatementPage(period = 'January 1, 2025 - December 31, 2025') {
+  return {
+    colWidth: 792,
+    rowHeight: 612,
+    rows: [
+      // Top-right area (row<100, col>396): title + period
+      { row: 50, items: [{ col: 450, row: 50, str: 'Activity Statement', width: 100 }] },
+      { row: 62, items: [{ col: 410, row: 62, str: period, width: 180 }] },
+      // Broker name area (row 100–160)
+      { row: 120, items: [{ col: 250, row: 120, str: 'Interactive Brokers LLC, Greenwich', width: 200 }] },
+    ],
+  }
+}
+
+/** Page with an Open Positions section */
+function makeOpenPositionsPage() {
+  return {
+    colWidth: 792,
+    rowHeight: 612,
+    rows: [
+      { row: 200, items: [{ col: 38, row: 200, str: 'Open Positions', width: 80 }] },
+      { row: 220, items: [{ col: 38, row: 220, str: 'Stocks', width: 40 }] },
+      { row: 240, items: [{ col: 38, row: 240, str: 'USD', width: 30 }] },
+      {
+        row: 260,
+        items: [
+          { col: 38,  row: 260, str: 'AAPL',    width: 30 },
+          { col: 251, row: 260, str: '10',       width: 15 },
+          { col: 303, row: 260, str: '1',        width: 10 },
+          { col: 362, row: 260, str: '150.00',   width: 30 },
+          { col: 438, row: 260, str: '1500.00',  width: 40 },
+          { col: 514, row: 260, str: '155.00',   width: 30 },
+          { col: 602, row: 260, str: '1550.00',  width: 40 },
+          { col: 694, row: 260, str: '50.00',    width: 30 },
+        ],
+      },
+    ],
+  }
+}
+
+// ---------------------------------------------------------------------------
 // PdfToCsvAdapter.adapt()
 // ---------------------------------------------------------------------------
 
 describe('PdfToCsvAdapter', () => {
   const adapter = new PdfToCsvAdapter()
 
-  const SAMPLE_PDF_TEXT = [
-    'Statement',
-    'BrokerName   Interactive Brokers LLC',
-    'Period       January 1, 2025 - December 31, 2025',
-    '',
-    'Trades',
-    'DataDiscriminator  Asset Category  Currency  Symbol  Date/Time  Buy/Sell  Quantity  Price',
-    'Order              Stocks          USD       AAPL    2025-03-01  BUY       10        150.00',
-    '',
-    'Dividends',
-    'Currency  Date        Description  Amount',
-    'USD       2025-06-15  AAPL(...)    25.00',
-  ].join('\n')
-
-  it('returns rows for all recognised sections', () => {
-    const rows = adapter.adapt(SAMPLE_PDF_TEXT)
-    const sections = new Set(rows.map(r => r[0]))
-    expect(sections).toContain('Statement')
-    expect(sections).toContain('Trades')
-    expect(sections).toContain('Dividends')
+  it('throws for empty pages array', () => {
+    expect(() => adapter.adapt([])).toThrow('Невалиден PDF файл')
   })
 
-  it('produces a Statement Data row with the period', () => {
-    const rows = adapter.adapt(SAMPLE_PDF_TEXT)
+  it('throws for null pages', () => {
+    expect(() => adapter.adapt(null)).toThrow('Невалиден PDF файл')
+  })
+
+  it('produces Statement Data rows with period', () => {
+    const rows = adapter.adapt([makeStatementPage()])
     const periodRow = rows.find(r => r[0] === 'Statement' && r[2] === 'Period')
     expect(periodRow).toBeDefined()
     expect(periodRow[3]).toBe('January 1, 2025 - December 31, 2025')
   })
 
-  it('produces a Trades Header row with column names', () => {
-    const rows = adapter.adapt(SAMPLE_PDF_TEXT)
-    const header = rows.find(r => r[0] === 'Trades' && r[1] === 'Header')
-    expect(header).toBeDefined()
-    expect(header).toContain('Symbol')
+  it('produces Statement Data rows with broker name', () => {
+    const rows = adapter.adapt([makeStatementPage()])
+    const nameRow = rows.find(r => r[0] === 'Statement' && r[2] === 'BrokerName')
+    expect(nameRow).toBeDefined()
+    expect(nameRow[3]).toContain('Interactive Brokers')
   })
 
-  it('produces a Trades Data row for the trade', () => {
-    const rows = adapter.adapt(SAMPLE_PDF_TEXT)
-    const dataRow = rows.find(r => r[0] === 'Trades' && r[1] === 'Data')
+  it('produces Open Positions Header + Data rows', () => {
+    const rows = adapter.adapt([makeStatementPage(), makeOpenPositionsPage()])
+    const header = rows.find(r => r[0] === 'Open Positions' && r[1] === 'Header')
+    expect(header).toBeDefined()
+    const dataRow = rows.find(r => r[0] === 'Open Positions' && r[1] === 'Data')
     expect(dataRow).toBeDefined()
+    // parseOpenPositions requires r[2] === 'Summary'
+    expect(dataRow[2]).toBe('Summary')
     expect(dataRow).toContain('AAPL')
   })
 
-  it('throws a Bulgarian error when no IBKR sections are found', () => {
-    expect(() => adapter.adapt('Random text\nwith no sections')).toThrow(
-      'Невалиден PDF файл'
-    )
-  })
-
   it('adapted output passes validatePdfContent', () => {
-    const rows = adapter.adapt(SAMPLE_PDF_TEXT)
+    const rows = adapter.adapt([makeStatementPage()])
     expect(() => validatePdfContent(rows)).not.toThrow()
   })
 })

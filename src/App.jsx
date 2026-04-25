@@ -42,6 +42,7 @@ export default function App() {
   const [htmlFileUrl, setHtmlFileUrl] = useState('')
 
   const isPdf = csvFile?.name?.toLowerCase().endsWith('.pdf') ?? false
+  const isHtmlPdf = htmlFile?.name?.toLowerCase().endsWith('.pdf') ?? false
 
   // Data pipeline
   const [inputData, setInputData] = useState(null)
@@ -85,9 +86,10 @@ export default function App() {
     setError(null)
 
     readInput({
-      csvFile: isPdf ? undefined : csvFile,
-      pdfFile: isPdf ? csvFile : undefined,
-      htmlFile,
+      csvFile:      isPdf     ? undefined : csvFile,
+      pdfFile:      isPdf     ? csvFile   : undefined,
+      htmlFile:     isHtmlPdf ? undefined : htmlFile,
+      tradePdfFile: isHtmlPdf ? htmlFile  : undefined,
     })
       .then(data => {
         if (cancelled) return
@@ -148,8 +150,8 @@ export default function App() {
   function selectHtmlFile(file) {
     if (!file) return
     const name = file.name.toLowerCase()
-    if (!name.endsWith('.htm') && !name.endsWith('.html')) {
-      setError(t('errors.invalidFileTypeHtml'))
+    if (!name.endsWith('.htm') && !name.endsWith('.html') && !name.endsWith('.pdf')) {
+      setError(t('errors.invalidFileTypeHtmlOrPdf'))
       return
     }
     setHtmlFile(file)
@@ -237,7 +239,8 @@ export default function App() {
                 <Dropzone
                 file={htmlFile} fileUrl={htmlFileUrl}
                 onFileSelect={selectHtmlFile} onClearFile={clearHtmlFile}
-                accept=".htm,.html" label={t('dropzone.htmlLabel')} infoKey="htm"
+                accept=".htm,.html,.pdf" label={t('dropzone.htmlLabel')} infoKey="htm"
+                fileType={htmlFile ? (isHtmlPdf ? 'PDF' : 'HTML') : undefined}
                 />
               <Typography variant="caption" color="text.secondary"
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>

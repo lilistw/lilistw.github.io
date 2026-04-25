@@ -1,7 +1,8 @@
 import { parseCSV } from './readCsv.js'
 import { validateCsvContent, validateHtmlContent, validatePdfContent, validateTradeCurrencies } from './validateInput.js'
-import { readPdfText } from '../io/readPdf.js'
+import { readPdfPages } from '../io/readPdf.js'
 import { PdfToCsvAdapter } from '../domain/parser/pdf/PdfToCsvAdapter.js'
+import { parseTradePdf } from '../domain/parser/pdf/PdfTradeConfirmationParser.js'
 import { parseStatementInfo } from '../domain/parser/parseStatementInfo.js'
 import { parseInstruments } from '../domain/parser/parseInstruments.js'
 import { parseDividends, parseWithholdingTax } from '../domain/parser/parseDividends.js'
@@ -13,40 +14,47 @@ import { parseTaxYear } from '../domain/parser/parseTaxYear.js'
 
 /**
  * Read uploaded files and parse them into a raw InputData object.
- * Accepts either { csvFile, htmlFile } or { pdfFile, htmlFile } —
- * pdfFile is an Activity Statement PDF and substitutes for csvFile.
+ *
+ * Activity Statement: { csvFile } or { pdfFile } (mutually exclusive).
+ * Trade Confirmation: { htmlFile } or { tradePdfFile } (mutually exclusive).
+ *
  * No tax calculations are performed here — only parsing close to the source.
  * All financial values are raw strings matching the input files.
  *
- * @param {{ csvFile?: File, htmlFile: File, pdfFile?: File }} files
+ * @param {{ csvFile?: File, pdfFile?: File, htmlFile?: File, tradePdfFile?: File }} files
  * @returns {Promise<InputData>}
  */
-export async function readInput({ csvFile, htmlFile, pdfFile }) {
+export async function readInput({ csvFile, htmlFile, pdfFile, tradePdfFile }) {
+  // --- Activity Statement ---
   let csvRows
-  let htmlText
-
   if (pdfFile) {
-    const [pdfText, html] = await Promise.all([readPdfText(pdfFile), htmlFile.text()])
-    csvRows = new PdfToCsvAdapter().adapt(pdfText)
+    const pages = await readPdfPages(pdfFile)
+    csvRows = new PdfToCsvAdapter().adapt(pages)
     validatePdfContent(csvRows)
-    htmlText = html
   } else {
-    const [html, csvText] = await Promise.all([htmlFile.text(), csvFile.text()])
+    const csvText = await csvFile.text()
     csvRows = parseCSV(csvText)
     validateCsvContent(csvRows)
-    htmlText = html
   }
 
-  const htmlDoc = new DOMParser().parseFromString(htmlText, 'text/html')
-  validateHtmlContent(htmlDoc)
+  // --- Trade Confirmation ---
+  let trades
+  if (tradePdfFile) {
+    const pages = await readPdfPages(tradePdfFile)
+    trades = parseTradePdf(pages)
+  } else {
+    const htmlText = await htmlFile.text()
+    const htmlDoc = new DOMParser().parseFromString(htmlText, 'text/html')
+    validateHtmlContent(htmlDoc)
+    trades = parseTradesFromHtml(htmlText)
+  }
+
+  validateTradeCurrencies(trades)
 
   const { statement, account } = parseStatementInfo(csvRows)
 
   // Validate year early for user feedback — throws if unsupported
   const taxYear = parseTaxYear(statement.period)
-
-  const trades = parseTradesFromHtml(htmlText)
-  validateTradeCurrencies(trades)
 
   return {
     statement,
