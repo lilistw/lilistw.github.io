@@ -5,6 +5,7 @@ import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from
 import { InfoOutlined } from '@mui/icons-material'
 
 import { dayTheme, nightTheme } from './theme.js'
+import { SUPPORTED_FORMATS } from './config.js'
 import { readInput } from './application/readInput.js'
 import { calculateTax } from './application/calculateTax.js'
 import { inferPriorPositions } from './application/inferPriorPositions.js'
@@ -34,12 +35,15 @@ export default function App() {
     localStorage.setItem('theme', value)
   }, [nightMode])
 
-  // Files
+  // Files — csvFile holds either a CSV or PDF Activity Statement
   const [csvFile, setCsvFile] = useState(null)
   const [htmlFile, setHtmlFile] = useState(null)
 
   const [csvFileUrl, setCsvFileUrl] = useState('')
   const [htmlFileUrl, setHtmlFileUrl] = useState('')
+
+  const isPdf = csvFile?.name?.toLowerCase().endsWith('.pdf') ?? false
+  const isHtmlPdf = htmlFile?.name?.toLowerCase().endsWith('.pdf') ?? false
 
   // Data pipeline
   const [inputData, setInputData] = useState(null)
@@ -82,7 +86,12 @@ export default function App() {
     setParsing(true)
     setError(null)
 
-    readInput({ csvFile, htmlFile })
+    readInput({
+      csvFile:      isPdf     ? undefined : csvFile,
+      pdfFile:      isPdf     ? csvFile   : undefined,
+      htmlFile:     isHtmlPdf ? undefined : htmlFile,
+      tradePdfFile: isHtmlPdf ? htmlFile  : undefined,
+    })
       .then(data => {
         if (cancelled) return
 
@@ -123,8 +132,10 @@ export default function App() {
   // File handlers
   function selectCsvFile(file) {
     if (!file) return
-    if (!file.name.toLowerCase().endsWith('.csv')) {
-      setError(t('errors.invalidFileTypeCsv'))
+    const name = file.name.toLowerCase()
+    const pdfOk = SUPPORTED_FORMATS.pdf && name.endsWith('.pdf')
+    if (!name.endsWith('.csv') && !pdfOk) {
+      setError(t(SUPPORTED_FORMATS.pdf ? 'errors.invalidFileTypeCsvOrPdf' : 'errors.invalidFileTypeCsv'))
       return
     }
     setCsvFile(file)
@@ -141,8 +152,9 @@ export default function App() {
   function selectHtmlFile(file) {
     if (!file) return
     const name = file.name.toLowerCase()
-    if (!name.endsWith('.htm') && !name.endsWith('.html')) {
-      setError(t('errors.invalidFileTypeHtml'))
+    const pdfOk = SUPPORTED_FORMATS.pdf && name.endsWith('.pdf')
+    if (!name.endsWith('.htm') && !name.endsWith('.html') && !pdfOk) {
+      setError(t(SUPPORTED_FORMATS.pdf ? 'errors.invalidFileTypeHtmlOrPdf' : 'errors.invalidFileTypeHtml'))
       return
     }
     setHtmlFile(file)
@@ -217,7 +229,10 @@ export default function App() {
                 <Dropzone
                 file={csvFile} fileUrl={csvFileUrl}
                 onFileSelect={selectCsvFile} onClearFile={clearCsvFile}
-                accept=".csv" label={t('dropzone.csvLabel')} infoKey="csv"
+                accept={SUPPORTED_FORMATS.pdf ? '.csv,.pdf' : '.csv'}
+                label={t(SUPPORTED_FORMATS.pdf ? 'dropzone.csvLabel' : 'dropzone.csvLabelNoPdf')}
+                infoKey={SUPPORTED_FORMATS.pdf ? 'csv' : 'csvNoPdf'}
+                fileType={csvFile ? (isPdf ? 'PDF' : 'CSV') : undefined}
                 />
               <Typography variant="caption" color="text.secondary"
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
@@ -229,12 +244,15 @@ export default function App() {
                 <Dropzone
                 file={htmlFile} fileUrl={htmlFileUrl}
                 onFileSelect={selectHtmlFile} onClearFile={clearHtmlFile}
-                accept=".htm,.html" label={t('dropzone.htmlLabel')} infoKey="htm"
+                accept={SUPPORTED_FORMATS.pdf ? '.htm,.html,.pdf' : '.htm,.html'}
+                label={t(SUPPORTED_FORMATS.pdf ? 'dropzone.htmlLabel' : 'dropzone.htmlLabelNoPdf')}
+                infoKey={SUPPORTED_FORMATS.pdf ? 'htm' : 'htmNoPdf'}
+                fileType={htmlFile ? (isHtmlPdf ? 'PDF' : 'HTML') : undefined}
                 />
               <Typography variant="caption" color="text.secondary"
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
                 <InfoOutlined sx={{ fontSize: 13 }} />
-                {t('app.htmlHint')}
+                {t(SUPPORTED_FORMATS.pdf ? 'app.htmlHint' : 'app.htmlHintNoPdf')}
                 </Typography>
               </Box>
             </Box>

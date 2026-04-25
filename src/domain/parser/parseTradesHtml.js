@@ -25,7 +25,7 @@ export function parseTradesFromHtml(htmlText) {
     const assetHeader = tbody.querySelector('td.header-asset')
     if (assetHeader) {
       const cat = assetHeader.textContent.trim()
-      skipSection = cat === 'Forex' || cat === 'FX'
+      skipSection = /^(forex|fx)$/i.test(cat)
       asset = skipSection ? null : cat
       continue
     }
