@@ -1,7 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import { PdfToCsvAdapter } from '../PdfToCsvAdapter.js'
 import { TableSectionExtractor, KeyValueSectionExtractor } from '../SectionExtractorStrategy.js'
-import { validatePdfContent } from '../../../../application/validateInput.js'
+import { validatePdfContent } from '../../../../parsing/validateInput.js'
 
 // ---------------------------------------------------------------------------
 // TableSectionExtractor

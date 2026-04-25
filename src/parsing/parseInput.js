@@ -13,7 +13,7 @@
  *   buildInputData(csvRows, trades)     → InputData
  */
 
-import { parseCSV }                                        from '../application/readCsv.js'
+import { parseCSV }                                        from './readCsv.js'
 import { PdfToCsvAdapter }                                 from '../domain/parser/pdf/PdfToCsvAdapter.js'
 import { parseTradePdf }                                   from '../domain/parser/pdf/PdfTradeConfirmationParser.js'
 import { parseTradesFromHtml }                             from '../domain/parser/parseTradesHtml.js'
@@ -29,7 +29,7 @@ import {
   validateHtmlContent,
   validatePdfContent,
   validateTradeCurrencies,
-} from '../application/validateInput.js'
+} from './validateInput.js'
 
 // ---------------------------------------------------------------------------
 // Activity Statement
