@@ -6,23 +6,12 @@ import DataTable from './DataTable.jsx'
 import { HoldingPresenter } from '../../presentation/HoldingPresenter.js'
 import ThresholdWarning from '../ThresholdWarning.jsx'
 
-const COLUMNS_WITHOUT_TYPE = (columns) =>
-  columns.filter(c => c.key !== 'type')
-
 function addRowNumbers(rows) {
-  return rows.map((r, i) => ({ '#': i + 1, ...r }))
+  let i = 1
+  return rows.map((r) => (r._subtitle ? r : { '#': i++, ...r }))
 }
 
 const NUM_COL = { key: '#', label: '#', align: 'right', mono: true, decimals: 0 }
-
-function HoldingsSubTable({ label, data, type, countLabel }) {
-  const rows = data.rows.filter(r => r.type === type)
-  if (rows.length === 0) return null
-  const columns = [NUM_COL, ...COLUMNS_WITHOUT_TYPE(data.columns)]
-  return (
-    <DataTable title={label} columns={columns} rows={addRowNumbers(rows)} countLabel={countLabel} embedded sx={{ mb: 2 }} />
-  )
-}
 
 export default function TaxApp8Holdings({ result }) {
   const holdingsPresenter = new HoldingPresenter({
@@ -58,8 +47,13 @@ export default function TaxApp8Holdings({ result }) {
           </Typography>
         </Box>
       </Box>
-      <HoldingsSubTable label={t('taxApp8Holdings.shares')} data={data} type="Акции" countLabel={t('taxApp8Holdings.countLabel')} />
-      <HoldingsSubTable label={t('taxApp8Holdings.funds')}  data={data} type="Дялове" countLabel={t('taxApp8Holdings.countLabel')} />
+      <DataTable
+        columns={[NUM_COL, ...data.columns]}
+        rows={addRowNumbers(data.rows)}
+        countLabel={t('taxApp8Holdings.countLabel')}
+        embedded
+        sx={{ mb: 2 }}
+      />
       <ThresholdWarning
         holdings={result.holdings}
         localCurrencyLabel={result.localCurrencyLabel}

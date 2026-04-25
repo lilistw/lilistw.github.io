@@ -13,7 +13,9 @@ function cellText(col, value) {
 
 function buildSection(name, columns, rows) {
   const header = columns.map(c => c.shortLabel ?? c.label).join('\t')
-  const body = rows.map(row => columns.map(col => cellText(col, row[col.key])).join('\t'))
+  const body = rows
+    .filter(row => !row._total && !row._subtitle)
+    .map(row => columns.map(col => cellText(col, row[col.key])).join('\t'))
   return [name, header, ...body].join('\n')
 }
 

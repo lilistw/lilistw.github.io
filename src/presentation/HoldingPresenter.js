@@ -5,11 +5,25 @@ export class HoldingPresenter {
   }
 
   buildHoldings(rows) {
+    const sortedRows = this.#mapRows(rows).sort((a, b) =>
+      a.type === b.type ? 0 : a.type === 'Акции' ? -1 : 1
+    )
+    const shares = sortedRows.filter(r => r.type === 'Акции')
+    const funds = sortedRows.filter(r => r.type === 'Дялове')
+    const groupedRows = []
+
+    if (shares.length > 0) {
+      groupedRows.push({ _subtitle: true, label: 'Акции' })
+      groupedRows.push(...shares)
+    }
+    if (funds.length > 0) {
+      groupedRows.push({ _subtitle: true, label: 'Дялове' })
+      groupedRows.push(...funds)
+    }
+
     return {
       columns: this.#columns(),
-      rows: this.#mapRows(rows).sort((a, b) =>
-        a.type === b.type ? 0 : a.type === 'Акции' ? -1 : 1
-      ),
+      rows: groupedRows,
     }
   }
 

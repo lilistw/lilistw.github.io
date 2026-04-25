@@ -4,6 +4,7 @@ import {
   Box, Button, Checkbox, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Tooltip, Typography,
 } from '@mui/material'
+import { alpha } from '@mui/material/styles'
 import { Check, ContentCopyOutlined, ExpandLess, ExpandMore, InfoOutlined } from '@mui/icons-material'
 
 const PREVIEW_ROWS = 5
@@ -139,7 +140,8 @@ function CopyExcelButton({ columns, rows }) {
 export default function DataTable({ title, columns, rows, countLabel, hint, embedded = false, sx, onToggle }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
-  const dataRows  = rows.filter(r => !r._total)
+  const copyRows = rows.filter(r => !r._total && !r._subtitle)
+  const dataRows = rows.filter(r => !r._total)
   const totalRows = rows.filter(r =>  r._total)
   const visible = expanded ? dataRows : dataRows.slice(0, PREVIEW_ROWS)
   const hidden = dataRows.length - PREVIEW_ROWS
@@ -157,11 +159,11 @@ export default function DataTable({ title, columns, rows, countLabel, hint, embe
           {title && (
             <>
               <Typography variant="subtitle2" fontWeight={700}>{title}</Typography>
-              <Chip label={dataRows.length} size="small" color="primary" />
+              <Chip label={copyRows.length} size="small" color="primary" />
             </>
           )}
           <Box sx={{ ml: 'auto' }}>
-            <CopyExcelButton columns={columns} rows={dataRows} />
+            <CopyExcelButton columns={columns} rows={copyRows} />
           </Box>
         </Box>
 
@@ -191,25 +193,40 @@ export default function DataTable({ title, columns, rows, countLabel, hint, embe
             {[...visible, ...totalRows].map((row, i) => (
               <TableRow
                 key={i}
-                hover={!row._total}
-                sx={row._total ? {
-                  backgroundColor: 'grey.50',
-                  '& td': { fontWeight: 700, borderTop: '2px solid', borderTopColor: 'divider' },
-                } : undefined}
+                hover={!row._total && !row._subtitle}
+                sx={
+                  row._total ? {
+                    backgroundColor: 'grey.50',
+                    '& td': { fontWeight: 700, borderTop: '2px solid', borderTopColor: 'divider' },
+                  } : row._subtitle ? {
+                    backgroundColor: (theme) =>
+                      alpha(theme.palette.primary.main, theme.palette.mode === 'light' ? 0.08 : 0.16),
+                    '& td': {
+                      fontWeight: 500,
+                      textTransform: 'uppercase',
+                    },
+                  } : undefined
+                }
               >
-                {columns.map(col => (
-                  <TableCell key={col.key} align={col.align ?? 'left'}>
-                    {col.editable === 'checkbox' && !row._total
-                      ? (row[col.key] !== null &&
-                          <Checkbox size="small" sx={{ p: 0 }}
-                            checked={row[col.key] === true}
-                            disabled={row[col.key] === null}
-                            onChange={() => onToggle?.(i, col.key)}
-                          />)
-                      : <CellContent col={col} value={row[col.key]} tooltipText={col.tooltip ? row[col.tooltip] : undefined} />
-                    }
+                {row._subtitle ? (
+                  <TableCell colSpan={columns.length}>
+                    <Typography variant="body2">{row.label}</Typography>
                   </TableCell>
-                ))}
+                ) : (
+                  columns.map(col => (
+                    <TableCell key={col.key} align={col.align ?? 'left'}>
+                      {col.editable === 'checkbox' && !row._total
+                        ? (row[col.key] !== null &&
+                            <Checkbox size="small" sx={{ p: 0 }}
+                              checked={row[col.key] === true}
+                              disabled={row[col.key] === null}
+                              onChange={() => onToggle?.(i, col.key)}
+                            />)
+                        : <CellContent col={col} value={row[col.key]} tooltipText={col.tooltip ? row[col.tooltip] : undefined} />
+                      }
+                    </TableCell>
+                  ))
+                )}
               </TableRow>
             ))}
           </TableBody>
