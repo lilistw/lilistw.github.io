@@ -229,7 +229,9 @@ export default function App() {
                 <Dropzone
                 file={csvFile} fileUrl={csvFileUrl}
                 onFileSelect={selectCsvFile} onClearFile={clearCsvFile}
-                accept={SUPPORTED_FORMATS.pdf ? '.csv,.pdf' : '.csv'} label={t('dropzone.csvLabel')} infoKey="csv"
+                accept={SUPPORTED_FORMATS.pdf ? '.csv,.pdf' : '.csv'}
+                label={t(SUPPORTED_FORMATS.pdf ? 'dropzone.csvLabel' : 'dropzone.csvLabelNoPdf')}
+                infoKey={SUPPORTED_FORMATS.pdf ? 'csv' : 'csvNoPdf'}
                 fileType={csvFile ? (isPdf ? 'PDF' : 'CSV') : undefined}
                 />
               <Typography variant="caption" color="text.secondary"
@@ -242,13 +244,15 @@ export default function App() {
                 <Dropzone
                 file={htmlFile} fileUrl={htmlFileUrl}
                 onFileSelect={selectHtmlFile} onClearFile={clearHtmlFile}
-                accept={SUPPORTED_FORMATS.pdf ? '.htm,.html,.pdf' : '.htm,.html'} label={t('dropzone.htmlLabel')} infoKey="htm"
+                accept={SUPPORTED_FORMATS.pdf ? '.htm,.html,.pdf' : '.htm,.html'}
+                label={t(SUPPORTED_FORMATS.pdf ? 'dropzone.htmlLabel' : 'dropzone.htmlLabelNoPdf')}
+                infoKey={SUPPORTED_FORMATS.pdf ? 'htm' : 'htmNoPdf'}
                 fileType={htmlFile ? (isHtmlPdf ? 'PDF' : 'HTML') : undefined}
                 />
               <Typography variant="caption" color="text.secondary"
                 sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
                 <InfoOutlined sx={{ fontSize: 13 }} />
-                {t('app.htmlHint')}
+                {t(SUPPORTED_FORMATS.pdf ? 'app.htmlHint' : 'app.htmlHintNoPdf')}
                 </Typography>
               </Box>
             </Box>

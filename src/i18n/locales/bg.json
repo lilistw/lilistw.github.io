@@ -187,6 +187,7 @@
     "termsAgreeLink": "условията за ползване",
     "csvHint": "IBKR Portal → Reports → Statements → Activity (формат CSV)",
     "htmlHint": "IBKR Portal → Reports → Trade Confirmation (HTML или PDF)",
+    "htmlHintNoPdf": "IBKR Portal → Reports → Trade Confirmation (HTML)",
     "interest": {
       "title": "Приложение №6 – Доходи от други източници (чл. 35 ЗДДФЛ)",
       "body": "Лихвите от IBKR се декларират в <app6>Приложение №6</app6>, Ред 6, <code>Код 606</code>: „Обща сума на доходите с код 606, платците на които не са предприятия или самоосигуряващи се лица“. В поле <em>Размер на дохода</em> въведете общата сума в {{localCurrencyLabel}} ({{localCurrencyCode}}), изчислена по курс на БНБ за датата на всяко плащане."
@@ -194,7 +195,9 @@
   },
   "dropzone": {
     "csvLabel": "Activity Statement CSV / PDF тук",
+    "csvLabelNoPdf": "Activity Statement CSV тук",
     "htmlLabel": "Trade Confirmation HTML / PDF тук",
+    "htmlLabelNoPdf": "Trade Confirmation HTML тук",
     "openFile": "Отвори файл",
     "downloadFile": "Свали файл",
     "removeFile": "Премахни файл",
@@ -212,6 +215,16 @@
         "Алтернативно — изтеглете PDF версията на Activity Statement"
       ]
     },
+    "csvNoPdf": {
+      "title": "Как да изтеглите Activity Statement",
+      "steps": [
+        "Влезте в Client Portal на Interactive Brokers",
+        "Отидете на Performance & Reports > Statements",
+        "Изберете Activity Statement",
+        "Във формата изберете желания период — \"Annual\"",
+        "Генерирайте и изтеглете CSV файла"
+      ]
+    },
     "htm": {
       "title": "Как да изтеглите Trade Confirmation",
       "steps": [
@@ -221,6 +234,16 @@
         "Кликнете Run и след генерирането — Download",
         "Изтеглете файла във формат HTML",
         "Алтернативно — изтеглете файла във формат PDF"
+      ]
+    },
+    "htmNoPdf": {
+      "title": "Как да изтеглите Trade Confirmation",
+      "steps": [
+        "Влезте в Client Portal на Interactive Brokers",
+        "Отидете на Performance & Reports > Trade Confirmations",
+        "Изберете желания период",
+        "Кликнете Run и след генерирането — Download",
+        "Изтеглете файла във формат HTML"
       ]
     }
   },
