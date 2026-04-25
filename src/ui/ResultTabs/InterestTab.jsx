@@ -1,4 +1,4 @@
-import { t, Trans } from '../../localization/translate.js'
+import { t } from '../../localization/translate.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
@@ -52,15 +52,7 @@ export default function InterestTab({ result }) {
             color="text.secondary"
             sx={{ lineHeight: 1.6 }}
           >
-            <Trans
-              i18nKey="app.interest.body"
-              values={{ localCurrencyLabel, localCurrencyCode }}
-              components={{
-                app6: <strong />,
-                code: <strong />,
-                em: <em />,
-              }}
-            />
+            {t('app.interest.bodyPart1')} <strong>{t('app.interest.bodyApp6')}</strong>{t('app.interest.bodyPart2')} <strong>{t('app.interest.bodyCode')}</strong>{t('app.interest.bodyPart3')} <em>{t('app.interest.bodyField')}</em>{t('app.interest.bodyPart4', { localCurrencyLabel, localCurrencyCode })}
           </Typography>
         </Box>
       </Box>

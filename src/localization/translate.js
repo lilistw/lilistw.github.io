@@ -1,4 +1,3 @@
-import React from 'react'
 import bg from './bg.json'
 
 const MISSING = Symbol('missing')
@@ -23,28 +22,4 @@ export function t(key, options = {}) {
   if (translated === MISSING) return key
   if (options.returnObjects) return translated
   return interpolate(translated, options)
-}
-
-export function Trans({ i18nKey, values = {}, components = {} }) {
-  const template = t(i18nKey, values)
-  if (typeof template !== 'string') return null
-
-  const nodes = []
-  const tagPattern = /<([a-zA-Z0-9_]+)>(.*?)<\/\1>/gs
-  let last = 0
-  let match
-
-  while ((match = tagPattern.exec(template))) {
-    const [full, tagName, inner] = match
-    if (match.index > last) nodes.push(template.slice(last, match.index))
-
-    const component = components[tagName]
-    if (component) nodes.push(React.cloneElement(component, { key: `${tagName}-${match.index}` }, inner))
-    else nodes.push(full)
-
-    last = match.index + full.length
-  }
-
-  if (last < template.length) nodes.push(template.slice(last))
-  return React.createElement(React.Fragment, null, ...nodes)
 }
