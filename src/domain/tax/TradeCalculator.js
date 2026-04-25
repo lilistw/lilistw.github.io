@@ -49,8 +49,11 @@ export class TradeCalculator {
   }
 
   calculate(trades, priorPositions = []) {
+    const valid = trades.filter(t =>
+      t.symbol && t.side && t.quantity && t.datetime
+    )
     const calculatedPositions = this.#initPositions(priorPositions)
-    const sorted = this.#sortTrades(trades)
+    const sorted = this.#sortTrades(valid)
 
     const rows = sorted.map((t, i) =>
       this.#processTrade(t, calculatedPositions, i)
@@ -110,9 +113,9 @@ export class TradeCalculator {
     const exempt = t.side === 'SELL' && !isTaxable(instr)
 
     const proceedsD = parseToDecimal(t.proceeds) ?? D0
-    const commD = parseToDecimal(t.commission) ?? D0
-    const feeD = parseToDecimal(t.fee) ?? D0
-    const qtyD = (parseToDecimal(t.quantity) ?? D0).abs()
+    const commD     = parseToDecimal(t.commission) ?? D0
+    const feeD      = parseToDecimal(t.fee) ?? D0
+    const qtyD      = parseToDecimal(t.quantity).abs()
 
     const totalD = proceedsD.plus(commD).plus(feeD)
     const totalLclD = this.#toLcl(totalD, t.currency, date)
