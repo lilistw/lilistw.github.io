@@ -15,7 +15,7 @@ React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers
 | UI framework      | React 19                                    |
 | Build             | Vite                                        |
 | Component library | Material UI (MUI) v9                        |
-| i18n              | i18next + react-i18next                     |
+| i18n              | Custom `src/localization/translate.js`      |
 | Arithmetic        | Decimal.js                                  |
 | Parsing           | PapaParse                                   |
 | Testing           | Vitest                                      |
@@ -37,12 +37,13 @@ React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers
 
 ## 4) Runtime flow
 
-`src/App.jsx` is the orchestration layer.
+`src/controllers/useTaxAppController.js` owns page state and orchestration.
+`src/App.jsx` is a thin composition shell.
 
 ```
 User selects CSV + HTML
         ↓
-readInput() → parse → inputData
+useTaxAppController → readInputFromFiles() → parseInput() → inputData
         ↓
 inferPriorPositions() → pendingPositions
         ↓
@@ -53,27 +54,40 @@ calculateTax(inputData, priorPositions)
 ResultTabs (trades / holdings / dividends / interest)
 ```
 
-`App.jsx` also owns:
+`useTaxAppController` owns:
 
-* theme switching
-* file lifecycle (Object URLs)
+* theme mode (via `useThemeMode`)
+* file selection and Object URL lifecycle
+* parsing phase (async, cancellable)
+* prior-position editing
+* tax calculation trigger
 * demo loading
-* terms acceptance
-* error handling
+* terms/modal state
+* error and loading state
 
 ---
 
 ## 5) Architecture layers
 
+### Controller layer (`src/controllers/`)
+
+Page-level state and commands. One hook per page workflow.
+
+* `useTaxAppController` — the main app workflow hook
+
+No business logic. No direct browser API calls.
+
+---
+
 ### Application layer (`src/application/`)
 
-Pure orchestration / service logic:
+Pure orchestration / service logic. No File or browser APIs.
 
-* `readInput`
+* `parseInput({ csvText, htmlDoc, csvPdfPages, tradePdfPages })` — pure InputData assembly
 * `inferPriorPositions`
 * `calculateTax`
 
-No React imports.
+No React imports. No browser globals.
 
 ---
 
@@ -81,7 +95,7 @@ No React imports.
 
 Pure business logic:
 
-* parsers (`parser/`)
+* parsers (`parser/`) — accept strings or pre-parsed DOM objects
 * tax calculators (`tax/`)
 * FX utilities (`fx/`)
 
@@ -91,21 +105,73 @@ Examples:
 * `DividendCalculator`
 * `HoldingsCalculator`
 
-No React imports.
+No React imports. No browser APIs.
+
+---
+
+### Parsing layer (`src/parsing/`)
+
+Low-level parser functions. Pure — accepts already-read text or pages.
+
+* `parseActivityStatementCsv(csvText)`
+* `parseActivityStatementPdf(pages)`
+* `parseTradeConfirmationHtml(doc)` — accepts pre-parsed Document
+* `parseTradeConfirmationPdf(pages)`
+* `buildInputData(csvRows, trades)`
+
+---
+
+### Presentation layer (`src/presentation/`)
+
+Output formatters — maps domain result objects to display-ready values.
+
+* `TradePresenter`, `HoldingPresenter`, `DividendPresenter`, `InterestPresenter`
+* `TradeSummaryPresenter`, `ExcelPresenter`
+* `fmt.js` — locale number formatting
+
+No React imports. No business logic.
+
+---
+
+### Platform layer (`src/platform/web/`)
+
+Browser-specific adapters. The only place that may use browser globals.
+
+* `fileReader.js` — reads File objects, calls `parseInput`
+* `htmlParser.js` — wraps `DOMParser`
+* `themeStorage.js` — wraps `localStorage` + `document.documentElement`
+
+---
+
+### Hooks layer (`src/hooks/`)
+
+Reusable React hooks that compose platform adapters.
+
+* `useThemeMode` — day/night toggle with persistence
 
 ---
 
 ### UI layer (`src/ui/`)
 
-All React components:
+All React components. Passive — render props only, emit events.
 
 * `AppHeader`, `AppFooter`
 * `Dropzone`
 * `PriorYearPositionsForm`
 * `ResultTabs/` (modular subfolder)
-* `Disclaimer`, `TermsModal`
+* `Disclaimer`, `InfoModal`
 
-No business logic.
+No business logic. No direct browser API imports.
+
+---
+
+### Dependency direction
+
+```
+ui → controllers → application → domain
+           ↓
+       platform/web    (injected at edges, never imported by domain)
+```
 
 ---
 
@@ -116,7 +182,7 @@ Themes defined in `src/theme.js`:
 * `dayTheme`
 * `nightTheme`
 
-Applied in `App.jsx`:
+Applied via `useThemeMode` hook → `platform/web/themeStorage.js`:
 
 ```js
 document.documentElement.setAttribute('data-theme', 'night' | 'day')
@@ -143,10 +209,11 @@ Do not hardcode colors.
 
 ## 7) i18n rules
 
-* All strings → `src/i18n/locales/bg.json`
-* Use `t('key')`
-* Use `returnObjects: true` for structured content
-* Use `<Trans>` only when needed
+* All strings → `src/localization/bg.json`
+* Use `import { t } from '../localization/translate.js'`
+* `t` is a plain function (not a React hook) — safe to call anywhere
+* Use `t('key', { returnObjects: true })` for structured content
+* Use interpolation: `t('key', { varName: value })` → `{{ varName }}` in JSON
 * Dropzone info uses `infoKey="csv" | "htm"`
 
 ---
@@ -203,9 +270,16 @@ Do not hardcode colors.
 
 ```
 src/
-  application/   ← orchestration
-  domain/        ← pure logic
-  ui/            ← React components
+  application/   ← pure orchestration (no browser APIs)
+  domain/        ← pure logic (no browser APIs)
+  parsing/       ← pure text parsers (no browser APIs)
+  presentation/  ← output formatters
+  io/            ← PDF reading (File.arrayBuffer)
+  platform/
+    web/         ← browser adapters (DOMParser, File, localStorage)
+  controllers/   ← page-level hooks (workflow state + commands)
+  hooks/         ← reusable React hooks
+  ui/            ← React components (passive)
 ```
 
 ---
@@ -231,10 +305,12 @@ Test only:
 
 * parsers
 * tax logic
+* pure application functions (e.g. `parseInput`)
 
 Do NOT test:
 
 * UI
+* controllers/hooks
 * styling
 
 ### Structure

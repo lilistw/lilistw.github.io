@@ -1,5 +1,5 @@
 /**
- * Parses an IBKR Trade Confirmation Report HTML file into a raw array.
+ * Parses an IBKR Trade Confirmation Report HTML document into a raw array.
  *
  * Shows only sub-rows (row-detail tbody) which carry the actual execution exchange.
  * Skips Forex trades.
@@ -11,11 +11,10 @@
  *
  * All values are raw strings. quantity keeps sign (negative for SELL).
  *
- * @param {string} htmlText
+ * @param {Document} doc - pre-parsed HTML document
  * @returns {object[]}
  */
-export function parseTradesFromHtml(htmlText) {
-  const doc = new DOMParser().parseFromString(htmlText, 'text/html')
+export function parseTradesFromHtml(doc) {
   const rows = []
   let currency = null
   let asset = null

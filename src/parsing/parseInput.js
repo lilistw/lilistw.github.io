@@ -62,14 +62,13 @@ export function parseActivityStatementPdf(pages) {
 // ---------------------------------------------------------------------------
 
 /**
- * Parse a Trade Confirmation HTML into normalized trade objects.
- * @param {string} htmlText
+ * Parse a Trade Confirmation HTML document into normalized trade objects.
+ * @param {Document} doc - pre-parsed HTML document
  * @returns {object[]}
  */
-export function parseTradeConfirmationHtml(htmlText) {
-  const doc = new DOMParser().parseFromString(htmlText, 'text/html')
+export function parseTradeConfirmationHtml(doc) {
   validateHtmlContent(doc)
-  const trades = parseTradesFromHtml(htmlText)
+  const trades = parseTradesFromHtml(doc)
   validateTradeCurrencies(trades)
   return trades
 }
