@@ -1,9 +1,8 @@
-import { useTranslation } from 'react-i18next';
+import { t } from '../localization/translate.js'
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton } from '@mui/material';
 import { Close } from '@mui/icons-material';
 
 export default function InfoModal({ titleKey, sectionsKey, onClose }) {
-  const { t } = useTranslation()
   const sections = t(sectionsKey, { returnObjects: true })
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth scroll="paper">

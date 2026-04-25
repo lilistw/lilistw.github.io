@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { t } from '../../localization/translate.js'
 import { Box, Tabs, Tab } from '@mui/material'
 
 import TradesTab from './TradesTab'
@@ -16,7 +16,6 @@ function TabPanel({ children, value, index }) {
 }
 
 export default function ResultTabs({ result, inputJsonText, outputJsonText }) {
-  const { t } = useTranslation()
   const [tab, setTab] = useState(0)
 
   const hasDividends = result.dividends.length > 0

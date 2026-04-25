@@ -1,9 +1,8 @@
 import { Alert } from '@mui/material'
 import { WarningAmber } from '@mui/icons-material'
-import { useTranslation } from 'react-i18next'
+import { t } from '../localization/translate.js'
 
 export default function Disclaimer() {
-  const { t } = useTranslation()
 
   return (
     <Alert

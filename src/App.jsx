@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { useTranslation } from 'react-i18next'
+import { t } from './localization/translate.js'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from '@mui/material'
 import { InfoOutlined } from '@mui/icons-material'
@@ -21,7 +21,6 @@ import PriorYearPositionsForm from './ui/PriorYearPositionsForm.jsx'
 import CostBasisStrategySelector from './ui/CostBasisStrategySelector.jsx'
 
 export default function App() {
-  const { t } = useTranslation()
 
   const [nightMode, setNightMode] = useState(
     () => localStorage.getItem('theme') === 'night'

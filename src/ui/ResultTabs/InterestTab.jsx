@@ -1,4 +1,4 @@
-import { useTranslation, Trans } from 'react-i18next'
+import { t, Trans } from '../../localization/translate.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
@@ -6,7 +6,6 @@ import DataTable from './DataTable'
 import { InterestPresenter } from '../../presentation/InterestPresenter.js'
 
 export default function InterestTab({ result }) {
-  const { t } = useTranslation()
   const { localCurrencyLabel, localCurrencyCode } = result
 
   const interestTable = new InterestPresenter({

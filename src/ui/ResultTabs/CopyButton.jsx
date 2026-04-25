@@ -1,10 +1,9 @@
 import { useState } from 'react'
-import { useTranslation } from 'react-i18next'
+import { t } from '../../localization/translate.js'
 import { IconButton } from '@mui/material'
 import { Check, ContentCopy } from '@mui/icons-material'
 
 export default function CopyButton({ text }) {
-  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {

@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { useTranslation } from 'react-i18next'
+import { t } from '../../localization/translate.js'
 import DataTable from './DataTable'
 import TaxSummary from './TaxSummary'
 import PriorYearApproxWarning from '../PriorYearApproxWarning'
@@ -12,7 +12,6 @@ import { TradePresenter } from '../../presentation/TradePresenter.js'
 
 
 export default function TradesTab({ result }) {
-  const { t } = useTranslation()
 
   const { taxYear, localCurrencyCode, localCurrencyLabel } = result
   

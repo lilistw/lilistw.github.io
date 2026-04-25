@@ -1,10 +1,9 @@
-import { useTranslation } from 'react-i18next';
+import { t } from '../localization/translate.js'
 import { Typography, Box } from '@mui/material';
 import { LightModeOutlined, DarkModeOutlined } from '@mui/icons-material';
 import AboutSection from './AboutSection';
 
 export default function AppHeader({ nightMode, setNightMode }) {
-  const { t } = useTranslation();
 
   return (
     <header className="app-header">

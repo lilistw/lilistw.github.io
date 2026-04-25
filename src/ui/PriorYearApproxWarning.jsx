@@ -1,4 +1,4 @@
-import { useTranslation } from 'react-i18next'
+import { t } from '../localization/translate.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
@@ -20,7 +20,6 @@ function fmtDate(dateStr) {
 }
 
 export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
-  const { t } = useTranslation()
   if (!rows || rows.length === 0) return null
 
   const lcl             = getLocalCurrencyLabel(taxYear)
