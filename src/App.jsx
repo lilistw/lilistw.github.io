@@ -5,6 +5,7 @@ import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from
 import { InfoOutlined } from '@mui/icons-material'
 
 import { dayTheme, nightTheme } from './theme.js'
+import { SUPPORTED_FORMATS } from './config.js'
 import { readInput } from './application/readInput.js'
 import { calculateTax } from './application/calculateTax.js'
 import { inferPriorPositions } from './application/inferPriorPositions.js'
@@ -132,8 +133,9 @@ export default function App() {
   function selectCsvFile(file) {
     if (!file) return
     const name = file.name.toLowerCase()
-    if (!name.endsWith('.csv') && !name.endsWith('.pdf')) {
-      setError(t('errors.invalidFileTypeCsvOrPdf'))
+    const pdfOk = SUPPORTED_FORMATS.pdf && name.endsWith('.pdf')
+    if (!name.endsWith('.csv') && !pdfOk) {
+      setError(t(SUPPORTED_FORMATS.pdf ? 'errors.invalidFileTypeCsvOrPdf' : 'errors.invalidFileTypeCsv'))
       return
     }
     setCsvFile(file)
@@ -150,8 +152,9 @@ export default function App() {
   function selectHtmlFile(file) {
     if (!file) return
     const name = file.name.toLowerCase()
-    if (!name.endsWith('.htm') && !name.endsWith('.html') && !name.endsWith('.pdf')) {
-      setError(t('errors.invalidFileTypeHtmlOrPdf'))
+    const pdfOk = SUPPORTED_FORMATS.pdf && name.endsWith('.pdf')
+    if (!name.endsWith('.htm') && !name.endsWith('.html') && !pdfOk) {
+      setError(t(SUPPORTED_FORMATS.pdf ? 'errors.invalidFileTypeHtmlOrPdf' : 'errors.invalidFileTypeHtml'))
       return
     }
     setHtmlFile(file)
@@ -226,7 +229,7 @@ export default function App() {
                 <Dropzone
                 file={csvFile} fileUrl={csvFileUrl}
                 onFileSelect={selectCsvFile} onClearFile={clearCsvFile}
-                accept=".csv,.pdf" label={t('dropzone.csvLabel')} infoKey="csv"
+                accept={SUPPORTED_FORMATS.pdf ? '.csv,.pdf' : '.csv'} label={t('dropzone.csvLabel')} infoKey="csv"
                 fileType={csvFile ? (isPdf ? 'PDF' : 'CSV') : undefined}
                 />
               <Typography variant="caption" color="text.secondary"
@@ -239,7 +242,7 @@ export default function App() {
                 <Dropzone
                 file={htmlFile} fileUrl={htmlFileUrl}
                 onFileSelect={selectHtmlFile} onClearFile={clearHtmlFile}
-                accept=".htm,.html,.pdf" label={t('dropzone.htmlLabel')} infoKey="htm"
+                accept={SUPPORTED_FORMATS.pdf ? '.htm,.html,.pdf' : '.htm,.html'} label={t('dropzone.htmlLabel')} infoKey="htm"
                 fileType={htmlFile ? (isHtmlPdf ? 'PDF' : 'HTML') : undefined}
                 />
               <Typography variant="caption" color="text.secondary"

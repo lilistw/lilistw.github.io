@@ -255,11 +255,15 @@ export class PdfToCsvAdapter {
     ]
 
     // Collect all trade items across all pages in one pass
-    // so we can look up nearby date/time fragments
+    // so we can look up nearby date/time fragments.
+    // Page offsets prevent row-coordinate collisions across pages.
+    const pageOffsets = this.#pageOffsets(pages)
     const tradeItems = [] // { row, col, str }
     let collecting = false
 
-    for (const page of pages) {
+    for (let pi = 0; pi < pages.length; pi++) {
+      const page = pages[pi]
+      const rowOffset = pageOffsets[pi]
       for (const pRow of page.rows) {
         const leftItems = pRow.items.filter(i => i.col < 400)
         if (leftItems.length === 0) continue
@@ -280,7 +284,7 @@ export class PdfToCsvAdapter {
 
         for (const item of pRow.items) {
           if (item.col < 400) {
-            tradeItems.push({ row: pRow.row, col: item.col, str: item.str })
+            tradeItems.push({ row: pRow.row + rowOffset, col: item.col, str: item.str })
           }
         }
       }
@@ -295,7 +299,9 @@ export class PdfToCsvAdapter {
 
     const sortedRows = [...rowMap.keys()].sort((a, b) => a - b)
 
-    for (const pageRow of pages) {
+    for (let pi = 0; pi < pages.length; pi++) {
+      const pageRow = pages[pi]
+      const rowOffset = pageOffsets[pi]
       for (const pRow of pageRow.rows) {
         const leftItems = pRow.items.filter(i => i.col < 400)
         if (leftItems.length === 0) continue
@@ -326,7 +332,7 @@ export class PdfToCsvAdapter {
           inForex = false
           continue
         }
-        if (firstText === 'Forex') {
+        if (/^(forex|fx)$/i.test(firstText)) {
           inForex = true
           continue
         }
@@ -349,7 +355,7 @@ export class PdfToCsvAdapter {
         if (symbol.startsWith('Total')) continue
 
         // Look for date fragment: item at col≈146, row slightly above
-        const symRow = pRow.row
+        const symRow = pRow.row + rowOffset
         let dateStr = ''
         let timeStr = ''
         for (const item of tradeItems) {
@@ -397,13 +403,17 @@ export class PdfToCsvAdapter {
   #extractDividendsAndWht(pages, colMid) {
     const rows = []
 
-    // Collect right-column items from all pages
+    // Collect right-column items from all pages with page offsets
+    // so items from different pages don't share the same row keys.
+    const pageOffsets = this.#pageOffsets(pages)
     const rightItems = [] // { row, col, str }
-    for (const page of pages) {
+    for (let pi = 0; pi < pages.length; pi++) {
+      const page = pages[pi]
+      const rowOffset = pageOffsets[pi]
       for (const pRow of page.rows) {
         for (const item of pRow.items) {
           if (item.col >= colMid) {
-            rightItems.push({ row: pRow.row, col: item.col, str: item.str })
+            rightItems.push({ row: pRow.row + rowOffset, col: item.col, str: item.str })
           }
         }
       }
@@ -533,10 +543,14 @@ export class PdfToCsvAdapter {
       'Security ID', 'Underlying', 'Listing Exch', 'Multiplier', 'Type', 'Code',
     ]
 
-    // Collect all FII items across pages for description fragment lookup
+    // Collect all FII items across pages for description fragment lookup.
+    // Page offsets prevent row-coordinate collisions across pages.
+    const pageOffsets = this.#pageOffsets(pages)
     const fiiItems = []
 
-    for (const page of pages) {
+    for (let pi = 0; pi < pages.length; pi++) {
+      const page = pages[pi]
+      const rowOffset = pageOffsets[pi]
       let inFii = false
       for (const pRow of page.rows) {
         const firstItem = pRow.items[0]
@@ -553,7 +567,7 @@ export class PdfToCsvAdapter {
         }
         if (inFii) {
           for (const item of pRow.items) {
-            fiiItems.push({ row: pRow.row, col: item.col, str: item.str })
+            fiiItems.push({ row: pRow.row + rowOffset, col: item.col, str: item.str })
           }
         }
       }
@@ -567,7 +581,9 @@ export class PdfToCsvAdapter {
     }
     const sortedFiiRows = [...fiiRowMap.keys()].sort((a, b) => a - b)
 
-    for (const page of pages) {
+    for (let pi = 0; pi < pages.length; pi++) {
+      const page = pages[pi]
+      const rowOffset = pageOffsets[pi]
       for (const pRow of page.rows) {
         const firstItem = pRow.items[0]
         if (!firstItem) continue
@@ -613,9 +629,10 @@ export class PdfToCsvAdapter {
         const code        = this.#pickCol(pRow.items, 725, 780)
 
         // Collect description fragments: col in [100,230), within ±8 rows of this row
+        const offsetRow = pRow.row + rowOffset
         const descFragments = []
         for (const rk of sortedFiiRows) {
-          if (Math.abs(rk - pRow.row) > 10) continue
+          if (Math.abs(rk - offsetRow) > 10) continue
           const ri = fiiRowMap.get(rk)
           if (!ri) continue
           for (const it of ri) {
@@ -672,5 +689,16 @@ export class PdfToCsvAdapter {
 
   #isMajorSectionHeader(text) {
     return PdfToCsvAdapter.#SECTION_NAMES.has(text)
+  }
+
+  /** Cumulative row offsets so pages don't collide in flat cross-page collections. */
+  #pageOffsets(pages) {
+    const offsets = []
+    let offset = 0
+    for (const page of pages) {
+      offsets.push(offset)
+      offset += page.rowHeight
+    }
+    return offsets
   }
 }
