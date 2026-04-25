@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { t } from '../../localization/translate.js'
+import { t } from '../../localization/i18n.js'
 import {
   Box, Button, Checkbox, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Tooltip, Typography,

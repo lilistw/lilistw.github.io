@@ -1,4 +1,4 @@
-import { t } from '../../localization/translate.js'
+import { t } from '../../localization/i18n.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
@@ -40,7 +40,7 @@ export default function TaxApp8Holdings({ result }) {
             {t('taxApp8Holdings.title')}
           </Typography>
           <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-            Съгласно <strong>{t('taxApp8Holdings.legalRef')}</strong> {t('taxApp8Holdings.bodyLine1')}{' '}
+            {t('taxApp8Holdings.accordingTo')} <strong>{t('taxApp8Holdings.legalRef')}</strong> {t('taxApp8Holdings.bodyLine1')}{' '}
             <strong>{t('taxApp8Holdings.bodyMustDeclare')}</strong> {t('taxApp8Holdings.bodyLine2')}
           </Typography>
         </Box>

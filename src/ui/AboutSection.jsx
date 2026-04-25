@@ -17,7 +17,7 @@ import {
   TrendingUp,
 } from '@mui/icons-material';
 import { useState } from 'react';
-import { t } from '../localization/translate.js'
+import { t } from '../localization/i18n.js'
 
 export default function AboutSection() {
   const [open, setOpen] = useState(false);

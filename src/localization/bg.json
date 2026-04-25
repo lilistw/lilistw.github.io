@@ -159,6 +159,10 @@
     "copyExcelDone": "Копирано",
     "copyExcelError": "Грешка при копиране",
     "copyExcelTooltip": "Копира данните от всички раздели",
+    "dev": {
+      "inputJson": "Input JSON",
+      "outputJson": "Output JSON"
+    },
     "tradesTableTitle": "Trade Confirmation – Сделки",
     "countLabel": {
       "trades": "сделки",
@@ -178,6 +182,7 @@
     "demoLoadError": "Неуспешно зареждане на демо файл:",
     "copyright": "© 2026 IBKR Данъчен калкулатор. Всички права запазени.",
     "footer": {
+      "githubLabel": "GitHub",
       "termsLink": "Условия за ползване",
       "privacyLink": "Поверителност",
       "supportLink": "Подкрепи кауза",
@@ -284,6 +289,7 @@
   },
   "taxApp8Holdings": {
     "title": "Приложение №8 – Част I Притежавани акции и дялове в чуждестранни дружества към 31.12",
+    "accordingTo": "Съгласно",
     "legalRef": "чл. 50, ал. 1, т. 2 ЗДДФЛ",
     "bodyLine1": "всички чуждестранни акции и дялове, притежавани към 31 декември,",
     "bodyMustDeclare": "трябва да се декларират",

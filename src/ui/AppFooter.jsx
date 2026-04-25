@@ -1,4 +1,4 @@
-import { t } from '../localization/translate.js'
+import { t } from '../localization/i18n.js'
 import { Tooltip } from '@mui/material';
 import { GitHub, InfoOutlined, Favorite, PrivacyTipOutlined } from '@mui/icons-material';
 
@@ -14,7 +14,7 @@ export default function AppFooter({ onShowTerms, onShowPrivacy }) {
           className="footer-link"
         >
           <GitHub sx={{ fontSize: 16 }} />
-          GitHub
+          {t('app.footer.githubLabel')}
         </a>
 
         <span className="footer-sep">·</span>

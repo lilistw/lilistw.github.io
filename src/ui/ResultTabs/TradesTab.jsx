@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { t } from '../../localization/translate.js'
+import { t } from '../../localization/i18n.js'
 import DataTable from './DataTable'
 import TaxSummary from './TaxSummary'
 import PriorYearApproxWarning from '../PriorYearApproxWarning'

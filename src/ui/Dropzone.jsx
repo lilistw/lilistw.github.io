@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { t } from '../localization/translate.js'
+import { t } from '../localization/i18n.js'
 import {
   Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
   Link, Typography,
