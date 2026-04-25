@@ -41,7 +41,7 @@ export default function TradesTab({ result }) {
 
   const [pending, setPending] = useState(null)
 
-  function handleToggle(idx) {
+  function handleToggle(idx, _colKey) {
     const row = rows[idx]
     if (row.taxable === null) return
 
@@ -81,9 +81,10 @@ export default function TradesTab({ result }) {
     <>
       <DataTable
         title={t('app.tradesTableTitle')}
-        data={trades}
+        columns={trades.columns}
+        rows={trades.rows}
         countLabel={t('app.countLabel.trades')}
-        onCheckChange={handleToggle}
+        onToggle={handleToggle}
         hint={
           <Box sx={{
             display: 'flex', alignItems: 'flex-start', gap: 1,

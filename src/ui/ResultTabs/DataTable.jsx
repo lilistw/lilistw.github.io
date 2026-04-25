@@ -136,25 +136,13 @@ function CopyExcelButton({ columns, rows }) {
   )
 }
 
-export default function DataTable({ title, data, countLabel, hint, embedded = false, sx, onCheckChange }) {
+export default function DataTable({ title, columns, rows, countLabel, hint, embedded = false, sx, onToggle }) {
   const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
-  const { columns, rows } = data
   const dataRows  = rows.filter(r => !r._total)
   const totalRows = rows.filter(r =>  r._total)
   const visible = expanded ? dataRows : dataRows.slice(0, PREVIEW_ROWS)
   const hidden = dataRows.length - PREVIEW_ROWS
-
-  // Internal checkbox state — used only when onCheckChange is not provided
-  const checkCols = columns.filter(c => c.editable === 'checkbox')
-  const [checkState, setCheckState] = useState(() =>
-    Object.fromEntries(checkCols.map(col => [col.key, rows.map(r => r[col.key] ?? true)]))
-  )
-  const handleCheck = (colKey, rowIdx) =>
-    setCheckState(prev => ({
-      ...prev,
-      [colKey]: prev[colKey].map((v, i) => i === rowIdx ? !v : v),
-    }))
 
   return (
     <Box sx={{ mb: embedded ? 0 : 3, ...sx }}>
@@ -212,17 +200,12 @@ export default function DataTable({ title, data, countLabel, hint, embedded = fa
                 {columns.map(col => (
                   <TableCell key={col.key} align={col.align ?? 'left'}>
                     {col.editable === 'checkbox' && !row._total
-                      ? onCheckChange
-                        ? (row[col.key] !== null &&
+                      ? (row[col.key] !== null &&
                           <Checkbox size="small" sx={{ p: 0 }}
                             checked={row[col.key] === true}
                             disabled={row[col.key] === null}
-                            onChange={() => onCheckChange(i)}
+                            onChange={() => onToggle?.(i, col.key)}
                           />)
-                        : <Checkbox size="small" sx={{ p: 0 }}
-                            checked={checkState[col.key]?.[i] ?? true}
-                            onChange={() => handleCheck(col.key, i)}
-                          />
                       : <CellContent col={col} value={row[col.key]} tooltipText={col.tooltip ? row[col.tooltip] : undefined} />
                     }
                   </TableCell>
