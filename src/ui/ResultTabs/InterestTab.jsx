@@ -68,7 +68,8 @@ export default function InterestTab({ result }) {
 
       <DataTable
         title={t('app.tabs.interest')}
-        data={interestTable}
+        columns={interestTable.columns}
+        rows={interestTable.rows}
         countLabel={t('app.countLabel.payments')}
       />
     </>

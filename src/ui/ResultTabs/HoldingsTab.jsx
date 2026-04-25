@@ -20,7 +20,7 @@ function HoldingsSubTable({ label, data, type, countLabel }) {
   if (rows.length === 0) return null
   const columns = [NUM_COL, ...COLUMNS_WITHOUT_TYPE(data.columns)]
   return (
-    <DataTable title={label} data={{ columns, rows: addRowNumbers(rows) }} countLabel={countLabel} embedded sx={{ mb: 2 }} />
+    <DataTable title={label} columns={columns} rows={addRowNumbers(rows)} countLabel={countLabel} embedded sx={{ mb: 2 }} />
   )
 }
 

@@ -39,7 +39,7 @@ export default function DividendsTab({ result }) {
           </Typography>
         </Box>
       </Box>
-      <DataTable title={t('taxApp8Dividends.tableTitle')} data={data} countLabel={t('taxApp8Dividends.countLabel')} embedded />
+      <DataTable title={t('taxApp8Dividends.tableTitle')} columns={data.columns} rows={data.rows} countLabel={t('taxApp8Dividends.countLabel')} embedded />
     </Box>
   )
 }
