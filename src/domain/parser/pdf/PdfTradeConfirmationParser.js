@@ -63,6 +63,9 @@ export function parseTradePdf(pages) {
       const symbol = pick(85, 130)
       if (!symbol) continue
 
+      const quantity = pick(450, 510)
+      if (!quantity) continue // non-parseable row (page header, totals, etc.)
+
       trades.push({
         asset:      asset    ?? '',
         currency:   currency ?? '',
@@ -71,7 +74,7 @@ export function parseTradePdf(pages) {
         settleDate: pick(248, 300),
         exchange,
         side:       pick(378, 435),
-        quantity:   pick(450, 510),
+        quantity,
         price:      pick(510, 565),
         proceeds:   pick(563, 625),
         commission: pick(615, 655),

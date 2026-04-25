@@ -109,10 +109,10 @@ export class TradeCalculator {
     const instr = makeInstrument(t, this.instrumentInfo)
     const exempt = t.side === 'SELL' && !isTaxable(instr)
 
-    const proceedsD = parseToDecimal(t.proceeds)
-    const commD = parseToDecimal(t.commission)
-    const feeD = parseToDecimal(t.fee)
-    const qtyD = parseToDecimal(t.quantity).abs()
+    const proceedsD = parseToDecimal(t.proceeds) ?? D0
+    const commD = parseToDecimal(t.commission) ?? D0
+    const feeD = parseToDecimal(t.fee) ?? D0
+    const qtyD = (parseToDecimal(t.quantity) ?? D0).abs()
 
     const totalD = proceedsD.plus(commD).plus(feeD)
     const totalLclD = this.#toLcl(totalD, t.currency, date)
