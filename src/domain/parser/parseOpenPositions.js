@@ -1,4 +1,5 @@
 import { getInstrumentTypeLabel } from '../instrument/classifier.js'
+import { t } from '../../localization/i18n.js'
 
 /**
  * Parses IBKR "Open Positions" section into a raw array.
@@ -72,17 +73,17 @@ export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsC
 
   return {
     columns: [
-      { key: 'assetCategory', label: 'Категория' },
-      { key: 'currency',      label: 'Валута' },
-      { key: 'symbol',        label: 'Символ',            bold: true },
-      { key: 'instrType',     label: 'Тип',               chip: true, chipColors: { ETF: 'primary', Stock: 'default', Other: 'default' } },
-      { key: 'quantity',      label: 'Количество',        align: 'right', mono: true, decimals: 4 },
-      { key: 'multiplier',    label: 'Множител',          align: 'right', mono: true, decimals: 2 },
-      { key: 'costPrice',     label: 'Цена',              align: 'right', mono: true, decimals: 4, nullAs: '—' },
-      { key: 'costBasis',     label: 'База',              align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'closePrice',    label: 'Крайна цена',       align: 'right', mono: true, decimals: 4, nullAs: '—' },
-      { key: 'value',         label: 'Стойност',          align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'unrealizedPL',  label: 'Нереализирана P/L', align: 'right', mono: true, decimals: 2, pnl: true, nullAs: '—' },
+      { key: 'assetCategory', label: t('openPositionsCols.assetCategory') },
+      { key: 'currency',      label: t('openPositionsCols.currency') },
+      { key: 'symbol',        label: t('openPositionsCols.symbol'), bold: true },
+      { key: 'instrType',     label: t('openPositionsCols.instrType'), chip: true, chipColors: { ETF: 'primary', Stock: 'default', Other: 'default' } },
+      { key: 'quantity',      label: t('openPositionsCols.quantity'), align: 'right', mono: true, decimals: 4 },
+      { key: 'multiplier',    label: t('openPositionsCols.multiplier'), align: 'right', mono: true, decimals: 2 },
+      { key: 'costPrice',     label: t('openPositionsCols.costPrice'), align: 'right', mono: true, decimals: 4, nullAs: '—' },
+      { key: 'costBasis',     label: t('openPositionsCols.costBasis'), align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'closePrice',    label: t('openPositionsCols.closePrice'), align: 'right', mono: true, decimals: 4, nullAs: '—' },
+      { key: 'value',         label: t('openPositionsCols.value'), align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'unrealizedPL',  label: t('openPositionsCols.unrealizedPL'), align: 'right', mono: true, decimals: 2, pnl: true, nullAs: '—' },
     ],
     rows: dataRows,
   }
