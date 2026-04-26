@@ -1,7 +1,7 @@
 import Decimal from 'decimal.js'
-import rates2024 from './rates/2024.json'
-import rates2025 from './rates/2025.json'
-import rates2026 from './rates/2026.json'
+import rates2024 from './rates/2024.fx.json'
+import rates2025 from './rates/2025.fx.json'
+import rates2026 from './rates/2026.fx.json'
 import { t } from '../../localization/i18n.js'
 
 export const EUR_BGN = new Decimal('1.95583')  // fixed peg
@@ -10,42 +10,16 @@ export const EUR_BGN = new Decimal('1.95583')  // fixed peg
 // 2024/2025 files hold USD/BGN directly.
 // 2026 file holds USD/EUR; normalised by × EUR_BGN so the map is always USD/BGN.
 const rateMap = new Map()
-for (const { date, rate } of [...rates2024, ...rates2025]) {
-  const [d, m, y] = date.split('.')
-  rateMap.set(`${y}-${m}-${d}`, new Decimal(String(rate)))
+for (const [ date, rate ] of Object.entries({
+  ...rates2024, 
+  ...rates2025,
+  ...rates2026})) {
+  rateMap.set(date, new Decimal(rate));
 }
-for (const { date, rate } of rates2026) {
-  const [d, m, y] = date.split('.')
-  rateMap.set(`${y}-${m}-${d}`, new Decimal(String(rate)).times(EUR_BGN))
-}
-const sortedDates = [...rateMap.keys()].sort()
 
 /** Returns the USD/BGN Decimal rate for the nearest previous trading day. */
 export function findUsdRate(dateStr) {
-  if (rateMap.has(dateStr)) return rateMap.get(dateStr)
-  if (dateStr < sortedDates[0]) return null
-  let lo = 0, hi = sortedDates.length - 1
-  while (lo < hi) {
-    const mid = Math.ceil((lo + hi) / 2)
-    if (sortedDates[mid] <= dateStr) lo = mid
-    else hi = mid - 1
-  }
-  return rateMap.get(sortedDates[lo]) ?? null
-}
-
-/**
- * Convert amount to BGN.
- * Accepts number, string, or Decimal; returns Decimal or null.
- */
-export function toBGN(amount, currency, dateStr) {
-  if (amount == null || !currency) return null
-  const d = amount instanceof Decimal ? amount : new Decimal(String(amount))
-  if (currency === 'EUR') return d.times(EUR_BGN)
-  if (currency === 'USD') {
-    const rate = findUsdRate(dateStr)
-    return rate != null ? d.times(rate) : null
-  }
-  return null
+  return rateMap.get(dateStr);
 }
 
 /**
@@ -57,16 +31,18 @@ export function toBGN(amount, currency, dateStr) {
  */
 export function toLocalCurrency(amount, currency, dateStr, taxYear) {
   if (amount == null || !currency) return null
-  const d = amount instanceof Decimal ? amount : new Decimal(String(amount))
-  if (taxYear >= 2026) {
-    if (currency === 'EUR') return d
-    if (currency === 'USD') {
-      const usdBgn = findUsdRate(dateStr)
-      return usdBgn != null ? d.times(usdBgn).div(EUR_BGN) : null
+  if (currency === 'EUR') {
+    if (dateStr.startsWith('2025')) {
+      return amount.times(EUR_BGN);
     }
-    return null
+    return amount;
   }
-  return toBGN(amount, currency, dateStr)
+  if (currency === 'USD') {
+    const usdBgn = findUsdRate(dateStr);
+    return amount.times(usdBgn);
+  }
+  console.warn(`Unsupported currency ${currency} for local conversion`)
+  return null
 }
 
 // ── Tax-year helpers ──────────────────────────────────────────────────────────
