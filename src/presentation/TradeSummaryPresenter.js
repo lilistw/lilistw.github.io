@@ -70,11 +70,11 @@ export class TradeSummaryPresenter {
       subtitle: this.t('taxApp13.subtitle'),
 
       rows: (s.totalProceedsLcl === 0) ? [] : (() => {
-        const profit = s.totalProceedsLcl - s.totalCostBasisLcl
+        const result = s.totalProceedsLcl - s.totalCostBasisLcl
         return [
           this.#row(this.t('taxApp13.grossIncome', { lcl: this.lcl }), s.totalProceedsLcl),
           this.#row(this.t('taxApp13.acquisitionCost', { lcl: this.lcl }), s.totalCostBasisLcl),
-          this.#row(this.t('taxApp13.profit', { lcl: this.lcl }), profit, profit >= 0 ? 'success.main' : 'error.main'),
+          this.#row(this.t('taxApp13.result', { lcl: this.lcl }), result, result >= 0 ? 'success.main' : 'error.main'),
         ]
       })(),
     }
