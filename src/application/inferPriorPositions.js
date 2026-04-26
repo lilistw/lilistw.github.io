@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js'
 import {
-  toLocalCurrency, getPrevYearEndDate, getPrevYearDefaultAcqDate,
+  toLocalCurrency, getPrevYearEndDate,
 } from '../domain/fx/fxRates.js'
 import { buildInstrumentInfo } from '../domain/parser/parseInstruments.js'
 import { buildCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
@@ -35,7 +35,6 @@ export function inferPriorPositions({ trades, openPositions, csvTrades, instrume
   const instrumentInfo     = buildInstrumentInfo(instruments)
   const csvTradeBasis      = buildCsvTradeBasis(csvTrades)
   const prevYearEndDate    = getPrevYearEndDate(taxYear)
-  const prevYearDefaultAcqDate = getPrevYearDefaultAcqDate(taxYear)
 
   // Aggregate per-symbol: qty bought/sold, cost of buys (positive), basis of sells (positive)
   const bySymbol = {}
@@ -103,7 +102,7 @@ export function inferPriorPositions({ trades, openPositions, csvTrades, instrume
       qty:         priorQtyD.toNumber(),
       costUSD:     priorCostD.toNumber(),
       costLcl:     priorCostLcl ? priorCostLcl.toNumber() : null,
-      lastBuyDate: prevYearDefaultAcqDate,
+      lastBuyDate: prevYearEndDate,
     })
   }
 
@@ -127,7 +126,7 @@ export function inferPriorPositions({ trades, openPositions, csvTrades, instrume
       qty:         priorQtyD.toNumber(),
       costUSD:     priorCostD.toNumber(),
       costLcl:     priorCostLcl ? priorCostLcl.toNumber() : null,
-      lastBuyDate: prevYearDefaultAcqDate,
+      lastBuyDate: prevYearEndDate,
     })
   }
 

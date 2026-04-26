@@ -24,7 +24,7 @@ export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
 
   const lcl             = getLocalCurrencyLabel(taxYear)
   const prevYearEndDate = getPrevYearEndDate(taxYear)
-  const prevRate        = findUsdRate(prevYearEndDate)
+  const prevRate        = findUsdRate(prevYearEndDate, taxYear)
   const prevYearLabel   = String(taxYear - 1)
 
   const rateInfo = prevRate != null

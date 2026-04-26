@@ -6,20 +6,27 @@ import { t } from '../../localization/i18n.js'
 
 export const EUR_BGN = new Decimal('1.95583')  // fixed peg
 
+
+const getRateMap = (taxYear, rates) => {
+  const rateMap = new Map();
+  for (const [ date, rate ] of Object.entries(rates)) {
+    rateMap.set(date, new Decimal(rate));
+  }
+  return rateMap;
+}
+
 // Unified rate map: 'YYYY-MM-DD' → Decimal USD/BGN.
 // 2024/2025 files hold USD/BGN directly.
 // 2026 file holds USD/EUR; normalised by × EUR_BGN so the map is always USD/BGN.
-const rateMap = new Map()
-for (const [ date, rate ] of Object.entries({
-  ...rates2024, 
-  ...rates2025,
-  ...rates2026})) {
-  rateMap.set(date, new Decimal(rate));
+const ratesByYear = {
+  2026: getRateMap(2026, rates2026),
+  2025: getRateMap(2025, rates2025)
 }
 
+
 /** Returns the USD/BGN Decimal rate for the nearest previous trading day. */
-export function findUsdRate(dateStr) {
-  return rateMap.get(dateStr);
+export function findUsdRate(dateStr, taxYear) {
+  return ratesByYear[taxYear].get(dateStr);
 }
 
 /**
@@ -32,13 +39,13 @@ export function findUsdRate(dateStr) {
 export function toLocalCurrency(amount, currency, dateStr, taxYear) {
   if (amount == null || !currency) return null
   if (currency === 'EUR') {
-    if (dateStr.startsWith('2025')) {
+    if (taxYear < 2026) {
       return amount.times(EUR_BGN);
     }
     return amount;
   }
   if (currency === 'USD') {
-    const usdBgn = findUsdRate(dateStr);
+    const usdBgn = findUsdRate(dateStr, taxYear);
     return amount.times(usdBgn);
   }
   console.warn(`Unsupported currency ${currency} for local conversion`)
@@ -49,11 +56,5 @@ export function toLocalCurrency(amount, currency, dateStr, taxYear) {
 
 export function getLocalCurrencyCode(taxYear)      { return taxYear >= 2026 ? 'EUR' : 'BGN' }
 export function getLocalCurrencyLabel(taxYear)     { return taxYear >= 2026 ? t('currencyLabels.eur') : t('currencyLabels.bgnShort') }
-export function getYearEndDate(taxYear)            { return `${taxYear}-12-30` }
-export function getPrevYearEndDate(taxYear)        { return `${taxYear - 1}-12-30` }
-export function getPrevYearDefaultAcqDate(taxYear) { return `${taxYear - 1}-12-31` }
-
-// ── Legacy 2025 constants ─────────────────────────────────────────────────────
-export const YEAR_END_DATE              = getYearEndDate(2025)
-export const PREV_YEAR_END_DATE         = getPrevYearEndDate(2025)
-export const PREV_YEAR_DEFAULT_ACQ_DATE = getPrevYearDefaultAcqDate(2025)
+export function getYearEndDate(taxYear)            { return `${taxYear}-12-31` }
+export function getPrevYearEndDate(taxYear) { return `${taxYear - 1}-12-31` }

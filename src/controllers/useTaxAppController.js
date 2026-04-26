@@ -4,7 +4,7 @@ import { SUPPORTED_FORMATS } from '../config.js'
 import { readInputFromFiles } from '../platform/web/fileReader.js'
 import { calculateTax } from '../application/calculateTax.js'
 import { inferPriorPositions } from '../application/inferPriorPositions.js'
-import { getPrevYearDefaultAcqDate } from '../domain/fx/fxRates.js'
+import { getPrevYearEndDate } from '../domain/fx/fxRates.js'
 import { useThemeMode } from '../hooks/useThemeMode.js'
 
 export function useTaxAppController() {
@@ -81,7 +81,7 @@ export function useTaxAppController() {
           period: data.statement.period,
         })
 
-        const defaultDate = getPrevYearDefaultAcqDate(data.taxYear)
+        const defaultDate = getPrevYearEndDate(data.taxYear)
 
         setPendingPositions(
           inferred.map(p => ({
@@ -160,7 +160,7 @@ export function useTaxAppController() {
         qty: p.qty,
         costUSD: parseFloat(String(p.costUSDInput).replace(',', '.')) || 0,
         costLcl: parseFloat(String(p.costLclInput).replace(',', '.')) || 0,
-        lastBuyDate: p.lastBuyDateInput || getPrevYearDefaultAcqDate(taxYear),
+        lastBuyDate: p.lastBuyDateInput || getPrevYearEndDate(taxYear),
       }))
 
       setResult(calculateTax(inputData, priorPositions, { strategy: costBasisStrategy }))
