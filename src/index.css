@@ -59,7 +59,7 @@ body {
   width: 1126px;
   max-width: 100%;
   margin: 0 auto;
-  min-height: 100svh;
+  min-height: 100%;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -85,7 +85,7 @@ h2 { font-size: 20px; letter-spacing: 0; margin: 0 0 8px; }
 p  { margin: 0; }
 
 /* ── App layout ─────────────────────────────────────────────────────────── */
-.app { display: flex; flex-direction: column; min-height: 100svh; }
+.app { display: flex; flex-direction: column; min-height: 100vh; min-height: 100dvh; }
 
 /* ── Header ─────────────────────────────────────────────────────────────── */
 .app-header {
@@ -166,8 +166,20 @@ p  { margin: 0; }
   flex: 1;
   display: flex;
   flex-direction: column;
-  @media (max-width: 768px) { padding: 20px 16px 0; }
 }
+
+.app-content > main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 0;
+}
+
+
+  @media (max-width: 768px) { 
+    .app-content { padding: 20px 16px 0; }
+  }
 
 /* ── Dropzone ────────────────────────────────────────────────────────────── */
 .dropzone {
