@@ -248,7 +248,7 @@ export class PdfTableExtractor {
         if (firstText === 'Stocks' || firstText === 'Options' || firstText === 'Bonds') {
           assetCategory = firstText; inForex = false; continue
         }
-        if (/^(forex|fx)$/i.test(firstText)) { inForex = true; continue }
+        if (/^(forex|fx)$/i.test(firstText)) { assetCategory = 'Forex'; inForex = true; continue }
         if (inForex) continue
         if (firstText === 'EUR' || firstText === 'USD') { currency = firstText; continue }
         if (firstText.startsWith('Total') || firstText === ' Total') continue
@@ -290,6 +290,8 @@ export class PdfTableExtractor {
             timeStr = item.str
         }
         const datetime = dateStr ? `${dateStr}, ${timeStr}`.replace(/, $/, '') : ''
+
+        if (/^(forex|fx)$/i.test(assetCategory)) continue
 
         const cells = this.#assignToColumns(allItems, colPositions)
         // Find the first signed-number cell to determine Buy/Sell side
