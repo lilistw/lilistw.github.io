@@ -50,7 +50,7 @@ export default function App() {
                 <Dropzone
                   file={csvFile} fileUrl={csvFileUrl}
                   onFileSelect={selectCsvFile} onClearFile={clearCsvFile}
-                  accept={SUPPORTED_FORMATS.pdf ? '.csv,.pdf' : '.csv'}
+                  accept={SUPPORTED_FORMATS.pdf ? '.csv,text/csv,.pdf' : '.csv,text/csv'}
                   label={t(SUPPORTED_FORMATS.pdf ? 'dropzone.csvLabel' : 'dropzone.csvLabelNoPdf')}
                   infoKey={SUPPORTED_FORMATS.pdf ? 'csv' : 'csvNoPdf'}
                   fileType={csvFile ? (isPdf ? 'PDF' : 'CSV') : undefined}
