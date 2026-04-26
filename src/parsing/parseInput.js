@@ -14,7 +14,7 @@
  */
 
 import { parseCSV }                                        from './readCsv.js'
-import { PdfToCsvAdapter }                                 from '../domain/parser/pdf/PdfToCsvAdapter.js'
+import { PdfTableExtractor }                                from '../domain/parser/pdf/PdfTableExtractor.js'
 import { parseTradePdf }                                   from '../domain/parser/pdf/PdfTradeConfirmationParser.js'
 import { parseTradesFromHtml }                             from '../domain/parser/parseTradesHtml.js'
 import { parseStatementInfo }                              from '../domain/parser/parseStatementInfo.js'
@@ -52,7 +52,7 @@ export function parseActivityStatementCsv(csvText) {
  * @returns {string[][]}
  */
 export function parseActivityStatementPdf(pages) {
-  const rows = new PdfToCsvAdapter().adapt(pages)
+  const rows = new PdfTableExtractor().adapt(pages)
   validatePdfContent(rows)
   return rows
 }
