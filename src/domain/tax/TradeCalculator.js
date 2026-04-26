@@ -138,8 +138,10 @@ export class TradeCalculator {
       costBasisLcl = cbLclResult
 
       if (!pos.qty.isZero()) {
-        const cbD    = pos.cost.div(pos.qty).times(qtyD)
-        const cbLclD = pos.costLcl.div(pos.qty).times(qtyD)
+        // Use the strategy's cost basis to deduct from the position so that
+        // remaining open-position cost reflects IBKR FIFO rather than WA.
+        const cbD    = costBasis    ?? pos.cost.div(pos.qty).times(qtyD)
+        const cbLclD = costBasisLcl ?? pos.costLcl.div(pos.qty).times(qtyD)
         pos.qty     = pos.qty.minus(qtyD)
         pos.cost    = pos.cost.minus(cbD)
         pos.costLcl = pos.costLcl.minus(cbLclD)
