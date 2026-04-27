@@ -1,6 +1,7 @@
 // HoldingsCalculator.js
 import { expandByAliases } from '../parser/parseInstruments.js'
 import { buildOpenPositions } from '../parser/parseOpenPositions.js'
+import { toDecimal, D0 } from '../numStr.js'
 
 export class HoldingsCalculator {
   constructor({ instrumentInfo }) {
@@ -39,9 +40,9 @@ export class HoldingsCalculator {
         Object.entries(positions).map(([sym, pos]) => [
           sym,
           {
-            cost: pos.cost.toNumber(),
-            qty: pos.qty.toNumber(),
-            costLcl: pos.costLcl.toNumber(),
+            cost: pos.cost,
+            qty: pos.qty,
+            costLcl: pos.costLcl,
           },
         ])
       ),
@@ -71,8 +72,9 @@ export class HoldingsCalculator {
 
     const acquDate = lastBuyDateExpanded[h.symbol] ?? null
 
-    const costPerShare = h.quantity ? h.costBasis / h.quantity : 0
-    const cost = Math.round(h.quantity * costPerShare * 100) / 100
+    const costBasis = h.costBasis != null
+      ? h.costBasis.toDecimalPlaces(2)
+      : D0
 
     return {
       symbol: h.symbol,
@@ -81,7 +83,7 @@ export class HoldingsCalculator {
       description: info.description ?? '',
       quantity: h.quantity,
       acquDate,
-      costBasis: cost,
+      costBasis,
       currency: h.currency,
       costLcl: positionsCostBasis[h.symbol]?.costLcl ?? null,
     }
@@ -113,10 +115,9 @@ export class HoldingsCalculator {
     const net = {}
 
     for (const t of trades) {
-      const q = Number(t.quantity) || 0
-
-      if (t.side === 'BUY') net[t.symbol] = (net[t.symbol] ?? 0) + q
-      if (t.side === 'SELL') net[t.symbol] = (net[t.symbol] ?? 0) - q
+      const q = toDecimal(t.quantity)
+      if (t.side === 'BUY')  net[t.symbol] = (net[t.symbol] ?? D0).plus(q)
+      if (t.side === 'SELL') net[t.symbol] = (net[t.symbol] ?? D0).minus(q)
     }
 
     return net

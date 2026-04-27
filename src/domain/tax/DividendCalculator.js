@@ -1,16 +1,8 @@
 import Decimal from 'decimal.js'
-import {
-  toLocalCurrency
-} from '../fx/fxRates.js'
-
+import { toLocalCurrency } from '../fx/fxRates.js'
+import { toDecimal, D0 } from '../numStr.js'
 
 const BG_DIVIDEND_TAX_RATE = new Decimal('0.05')
-
-function toD(v) {
-  if (v instanceof Decimal) return v
-  const s = String(v ?? 0).replace(/,/g, '').trim()
-  try { return new Decimal(s) } catch { return new Decimal(0) }
-}
 
 export class DividendCalculator {
   constructor({ instrumentInfo, context }) {
@@ -37,11 +29,8 @@ export class DividendCalculator {
       // safer + stable key
       const key = `${d.symbol}|${d.taxCode}`
 
-      const grossD = toLocalCurrency(toD(d.grossAmount), d.currency, d.date, this.ctx.taxYear)
-      const withheldD = toLocalCurrency(toD(d.withheldTax), d.currency, d.date, this.ctx.taxYear)
-
-      const grossLcl = grossD ? grossD.toNumber() : 0
-      const withheldLcl = withheldD ? withheldD.toNumber() : 0
+      const grossD = toLocalCurrency(d.grossAmount, d.currency, d.date, this.ctx.taxYear)
+      const withheldD = toLocalCurrency(d.withheldTax, d.currency, d.date, this.ctx.taxYear)
 
       if (!acc[key]) {
         acc[key] = {
@@ -50,13 +39,13 @@ export class DividendCalculator {
           countryName: d.countryName,
           incomeCategoryCode: 8141,
           methodCode: d.taxCode,
-          grossAmountLcl: 0,
-          foreignTaxPaidLcl: 0,
+          grossAmountLcl: D0,
+          foreignTaxPaidLcl: D0,
         }
       }
 
-      acc[key].grossAmountLcl += grossLcl
-      acc[key].foreignTaxPaidLcl += withheldLcl
+      acc[key].grossAmountLcl = acc[key].grossAmountLcl.plus(grossD ?? D0)
+      acc[key].foreignTaxPaidLcl = acc[key].foreignTaxPaidLcl.plus(withheldD ?? D0)
 
       return acc
     }, {})
@@ -66,13 +55,13 @@ export class DividendCalculator {
     return Object.values(grouped).map(d => {
       const bgTaxLcl =
         d.grossAmountLcl != null
-          ? new Decimal(d.grossAmountLcl).times(BG_DIVIDEND_TAX_RATE).toNumber()
+          ? d.grossAmountLcl.times(BG_DIVIDEND_TAX_RATE)
           : null
 
       const partialCredit =
         bgTaxLcl != null &&
         d.foreignTaxPaidLcl != null &&
-        d.foreignTaxPaidLcl < bgTaxLcl
+        d.foreignTaxPaidLcl.lt(bgTaxLcl)
           ? d.foreignTaxPaidLcl
           : null
 
@@ -80,7 +69,7 @@ export class DividendCalculator {
 
       const dueTaxLcl =
         bgTaxLcl != null && d.foreignTaxPaidLcl != null
-          ? Math.max(0, bgTaxLcl - d.foreignTaxPaidLcl)
+          ? Decimal.max(D0, bgTaxLcl.minus(d.foreignTaxPaidLcl))
           : bgTaxLcl
 
       return {
@@ -99,15 +88,15 @@ export class DividendCalculator {
         const symbol = m ? m[1].trim() : null
         if (!symbol || !wt.date) continue
         const key = `${symbol}_${wt.date}`
-        withholding[key] = (withholding[key] || 0) + parseFloat(wt.amount || '0')
+        withholding[key] = (withholding[key] ?? D0).plus(toDecimal(wt.amount))
     }
 
     return rawDividends.map(d => {
         const m = d.description.match(/^([^(]+)\(/)
         const symbol = m ? m[1].trim() : d.description.split(' ')[0]
         const key = `${symbol}_${d.date}`
-        const grossAmount = parseFloat(d.amount || '0')
-        const withheldTax = Math.abs(withholding[key] || 0)
+        const grossAmount = toDecimal(d.amount)
+        const withheldTax = (withholding[key] ?? D0).abs()
         const info = instrumentInfo[symbol] || {}
         return {
         symbol,
@@ -116,10 +105,10 @@ export class DividendCalculator {
         description: d.description,
         grossAmount,
         withheldTax,
-        netAmount:   grossAmount - withheldTax,
+        netAmount:   grossAmount.minus(withheldTax),
         country:     info.country     || '',
         countryName: info.countryName || '',
-        taxCode:     withheldTax > 0 ? 1 : 3,
+        taxCode:     withheldTax.gt(D0) ? 1 : 3,
         }
     })
     }

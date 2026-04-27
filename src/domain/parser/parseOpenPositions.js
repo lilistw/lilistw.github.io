@@ -1,6 +1,6 @@
 import { getInstrumentTypeLabel } from '../instrument/classifier.js'
 import { t } from '../../localization/i18n.js'
-import { parseToDecimal } from '../numStr.js'
+import { parseToDecimal, toDecimal } from '../numStr.js'
 
 /**
  * Parses IBKR "Open Positions" section into a raw array.
@@ -47,7 +47,7 @@ export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsC
     const info     = instrumentInfo[symbol] || {}
     const quantity = r.quantity
     const calcPos  = positionsCostBasis[symbol]
-    const costBasis = calcPos?.cost ?? r.costBasis
+    const costBasis = calcPos?.cost != null ? toDecimal(calcPos.cost) : r.costBasis
     const costPrice = quantity && !quantity.isZero()
       ? costBasis?.div(quantity)
       : r.costPrice

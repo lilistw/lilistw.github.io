@@ -2,31 +2,38 @@
  * Reactive trade summaries — recomputed whenever the user toggles taxable status.
  * Both functions are pure and operate on the current trade data rows from App state.
  */
+import Decimal from 'decimal.js'
 import { t } from '../localization/i18n.js'
+import { D0 } from './numStr.js'
 
-const TRADE_SUM_COLS     = ['proceeds', 'commission', 'fee', 'totalWithFee']
-const TRADE_SUM_LCL_COLS = ['totalWithFeeLcl', 'costBasisLcl']
+const TRADE_SUM_COLS     = ['proceeds', 'commission', 'fee', 'total']
+const TRADE_SUM_LCL_COLS = ['totalLcl', 'costBasisLcl']
 
 /**
  * Build per-group, per-currency total rows for the trades table.
- * Groups by taxExemptLabel ('Облагаем' / 'Освободен'), then by currency,
+ * Groups by taxable boolean (true = taxable, false = exempt), then by currency,
  * plus a local-currency grand total per group.
  */
 export function buildTradeTotals(dataRows, localCurrencyCode) {
   const totals = []
-  for (const label of [t('app.taxStatus.taxable'), t('app.taxStatus.exempt')]) {
-    const group = dataRows.filter(r => r.taxExemptLabel === label)
+  const groups = [
+    { taxable: true,  label: t('app.taxStatus.taxable') },
+    { taxable: false, label: t('app.taxStatus.exempt') },
+  ]
+
+  for (const { taxable, label } of groups) {
+    const group = dataRows.filter(r => r.taxable === taxable)
     if (group.length === 0) continue
     for (const cur of ['EUR', 'USD']) {
       const subset = group.filter(r => r.currency === cur)
       if (subset.length === 0) continue
       const row = { _total: true, taxExemptLabel: label, currency: cur }
-      TRADE_SUM_COLS.forEach(k    => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
-      TRADE_SUM_LCL_COLS.forEach(k => { row[k] = subset.reduce((s, r) => s + (r[k] ?? 0), 0) })
+      TRADE_SUM_COLS.forEach(k    => { row[k] = subset.reduce((s, r) => s.plus(r[k] ?? D0), D0) })
+      TRADE_SUM_LCL_COLS.forEach(k => { row[k] = subset.reduce((s, r) => s.plus(r[k] ?? D0), D0) })
       totals.push(row)
     }
     const lclRow = { _total: true, taxExemptLabel: label, currency: localCurrencyCode }
-    TRADE_SUM_LCL_COLS.forEach(k => { lclRow[k] = group.reduce((s, r) => s + (r[k] ?? 0), 0) })
+    TRADE_SUM_LCL_COLS.forEach(k => { lclRow[k] = group.reduce((s, r) => s.plus(r[k] ?? D0), D0) })
     totals.push(lclRow)
   }
   return totals
@@ -43,16 +50,16 @@ export function buildTaxSummary(dataRows) {
 
   const summarize = group => {
     const profits = group.reduce((s, r) => {
-      const pl = (r.totalWithFeeLcl ?? 0) - (r.costBasisLcl ?? 0)
-      return pl > 0 ? s + pl : s
-    }, 0)
+      const pl = (r.totalLcl ?? D0).minus(r.costBasisLcl ?? D0)
+      return pl.gt(D0) ? s.plus(pl) : s
+    }, D0)
     const losses = group.reduce((s, r) => {
-      const pl = (r.totalWithFeeLcl ?? 0) - (r.costBasisLcl ?? 0)
-      return pl < 0 ? s + Math.abs(pl) : s
-    }, 0)
+      const pl = (r.totalLcl ?? D0).minus(r.costBasisLcl ?? D0)
+      return pl.lt(D0) ? s.plus(pl.abs()) : s
+    }, D0)
     return {
-      totalProceedsLcl:  group.reduce((s, r) => s + (r.totalWithFeeLcl ?? 0), 0),
-      totalCostBasisLcl: group.reduce((s, r) => s + (r.costBasisLcl    ?? 0), 0),
+      totalProceedsLcl:  group.reduce((s, r) => s.plus(r.totalLcl    ?? D0), D0),
+      totalCostBasisLcl: group.reduce((s, r) => s.plus(r.costBasisLcl ?? D0), D0),
       profits,
       losses,
     }

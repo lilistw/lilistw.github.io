@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import Decimal from 'decimal.js'
 import { parseOpenPositions, buildOpenPositions } from '../parseOpenPositions.js'
 
 // Real IBKR CSV: index 2 of the header row is 'DataDiscriminator';
@@ -39,17 +40,15 @@ describe('parseOpenPositions', () => {
     const rows = [makeHeader(), makePositionRow()]
     const result = parseOpenPositions(rows)
     expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({
-      assetCategory: 'Stocks',
-      currency:      'USD',
-      symbol:        'AAPL',
-      quantity:      '100',
-      costPrice:     '150.00',
-      costBasis:     '15000.00',
-      closePrice:    '180.00',
-      value:         '18000.00',
-      unrealizedPL:  '3000.00',
-    })
+    expect(result[0].assetCategory).toBe('Stocks')
+    expect(result[0].currency).toBe('USD')
+    expect(result[0].symbol).toBe('AAPL')
+    expect(result[0].quantity).toEqual(new Decimal('100'))
+    expect(result[0].costPrice).toEqual(new Decimal('150.00'))
+    expect(result[0].costBasis).toEqual(new Decimal('15000.00'))
+    expect(result[0].closePrice).toEqual(new Decimal('180.00'))
+    expect(result[0].value).toEqual(new Decimal('18000.00'))
+    expect(result[0].unrealizedPL).toEqual(new Decimal('3000.00'))
   })
 
   it('only includes Summary rows, not Total rows', () => {
@@ -81,24 +80,24 @@ describe('buildOpenPositions', () => {
     expect(Array.isArray(result.rows)).toBe(true)
   })
 
-  it('converts quantity and costBasis to numbers', () => {
+  it('returns Decimal for quantity and costBasis', () => {
     const rawPositions = parseOpenPositions([makeHeader(), makePositionRow()])
     const { rows } = buildOpenPositions(rawPositions)
-    expect(typeof rows[0].quantity).toBe('number')
-    expect(typeof rows[0].costBasis).toBe('number')
+    expect(rows[0].quantity).toBeInstanceOf(Decimal)
+    expect(rows[0].costBasis).toBeInstanceOf(Decimal)
   })
 
   it('uses calculated costBasis from positionsCostBasis when available', () => {
     const rawPositions = parseOpenPositions([makeHeader(), makePositionRow({ symbol: 'AAPL', costBasis: '15000.00' })])
-    const positionsCostBasis = { AAPL: { cost: 12000, qty: 100 } }
+    const positionsCostBasis = { AAPL: { cost: new Decimal(12000), qty: new Decimal(100) } }
     const { rows } = buildOpenPositions(rawPositions, {}, positionsCostBasis)
-    expect(rows[0].costBasis).toBe(12000)
+    expect(rows[0].costBasis).toEqual(new Decimal(12000))
   })
 
   it('falls back to raw costBasis when positionsCostBasis has no entry', () => {
     const rawPositions = parseOpenPositions([makeHeader(), makePositionRow({ costBasis: '15000.00' })])
     const { rows } = buildOpenPositions(rawPositions, {}, {})
-    expect(rows[0].costBasis).toBeCloseTo(15000)
+    expect(rows[0].costBasis.toNumber()).toBeCloseTo(15000)
   })
 
   it('enriches rows with country from instrumentInfo', () => {
@@ -117,8 +116,8 @@ describe('buildOpenPositions', () => {
   it('handles comma-formatted numbers', () => {
     const rawPositions = parseOpenPositions([makeHeader(), makePositionRow({ costBasis: '1,500,000.00', quantity: '1,000' })])
     const { rows } = buildOpenPositions(rawPositions)
-    expect(rows[0].costBasis).toBeCloseTo(1500000)
-    expect(rows[0].quantity).toBeCloseTo(1000)
+    expect(rows[0].costBasis.toNumber()).toBeCloseTo(1500000)
+    expect(rows[0].quantity.toNumber()).toBeCloseTo(1000)
   })
 })
 

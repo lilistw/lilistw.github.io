@@ -3,7 +3,7 @@ import Decimal from 'decimal.js'
 import { toLocalCurrency } from '../fx/fxRates.js'
 import { IBKR_EXCHANGES } from '../constants.js'
 import { isTaxable } from '../instrument/classifier.js'
-import { parseToDecimal, D0 } from '../numStr.js'
+import { toDecimal, D0 } from '../numStr.js'
 import { createCostBasisStrategy } from './costBasis/createCostBasisStrategy.js'
 
 function makeInstrument(trade, instrumentInfo) {
@@ -88,9 +88,9 @@ export class TradeCalculator {
     for (const p of priorPositions) {
       if (!p.symbol) continue
       map[p.symbol] = {
-        qty: new Decimal(p.qty),
-        cost: new Decimal(p.costUSD),
-        costLcl: new Decimal(p.costLcl),
+        qty: toDecimal(p.qty),
+        cost: toDecimal(p.costUSD),
+        costLcl: toDecimal(p.costLcl),
       }
     }
 
@@ -112,10 +112,10 @@ export class TradeCalculator {
     const instr = makeInstrument(t, this.instrumentInfo)
     const exempt = t.side === 'SELL' && !isTaxable(instr)
 
-    const proceedsD = parseToDecimal(t.proceeds) ?? D0
-    const commD     = parseToDecimal(t.commission) ?? D0
-    const feeD      = parseToDecimal(t.fee) ?? D0
-    const qtyD      = parseToDecimal(t.quantity).abs()
+    const proceedsD = toDecimal(t.proceeds)
+    const commD     = toDecimal(t.commission)
+    const feeD      = toDecimal(t.fee)
+    const qtyD      = toDecimal(t.quantity).abs()
 
     const totalD = proceedsD.plus(commD).plus(feeD)
     const totalLclD = this.#toLcl(totalD, t.currency, date)
@@ -163,7 +163,7 @@ export class TradeCalculator {
       currency: t.currency,
       side: t.side,
       quantity: qtyD,
-      price: parseToDecimal(t.price),
+      price: toDecimal(t.price),
 
       proceeds: proceedsD,
       commission: commD,

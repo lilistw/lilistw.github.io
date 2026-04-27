@@ -1,18 +1,10 @@
-import Decimal from 'decimal.js'
 import {
   toLocalCurrency, getPrevYearEndDate,
 } from '../domain/fx/fxRates.js'
 import { buildInstrumentInfo } from '../domain/parser/parseInstruments.js'
 import { buildCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
 import { parseTaxYear } from '../domain/parser/parseTaxYear.js'
-
-const D0 = new Decimal(0)
-
-function toD(v) {
-  if (v instanceof Decimal) return v
-  const s = String(v ?? 0).replace(/,/g, '').trim()
-  try { return new Decimal(s) } catch { return D0 }
-}
+import { toDecimal, D0 } from '../domain/numStr.js'
 
 /**
  * Infer prior-year open positions from current-year trade data.
@@ -42,10 +34,10 @@ export function inferPriorPositions({ trades, openPositions, csvTrades, instrume
   for (const t of trades) {
     if (!t.symbol || !t.side) continue
 
-    const qtyD      = toD(t.quantity).abs()
-    const proceedsD = toD(t.proceeds)
-    const commD     = toD(t.commission)
-    const feeD      = toD(t.fee)
+    const qtyD      = toDecimal(t.quantity).abs()
+    const proceedsD = toDecimal(t.proceeds)
+    const commD     = toDecimal(t.commission)
+    const feeD      = toDecimal(t.fee)
     const date      = (t.datetime || '').split(/[,\s]/)[0]
     // For BUY: proceeds is negative (cash out), totalWithFee is negative → neg() = cost paid
     const totalWithFeeD = proceedsD.plus(commD).plus(feeD)
@@ -80,15 +72,15 @@ export function inferPriorPositions({ trades, openPositions, csvTrades, instrume
 
   // Symbols still open at year-end
   for (const h of openPositions) {
-    if (!h.symbol || !parseFloat(h.quantity)) continue
+    if (!h.symbol || !h.quantity?.gt(0)) continue
 
     const aliases = instrumentInfo[h.symbol]?.aliases ?? []
     const sym = bySymbol[h.symbol]
       ?? aliases.map(a => bySymbol[a]).find(Boolean)
       ?? { currency: h.currency, buyQty: D0, buyCostUSD: D0, sellQty: D0, sellBasisUSD: D0, lastBuyDate: null }
 
-    const openQtyD  = toD(h.quantity)
-    const openCostD = toD(h.costBasis)
+    const openQtyD  = toDecimal(h.quantity)
+    const openCostD = toDecimal(h.costBasis)
 
     const priorQtyD = openQtyD.plus(sym.sellQty).minus(sym.buyQty)
     if (priorQtyD.lte(0)) continue  // all shares were bought in current year

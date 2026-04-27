@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import Decimal from 'decimal.js'
 import { parseInterest } from '../parseInterest.js'
 
 function makeRows(dataRows = []) {
@@ -18,12 +19,10 @@ describe('parseInterest', () => {
     ])
     const result = parseInterest(rows)
     expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({
-      currency: 'USD',
-      date: '2025-02-28',
-      description: 'USD Credit Interest for Feb-2025',
-      amount: '12.34',
-    })
+    expect(result[0].currency).toBe('USD')
+    expect(result[0].date).toBe('2025-02-28')
+    expect(result[0].description).toBe('USD Credit Interest for Feb-2025')
+    expect(result[0].amount).toEqual(new Decimal('12.34'))
   })
 
   it('parses multiple interest rows', () => {

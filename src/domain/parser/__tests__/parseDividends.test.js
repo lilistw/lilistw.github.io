@@ -1,4 +1,5 @@
 import { describe, it, expect } from 'vitest'
+import Decimal from 'decimal.js'
 import { parseDividends, parseWithholdingTax } from '../parseDividends.js'
 
 // Helper: build rows with a Dividends header + optional data rows
@@ -24,12 +25,10 @@ describe('parseDividends', () => {
     ])
     const result = parseDividends(rows)
     expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({
-      currency: 'USD',
-      date: '2025-03-15',
-      description: 'AAPL(US0378331005) Cash Dividend',
-      amount: '10.00',
-    })
+    expect(result[0].currency).toBe('USD')
+    expect(result[0].date).toBe('2025-03-15')
+    expect(result[0].description).toBe('AAPL(US0378331005) Cash Dividend')
+    expect(result[0].amount).toEqual(new Decimal('10.00'))
   })
 
   it('parses multiple dividend rows', () => {
@@ -110,13 +109,11 @@ describe('parseWithholdingTax', () => {
     ])
     const result = parseWithholdingTax(rows)
     expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({
-      currency: 'USD',
-      date: '2025-03-15',
-      description: 'AAPL(US0378331005) Cash Dividend',
-      amount: '-1.50',
-      code: 'Po',
-    })
+    expect(result[0].currency).toBe('USD')
+    expect(result[0].date).toBe('2025-03-15')
+    expect(result[0].description).toBe('AAPL(US0378331005) Cash Dividend')
+    expect(result[0].amount).toEqual(new Decimal('-1.50'))
+    expect(result[0].code).toBe('Po')
   })
 
   it('skips rows where Currency starts with "Total"', () => {
@@ -133,7 +130,7 @@ describe('parseWithholdingTax', () => {
     ])
     const result = parseWithholdingTax(rows)
     expect(result).toHaveLength(1)
-    expect(result[0].amount).toBe('-1.50')
+    expect(result[0].amount).toEqual(new Decimal('-1.50'))
   })
 
   it('handles empty input gracefully', () => {
