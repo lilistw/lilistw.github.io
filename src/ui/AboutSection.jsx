@@ -26,7 +26,6 @@ export default function AboutSection() {
     borderRadius: 2,
     display: 'flex',
     flexDirection: 'column',
-    height: '100%',
     transition: 'transform 0.15s ease, box-shadow 0.15s ease',
     '&:hover': {
       transform: 'translateY(-2px)',
@@ -70,7 +69,7 @@ export default function AboutSection() {
       {/* Card 1 */}
       <Card variant="outlined" sx={cardSx}>
         <CardActionArea
-          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start', height: '100%' }}
+          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start' }}
           onClick={() => setOpen(true)}
         >
           <CardContent   sx={{
@@ -95,7 +94,7 @@ export default function AboutSection() {
       {/* Card 2 */}
       <Card variant="outlined" sx={cardSx}>
         <CardActionArea
-          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start', height: '100%' }}
+          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start' }}
           onClick={() => setOpen(true)}
         >
           <CardContent   sx={{
@@ -120,7 +119,7 @@ export default function AboutSection() {
       {/* Card 3 (Поверителност - with blue text) */}
       <Card variant="outlined" sx={cardSx}>
         <CardActionArea
-          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start', height: '100%' }}
+          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start' }}
           onClick={() => setOpen(true)}
         >
           <CardContent   sx={{
