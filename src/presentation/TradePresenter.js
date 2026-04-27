@@ -72,6 +72,7 @@ export class TradePresenter {
 
       quantityDisplay: r.quantity?.toString() ?? null,
 
+      price:       this.#fmtNum(r.price, 4),
       proceeds:    this.#fmtNum(r.proceeds, 2),
       commission:  this.#fmtNum(r.commission, 2),
       fee:         this.#fmtNum(r.fee, 2),

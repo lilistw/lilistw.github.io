@@ -6,6 +6,10 @@ export default function TaxableToggleDialog({ pending, onClose, onConfirm }) {
 
   if (!pending) return null
 
+  const currentLabel = pending.row.taxable
+    ? t('app.taxStatus.taxable')
+    : t('app.taxStatus.exempt')
+
   return (
     <Dialog open onClose={onClose} maxWidth="xs" fullWidth>
       <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -17,11 +21,11 @@ export default function TaxableToggleDialog({ pending, onClose, onConfirm }) {
 
       <DialogContent>
         <Typography variant="body2">
-          <strong>{pending.row.symbol}</strong> · {pending.row.dateTime}
+          <strong>{pending.row.symbol}</strong> · {pending.row.datetime}
         </Typography>
 
         <Typography variant="body2">
-          {pending.row.taxExemptLabel} → <strong>{pending.newLabel}</strong>
+          {currentLabel} → <strong>{pending.newLabel}</strong>
         </Typography>
       </DialogContent>
 

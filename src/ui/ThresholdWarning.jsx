@@ -17,7 +17,7 @@ function fmtNum(n) {
 
 export default function ThresholdWarning({ holdings, localCurrencyLabel, localCurrencyCode }) {
 
-  const totalLcl = holdings.reduce((sum, h) => sum + (h.costLcl ?? 0), 0)
+  const totalLcl = holdings.reduce((sum, h) => sum + Number(h.costLcl ?? 0), 0)
   if (totalToEur(totalLcl, localCurrencyCode) <= SPB8_THRESHOLD_EUR) return null
 
   const details = t('spb8Warning.details', { returnObjects: true })
