@@ -1,5 +1,6 @@
 import { getInstrumentTypeLabel } from '../instrument/classifier.js'
 import { t } from '../../localization/i18n.js'
+import { parseToDecimal } from '../numStr.js'
 
 /**
  * Parses IBKR "Open Positions" section into a raw array.
@@ -20,13 +21,13 @@ export function parseOpenPositions(rows) {
       assetCategory: (r[colIndex['Asset Category']] || '').trim(),
       currency:      (r[colIndex['Currency']]       || '').trim(),
       symbol:        (r[colIndex['Symbol']]         || '').trim(),
-      quantity:      (r[colIndex['Quantity']]        || '').trim(),
-      multiplier:    (r[colIndex['Mult']]            || '').trim(),
-      costPrice:     (r[colIndex['Cost Price']]      || '').trim(),
-      costBasis:     (r[colIndex['Cost Basis']]      || '').trim(),
-      closePrice:    (r[colIndex['Close Price']]     || '').trim(),
-      value:         (r[colIndex['Value']]           || '').trim(),
-      unrealizedPL:  (r[colIndex['Unrealized P/L']] || '').trim(),
+      quantity:      parseToDecimal((r[colIndex['Quantity']]        || '').trim()),
+      multiplier:    parseToDecimal((r[colIndex['Mult']]            || '').trim()),
+      costPrice:     parseToDecimal((r[colIndex['Cost Price']]      || '').trim()),
+      costBasis:     parseToDecimal((r[colIndex['Cost Basis']]      || '').trim()),
+      closePrice:    parseToDecimal((r[colIndex['Close Price']]     || '').trim()),
+      value:         parseToDecimal((r[colIndex['Value']]           || '').trim()),
+      unrealizedPL:  parseToDecimal((r[colIndex['Unrealized P/L']] || '').trim()),
       code:          (r[colIndex['Code']]            || '').trim(),
     }))
 }
@@ -37,22 +38,19 @@ export function parseOpenPositions(rows) {
  *
  * @param {object[]} rawPositions
  * @param {{ [symbol: string]: object }} instrumentInfo
- * @param {{ [symbol: string]: { cost: number, qty: number } }} positionsCostBasis
+ * @param {{ [symbol: string]: { cost: Decimal, qty: Decimal } }} positionsCostBasis
  * @returns {{ columns: object[], rows: object[] }}
  */
 export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsCostBasis = {}) {
-  const parseNum = v => {
-    const n = parseFloat((v || '').replace(/,/g, ''))
-    return Number.isFinite(n) ? n : null
-  }
-
   const dataRows = rawPositions.map(r => {
     const symbol   = r.symbol
     const info     = instrumentInfo[symbol] || {}
-    const quantity = parseNum(r.quantity)
+    const quantity = r.quantity
     const calcPos  = positionsCostBasis[symbol]
-    const costBasis = calcPos?.cost != null ? calcPos.cost : parseNum(r.costBasis)
-    const costPrice = quantity ? costBasis / quantity : parseNum(r.costPrice)
+    const costBasis = calcPos?.cost ?? r.costBasis
+    const costPrice = quantity && !quantity.isZero()
+      ? costBasis?.div(quantity)
+      : r.costPrice
     const instrType = getInstrumentTypeLabel({ name: info.description ?? '', type: info.type ?? '' })
     return {
       assetCategory: r.assetCategory,
@@ -61,12 +59,12 @@ export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsC
       instrType,
       country:      info.countryName || info.country || '',
       quantity,
-      multiplier:   parseNum(r.multiplier),
+      multiplier:   r.multiplier,
       costPrice,
       costBasis,
-      closePrice:   parseNum(r.closePrice),
-      value:        parseNum(r.value),
-      unrealizedPL: parseNum(r.unrealizedPL),
+      closePrice:   r.closePrice,
+      value:        r.value,
+      unrealizedPL: r.unrealizedPL,
       code:         r.code,
     }
   })

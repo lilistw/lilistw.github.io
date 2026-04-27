@@ -1,3 +1,5 @@
+import { parseToDecimal } from '../numStr.js'
+
 /**
  * Parses an IBKR Trade Confirmation Report HTML document into a raw array.
  *
@@ -9,7 +11,7 @@
  *   4: Exchange | 5: Type (side) | 6: Quantity | 7: Price | 8: Proceeds |
  *   9: Comm (commission) | 10: Fee | 11: Order Type | 12: Code
  *
- * All values are raw strings. quantity keeps sign (negative for SELL).
+ * Numeric fields are returned as Decimal instances (null for blank/non-numeric).
  *
  * @param {Document} doc - pre-parsed HTML document
  * @returns {object[]}
@@ -55,11 +57,11 @@ export function parseTradesFromHtml(doc) {
         settleDate: txt(cells[3]),
         exchange,
         side:       txt(cells[5]),
-        quantity:   txt(cells[6]),
-        price:      txt(cells[7]),
-        proceeds:   txt(cells[8]),
-        commission: txt(cells[9]),
-        fee:        txt(cells[10]),
+        quantity:   parseToDecimal(txt(cells[6])),
+        price:      parseToDecimal(txt(cells[7])),
+        proceeds:   parseToDecimal(txt(cells[8])),
+        commission: parseToDecimal(txt(cells[9])),
+        fee:        parseToDecimal(txt(cells[10])),
         orderType:  txt(cells[11]),
         code:       txt(cells[12]),
       })

@@ -1,5 +1,4 @@
-import Decimal from 'decimal.js'
-import { parseToDecimal } from '../numStr.js'
+import { parseToDecimal, toDecimal } from '../numStr.js'
 
 /**
  * Parses the "Trades" section of an IBKR Activity Statement CSV into a raw array.
@@ -32,12 +31,13 @@ export function parseCsvTrades(rows) {
       settleDate:    (r[colIndex['Settle Date/Time']]  || '').trim(),
       exchange:      (r[colIndex['Exchange']]          || '').trim(),
       side:          (r[colIndex['Buy/Sell']]          || '').trim(),
-      quantity:      (r[colIndex['Quantity']]          || '').trim(),
-      price:         (r[colIndex['Price']]             || '').trim(),
-      proceeds:      (r[colIndex['Proceeds']]          || '').trim(),
-      commission:    (r[colIndex['Comm/Fee']]          || '').trim(),
-      basis:         (r[colIndex['Basis']]             || '').trim(),
-      realizedPL:    (r[colIndex['Realized P/L']]      || '').trim(),
+      quantity:      parseToDecimal((r[colIndex['Quantity']]       || '').trim()),
+      price:         parseToDecimal((r[colIndex['Price']]          || '').trim()),
+      proceeds:      parseToDecimal((r[colIndex['Proceeds']]       || '').trim()),
+      commission:    parseToDecimal((r[colIndex['Comm/Fee']]       || '').trim()),
+      fee:           parseToDecimal((r[colIndex['Fee']]            || '').trim()),
+      basis:         parseToDecimal((r[colIndex['Basis']]          || '').trim()),
+      realizedPL:    parseToDecimal((r[colIndex['Realized P/L']]   || '').trim()),
       code:          (r[colIndex['Code']]              || '').trim(),
     }))
 }
@@ -53,11 +53,11 @@ export function parseCsvTrades(rows) {
 export function buildCsvTradeBasis(csvTrades) {
   const result = new Map()
   for (const t of csvTrades) {
-    const qtyD = parseToDecimal(t.quantity)
+    const qtyD = toDecimal(t.quantity)
     if (!qtyD || qtyD.gte(0)) continue  // only SELL trades have negative quantity
 
     const date   = t.datetime.split(',')[0].trim()
-    const basisD = parseToDecimal(t.basis)
+    const basisD = toDecimal(t.basis)
     if (!t.symbol || !date || !basisD) continue
 
     const key = `${t.symbol}|${date}|${qtyD.abs().toFixed(0)}`

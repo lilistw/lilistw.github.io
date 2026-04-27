@@ -37,3 +37,31 @@ export function toDisplayStr(value) {
   if (!s.includes('.')) return s
   return s.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')
 }
+
+/**
+ * Robust Decimal coercion — handles Decimal, number, or string input.
+ * Replaces the various local toD() helpers scattered across calculators.
+ */
+export function toDecimal(v) {
+  if (v instanceof Decimal) return v
+  const s = String(v ?? 0).replace(/,/g, '').trim()
+  try { return new Decimal(s) } catch { return D0 }
+}
+
+/**
+ * Explicit Decimal → number conversion.
+ * Only for dev JSON and TSV export paths.
+ */
+export function decimalToNumber(v) {
+  if (v == null) return null
+  if (v instanceof Decimal) return v.toNumber()
+  if (typeof v === 'number') return v
+  return null
+}
+
+/**
+ * JSON.stringify replacer that converts Decimal instances to JS numbers.
+ * Use for outputJsonText in the dev panel.
+ */
+export const decimalJsonReplacer = (key, value) =>
+  value instanceof Decimal ? value.toNumber() : value
