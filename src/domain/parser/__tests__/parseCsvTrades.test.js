@@ -41,19 +41,17 @@ describe('parseCsvTrades', () => {
     const rows = [makeHeader(), makeTrade()]
     const result = parseCsvTrades(rows)
     expect(result).toHaveLength(1)
-    expect(result[0]).toMatchObject({
-      assetCategory: 'Stocks',
-      currency:      'USD',
-      symbol:        'AAPL',
-      exchange:      'NASDAQ',
-      side:          'BUY',
-      quantity:      '10',
-      price:         '150.00',
-      proceeds:      '-1500.00',
-      commission:    '-5.00',
-      basis:         '-1505.00',
-      code:          'O',
-    })
+    expect(result[0].assetCategory).toBe('Stocks')
+    expect(result[0].currency).toBe('USD')
+    expect(result[0].symbol).toBe('AAPL')
+    expect(result[0].exchange).toBe('NASDAQ')
+    expect(result[0].side).toBe('BUY')
+    expect(result[0].quantity).toEqual(new Decimal('10'))
+    expect(result[0].price).toEqual(new Decimal('150.00'))
+    expect(result[0].proceeds).toEqual(new Decimal('-1500.00'))
+    expect(result[0].commission).toEqual(new Decimal('-5.00'))
+    expect(result[0].basis).toEqual(new Decimal('-1505.00'))
+    expect(result[0].code).toBe('O')
   })
 
   it('strips quotes from datetime field', () => {
@@ -87,8 +85,8 @@ describe('parseCsvTrades', () => {
     ]
     const result = parseCsvTrades(rows)
     expect(result[0].side).toBe('SELL')
-    expect(result[0].quantity).toBe('-10')
-    expect(result[0].proceeds).toBe('1800.00')
+    expect(result[0].quantity).toEqual(new Decimal('-10'))
+    expect(result[0].proceeds).toEqual(new Decimal('1800.00'))
   })
 })
 

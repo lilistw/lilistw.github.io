@@ -1,9 +1,12 @@
 // DividendPresenter.js
 import { t } from '../localization/i18n.js'
+import { fmt } from './fmt.js'
+import { decimalToNumber } from '../domain/numStr.js'
 
 export class DividendPresenter {
-  constructor({ lcl }) {
+  constructor({ lcl, mode = 'display' }) {
     this.lcl = lcl
+    this.mode = mode
   }
 
   buildDividendsTable(rows) {
@@ -19,7 +22,26 @@ export class DividendPresenter {
         { key: 'allowableCreditLcl', label: t('dividendTableCols.allowableCreditLcl'), shortLabel: t('dividendTableCols.allowableCreditLclShort', { lcl: this.lcl }), align: 'right', mono: true, decimals: 2, nullAs: '—' },
         { key: 'dueTaxLcl',          label: t('dividendTableCols.dueTaxLcl'), shortLabel: t('dividendTableCols.dueTaxLclShort', { lcl: this.lcl }), align: 'right', mono: true, decimals: 2, nullAs: '—' },
       ],
-      rows,
+      rows: this.#mapRows(rows),
     }
+  }
+
+  // -------------------------
+
+  #fmtNum(decimal, decimals) {
+    if (decimal == null) return null
+    return this.mode === 'display'
+      ? fmt(decimal, decimals)
+      : decimalToNumber(decimal)
+  }
+
+  #mapRows(rows) {
+    return rows.map(r => ({
+      ...r,
+      grossAmountLcl:     this.#fmtNum(r.grossAmountLcl, 2),
+      foreignTaxPaidLcl:  this.#fmtNum(r.foreignTaxPaidLcl, 2),
+      allowableCreditLcl: this.#fmtNum(r.allowableCreditLcl, 2),
+      dueTaxLcl:          this.#fmtNum(r.dueTaxLcl, 2),
+    }))
   }
 }

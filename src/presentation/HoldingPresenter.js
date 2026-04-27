@@ -1,9 +1,12 @@
 // HoldingsPresenter.js
 import { t } from '../localization/i18n.js'
+import { fmt } from './fmt.js'
+import { decimalToNumber } from '../domain/numStr.js'
 
 export class HoldingPresenter {
-  constructor({ lcl }) {
+  constructor({ lcl, mode = 'display' }) {
     this.lcl = lcl
+    this.mode = mode
   }
 
   buildHoldings(rows) {
@@ -32,6 +35,13 @@ export class HoldingPresenter {
   // -------------------------
   // PRIVATE
   // -------------------------
+
+  #fmtNum(decimal, decimals) {
+    if (decimal == null) return null
+    return this.mode === 'display'
+      ? fmt(decimal, decimals)
+      : decimalToNumber(decimal)
+  }
 
   #columns() {
     return [
@@ -72,6 +82,9 @@ export class HoldingPresenter {
       acquDate: r.acquDate
         ? r.acquDate.split('-').reverse().join('.')
         : null,
+      costBasis: this.#fmtNum(r.costBasis, 2),
+      costLcl:   this.#fmtNum(r.costLcl, 2),
+      quantity:  r.quantity != null ? decimalToNumber(r.quantity) : null,
     }))
   }
 }

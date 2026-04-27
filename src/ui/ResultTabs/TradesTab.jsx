@@ -14,34 +14,46 @@ import { TradePresenter } from '../../presentation/TradePresenter.js'
 export default function TradesTab({ result }) {
 
   const { taxYear, localCurrencyCode, localCurrencyLabel } = result
-  
-  
-  const tradePresenter = new TradePresenter({
-    lcl: localCurrencyLabel,
-  })
 
-  const tradesTable = tradePresenter.buildTable(result.trades)
+  const tradePresenter = new TradePresenter({ lcl: localCurrencyLabel })
 
-  const [rows, setRows] = useState(
-    tradesTable.rows.filter(r => !r._total)
+  // Raw Decimal rows (no _total rows); updated when user toggles taxable status
+  const [rawRows, setRawRows] = useState(
+    () => result.trades.filter(r => !r._total)
+  )
+
+  // Presented display rows (Decimal → locale strings)
+  const displayRows = useMemo(
+    () => tradePresenter.buildTable(rawRows).rows,
+    [rawRows]
+  )
+
+  // Domain totals (Decimal sums) then presented
+  const totalRows = useMemo(
+    () => buildTradeTotals(rawRows, localCurrencyCode),
+    [rawRows, localCurrencyCode]
+  )
+  const displayTotals = useMemo(
+    () => tradePresenter.buildTable(totalRows).rows,
+    [totalRows]
   )
 
   const trades = useMemo(() => ({
-    columns: tradesTable.columns,
-    rows: [...rows, ...buildTradeTotals(rows, localCurrencyCode)],
-  }), [rows, localCurrencyCode])
+    columns: tradePresenter.buildTable([]).columns,
+    rows: [...displayRows, ...displayTotals],
+  }), [displayRows, displayTotals])
 
-  const taxSummary = useMemo(() => buildTaxSummary(rows), [rows])
+  const taxSummary = useMemo(() => buildTaxSummary(rawRows), [rawRows])
 
   const approxRows = useMemo(
-    () => rows.filter(r => r.side === 'SELL' && r.costBasisLclApprox),
-    [rows]
+    () => rawRows.filter(r => r.side === 'SELL' && r.costBasisLclApprox),
+    [rawRows]
   )
 
   const [pending, setPending] = useState(null)
 
   function handleToggle(idx, _colKey) {
-    const row = rows[idx]
+    const row = rawRows[idx]
     if (row.taxable === null) return
 
     const newTaxable = !row.taxable
@@ -56,14 +68,10 @@ export default function TradesTab({ result }) {
   function confirm() {
     if (!pending) return
 
-    setRows(prev =>
+    setRawRows(prev =>
       prev.map((r, i) =>
         i === pending.idx
-          ? {
-              ...r,
-              taxable: pending.newTaxable,
-              taxExemptLabel: pending.newLabel,
-            }
+          ? { ...r, taxable: pending.newTaxable }
           : r
       )
     )
@@ -71,9 +79,9 @@ export default function TradesTab({ result }) {
     setPending(null)
   }
 
-  // ✅ always derive fresh row from current state
+  // always derive fresh row from current state
   const pendingWithRow = pending
-    ? { ...pending, row: rows[pending.idx] }
+    ? { ...pending, row: rawRows[pending.idx] }
     : null
 
   return (

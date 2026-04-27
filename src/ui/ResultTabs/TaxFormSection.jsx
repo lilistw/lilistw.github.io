@@ -1,7 +1,6 @@
 import { Box, Paper, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ArticleOutlined } from '@mui/icons-material'
-import { fmt } from '../../presentation/fmt.js'
 
 export function TaxFormSection({ title, subtitle, rows }) {
   return (
@@ -37,7 +36,7 @@ export function TaxFormSection({ title, subtitle, rows }) {
           <TaxRow
             key={i}
             label={r.label}
-            value={fmt(r.value)}
+            value={r.value ?? '—'}
             color={r.color}
           />
         ))}</Box>

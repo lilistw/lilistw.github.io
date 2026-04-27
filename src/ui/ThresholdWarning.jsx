@@ -1,14 +1,16 @@
+import Decimal from 'decimal.js'
 import { t } from '../localization/i18n.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
+import { toDecimal, D0 } from '../domain/numStr.js'
 
-const EUR_BGN = 1.95583
-const SPB8_THRESHOLD_EUR = 25000
+const EUR_BGN = new Decimal('1.95583')
+const SPB8_THRESHOLD_EUR = new Decimal(25000)
 
 function totalToEur(totalLcl, localCurrencyCode) {
   if (localCurrencyCode === 'EUR') return totalLcl
-  return totalLcl / EUR_BGN
+  return totalLcl.div(EUR_BGN)
 }
 
 function fmtNum(n) {
@@ -17,8 +19,8 @@ function fmtNum(n) {
 
 export default function ThresholdWarning({ holdings, localCurrencyLabel, localCurrencyCode }) {
 
-  const totalLcl = holdings.reduce((sum, h) => sum + (h.costLcl ?? 0), 0)
-  if (totalToEur(totalLcl, localCurrencyCode) <= SPB8_THRESHOLD_EUR) return null
+  const totalLcl = holdings.reduce((sum, h) => sum.plus(toDecimal(h.costLcl ?? D0)), D0)
+  if (totalToEur(totalLcl, localCurrencyCode).lte(SPB8_THRESHOLD_EUR)) return null
 
   const details = t('spb8Warning.details', { returnObjects: true })
 

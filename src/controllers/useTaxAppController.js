@@ -6,6 +6,7 @@ import { calculateTax } from '../application/calculateTax.js'
 import { inferPriorPositions } from '../application/inferPriorPositions.js'
 import { getPrevYearEndDate } from '../domain/fx/fxRates.js'
 import { useThemeMode } from '../hooks/useThemeMode.js'
+import { decimalJsonReplacer } from '../domain/numStr.js'
 
 export function useTaxAppController() {
   const [nightMode, setNightMode] = useThemeMode()
@@ -190,7 +191,7 @@ export function useTaxAppController() {
   }
 
   const inputJsonText = inputData ? JSON.stringify(inputData, null, 2) : ''
-  const outputJsonText = result ? JSON.stringify(result, null, 2) : ''
+  const outputJsonText = result ? JSON.stringify(result, decimalJsonReplacer, 2) : ''
 
   return {
     nightMode, setNightMode,

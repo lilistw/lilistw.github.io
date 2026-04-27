@@ -1,9 +1,12 @@
 // InterestPresenter.js
 import { t } from '../localization/i18n.js'
+import { fmt } from './fmt.js'
+import { decimalToNumber } from '../domain/numStr.js'
 
 export class InterestPresenter {
-  constructor({ lcl }) {
+  constructor({ lcl, mode = 'display' }) {
     this.lcl = lcl
+    this.mode = mode
   }
 
   buildTable(rows) {
@@ -14,6 +17,13 @@ export class InterestPresenter {
   }
 
   // -------------------------
+
+  #fmtNum(decimal, decimals) {
+    if (decimal == null) return null
+    return this.mode === 'display'
+      ? fmt(decimal, decimals)
+      : decimalToNumber(decimal)
+  }
 
   #buildColumns() {
     return [
@@ -35,8 +45,8 @@ export class InterestPresenter {
   #mapRows(rows) {
     return rows.map(r => ({
       ...r,
-      amount: r.amount?.toNumber?.() ?? null,
-      amountLcl: r.amountLcl?.toNumber?.() ?? null,
+      amount:    this.#fmtNum(r.amount, 2),
+      amountLcl: this.#fmtNum(r.amountLcl, 2),
       description: r._total ? t('interestTableCols.total') : r.description,
     }))
   }

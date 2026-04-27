@@ -1,5 +1,8 @@
+import { parseToDecimal } from '../numStr.js'
+
 /**
  * Parses the Dividends section into a raw array.
+ * The `amount` field is returned as a Decimal instance.
  *
  * @param {string[][]} rows
  * @returns {object[]}
@@ -23,13 +26,14 @@ export function parseDividends(rows) {
       currency:    (r[idx['Currency']]    || '').trim(),
       date:        (r[idx['Date']]         || '').trim(),
       description: (r[idx['Description']] || '').trim(),
-      amount:      (r[idx['Amount']]       || '').trim(),
+      amount:      parseToDecimal((r[idx['Amount']] || '').trim()),
     }))
-    .filter(r => parseFloat(r.amount) > 0)
+    .filter(r => r.amount?.gt(0))
 }
 
 /**
  * Parses the Withholding Tax section into a raw array.
+ * The `amount` field is returned as a Decimal instance.
  *
  * @param {string[][]} rows
  * @returns {object[]}
@@ -51,7 +55,7 @@ export function parseWithholdingTax(rows) {
       currency:    (r[idx['Currency']]    || '').trim(),
       date:        (r[idx['Date']]         || '').trim(),
       description: (r[idx['Description']] || '').trim(),
-      amount:      (r[idx['Amount']]       || '').trim(),
+      amount:      parseToDecimal((r[idx['Amount']] || '').trim()),
       code:        (r[idx['Code']]         || '').trim(),
     }))
 }

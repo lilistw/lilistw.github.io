@@ -29,28 +29,28 @@ export class ExcelPresenter {
     const { t, lcl } = this
     const sections = []
 
-    const tradePresenter = new TradePresenter({ lcl })
+    const tradePresenter = new TradePresenter({ lcl, mode: 'export' })
     const trades = tradePresenter.buildTable(result.trades)
     sections.push(buildSection(t('app.tabs.trades'), trades.columns, trades.rows))
 
-    const holdingPresenter = new HoldingPresenter({ lcl })
+    const holdingPresenter = new HoldingPresenter({ lcl, mode: 'export' })
     const holdings = holdingPresenter.buildHoldings(result.holdings)
     sections.push(buildSection(t('app.tabs.positions'), holdings.columns, holdings.rows))
 
     if (result.dividends.length > 0) {
-      const divPresenter = new DividendPresenter({ lcl })
+      const divPresenter = new DividendPresenter({ lcl, mode: 'export' })
       const dividends = divPresenter.buildDividendsTable(result.dividends)
       sections.push(buildSection(t('app.tabs.dividends'), dividends.columns, dividends.rows))
     }
 
     const realInterest = result.interest.filter(r => !r._total)
     if (realInterest.length > 0) {
-      const intPresenter = new InterestPresenter({ lcl })
+      const intPresenter = new InterestPresenter({ lcl, mode: 'export' })
       const interest = intPresenter.buildTable(result.interest)
       sections.push(buildSection(t('app.tabs.interest'), interest.columns, interest.rows))
     }
 
-    const summaryPresenter = new TradeSummaryPresenter({ t, lcl })
+    const summaryPresenter = new TradeSummaryPresenter({ t, lcl, mode: 'export' })
     sections.push(this.#summarySection(result.taxSummary, summaryPresenter))
 
     return sections.join('\n\n\n')
