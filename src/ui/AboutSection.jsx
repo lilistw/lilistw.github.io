@@ -70,7 +70,7 @@ export default function AboutSection() {
       {/* Card 1 */}
       <Card variant="outlined" sx={cardSx}>
         <CardActionArea
-          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start' }}
+          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start', height: '100%' }}
           onClick={() => setOpen(true)}
         >
           <CardContent   sx={{
@@ -95,7 +95,7 @@ export default function AboutSection() {
       {/* Card 2 */}
       <Card variant="outlined" sx={cardSx}>
         <CardActionArea
-          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start' }}
+          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start', height: '100%' }}
           onClick={() => setOpen(true)}
         >
           <CardContent   sx={{
@@ -120,7 +120,7 @@ export default function AboutSection() {
       {/* Card 3 (Поверителност - with blue text) */}
       <Card variant="outlined" sx={cardSx}>
         <CardActionArea
-          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start' }}
+          sx={{ flexGrow: 1, display: 'flex', alignItems: 'flex-start', height: '100%' }}
           onClick={() => setOpen(true)}
         >
           <CardContent   sx={{
