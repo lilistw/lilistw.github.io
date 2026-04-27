@@ -1,6 +1,8 @@
 // TradePresenter.js
 import { getInstrumentTypeLabel } from '../domain/instrument/classifier.js'
 import { t } from '../localization/i18n.js'
+import { fmt } from './fmt.js'
+import { decimalToNumber } from '../domain/numStr.js'
 
 const TRADE_COLUMNS = (lcl) => [
   { key: '#',               label: '#',                                  align: 'right', mono: true, decimals: 0 },
@@ -36,44 +38,13 @@ const TRADE_COLUMNS = (lcl) => [
 ]
 
 // -------------------------
-// helpers
-// -------------------------
-
-function toNumberSafe(v) {
-  if (v == null) return null
-  if (typeof v === 'number') return v
-  if (v?.toNumber) return v.toNumber()
-  return v
-}
-
-function toStringSafe(v) {
-  if (v == null) return null
-  if (typeof v === 'string') return v
-  if (v?.toString) return v.toString()
-  return String(v)
-}
-
-function normalizeRow(obj) {
-  const res = {}
-
-  for (const [k, v] of Object.entries(obj)) {
-    if (v?.toNumber) {
-      res[k] = v.toNumber()
-    } else {
-      res[k] = v
-    }
-  }
-
-  return res
-}
-
-// -------------------------
 // presenter
 // -------------------------
 
 export class TradePresenter {
-  constructor({ lcl }) {
+  constructor({ lcl, mode = 'display' }) {
     this.lcl = lcl
+    this.mode = mode
   }
 
   buildTable(rows) {
@@ -85,42 +56,45 @@ export class TradePresenter {
 
   // -------------------------
 
+  #fmtNum(decimal, decimals) {
+    if (decimal == null) return null
+    return this.mode === 'display'
+      ? fmt(decimal, decimals)
+      : decimalToNumber(decimal)
+  }
+
   #mapRows(rows) {
-    return rows.map(r => {
-      const mapped = {
-        ...r,
+    return rows.map(r => ({
+      ...r,
 
-        // UI-specific fields
-        '#': r.index,
+      // UI-specific fields
+      '#': r.index,
 
-        quantityDisplay: toStringSafe(r.quantity),
+      quantityDisplay: r.quantity?.toString() ?? null,
 
-        proceeds: toNumberSafe(r.proceeds),
-        commission: toNumberSafe(r.commission),
-        fee: toNumberSafe(r.fee),
+      proceeds:    this.#fmtNum(r.proceeds, 2),
+      commission:  this.#fmtNum(r.commission, 2),
+      fee:         this.#fmtNum(r.fee, 2),
 
-        totalWithFee: toNumberSafe(r.total),
-        totalWithFeeLcl: toNumberSafe(r.totalLcl),
-        rate: toNumberSafe(r.rate),
+      totalWithFee:    this.#fmtNum(r.total, 2),
+      totalWithFeeLcl: this.#fmtNum(r.totalLcl, 2),
+      rate:            this.#fmtNum(r.rate, 5),
 
-        costBasis: toNumberSafe(r.costBasis),
-        costBasisLcl: toNumberSafe(r.costBasisLcl),
+      costBasis:    this.#fmtNum(r.costBasis, 2),
+      costBasisLcl: this.#fmtNum(r.costBasisLcl, 2),
 
-        proceedsLcl: toNumberSafe(r.proceedsLcl),
-        realizedPLLcl: toNumberSafe(r.realizedPLLcl),
+      proceedsLcl:   this.#fmtNum(r.proceedsLcl, 2),
+      realizedPLLcl: this.#fmtNum(r.realizedPLLcl, 2),
 
-        instrType: getInstrumentTypeLabel({ type: r.instrType }),
+      instrType: r._total ? r.instrType : getInstrumentTypeLabel({ type: r.instrType }),
 
-        taxExemptLabel:
-          r.taxable == null
-            ? ''
-            : r.taxable
+      taxExemptLabel: r._total
+        ? r.taxExemptLabel
+        : r.taxable == null
+          ? ''
+          : r.taxable
             ? t('app.taxStatus.taxable')
             : t('app.taxStatus.exempt'),
-      }
-
-      // Final safety: ensure NO Decimal slips through
-      return normalizeRow(mapped)
-    })
+    }))
   }
 }

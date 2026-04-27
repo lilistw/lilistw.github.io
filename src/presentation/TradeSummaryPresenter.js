@@ -1,16 +1,13 @@
 // TradeSummaryPresenter.js
-
-function toNumberSafe(v) {
-  if (v == null) return 0
-  if (typeof v === 'number') return v
-  if (v?.toNumber) return v.toNumber()
-  return Number(v) || 0
-}
+import Decimal from 'decimal.js'
+import { fmt } from './fmt.js'
+import { toDecimal, decimalToNumber, D0 } from '../domain/numStr.js'
 
 export class TradeSummaryPresenter {
-  constructor({ t, lcl }) {
+  constructor({ t, lcl, mode = 'display' }) {
     this.t = t
     this.lcl = lcl
+    this.mode = mode
   }
 
   // -------------------------
@@ -19,12 +16,12 @@ export class TradeSummaryPresenter {
   buildTaxable(summary) {
     if (!summary) return null
 
-    const s = this.#normalize(summary)
+    const s = this.#toDecimal(summary)
 
-    const netTaxable = s.profits - s.losses
+    const netTaxable = s.profits.minus(s.losses)
     // чл. 33, ал. 3: 10% recognised expenses reduce the taxable base before the 10% rate
-    const taxableBase = Math.max(netTaxable, 0) * 0.90
-    const taxDue = taxableBase * 0.10
+    const taxableBase = Decimal.max(D0, netTaxable).times('0.90')
+    const taxDue = taxableBase.times('0.10')
 
     return {
       title: this.t('taxApp5.title'),
@@ -38,7 +35,7 @@ export class TradeSummaryPresenter {
         this.#row(
           this.t('taxApp5.netIncome', { lcl: this.lcl }),
           netTaxable,
-          netTaxable >= 0 ? 'success.main' : 'error.main'
+          netTaxable.gte(D0) ? 'success.main' : 'error.main'
         ),
         this.#row(this.t('taxApp5.taxableBase', { lcl: this.lcl }), taxableBase),
         this.#row(this.t('taxApp5.taxDue', { lcl: this.lcl }), taxDue, 'warning.dark'),
@@ -63,18 +60,18 @@ export class TradeSummaryPresenter {
   buildExempt(summary) {
     if (!summary) return null
 
-    const s = this.#normalize(summary)
+    const s = this.#toDecimal(summary)
 
     return {
       title: this.t('taxApp13.title'),
       subtitle: this.t('taxApp13.subtitle'),
 
-      rows: (s.totalProceedsLcl === 0) ? [] : (() => {
-        const result = s.totalProceedsLcl - s.totalCostBasisLcl
+      rows: s.totalProceedsLcl.isZero() ? [] : (() => {
+        const result = s.totalProceedsLcl.minus(s.totalCostBasisLcl)
         return [
           this.#row(this.t('taxApp13.grossIncome', { lcl: this.lcl }), s.totalProceedsLcl),
           this.#row(this.t('taxApp13.acquisitionCost', { lcl: this.lcl }), s.totalCostBasisLcl),
-          this.#row(this.t('taxApp13.result', { lcl: this.lcl }), result, result >= 0 ? 'success.main' : 'error.main'),
+          this.#row(this.t('taxApp13.result', { lcl: this.lcl }), result, result.gte(D0) ? 'success.main' : 'error.main'),
         ]
       })(),
     }
@@ -84,19 +81,26 @@ export class TradeSummaryPresenter {
   // PRIVATE
   // -------------------------
 
-  #normalize(summary) {
+  #toDecimal(summary) {
     return {
-      totalProceedsLcl: toNumberSafe(summary.totalProceedsLcl),
-      totalCostBasisLcl: toNumberSafe(summary.totalCostBasisLcl),
-      profits: toNumberSafe(summary.profits),
-      losses: toNumberSafe(summary.losses),
+      totalProceedsLcl:  toDecimal(summary.totalProceedsLcl),
+      totalCostBasisLcl: toDecimal(summary.totalCostBasisLcl),
+      profits:           toDecimal(summary.profits),
+      losses:            toDecimal(summary.losses),
     }
+  }
+
+  #fmtNum(decimal, decimals) {
+    if (decimal == null) return null
+    return this.mode === 'display'
+      ? fmt(decimal, decimals)
+      : decimalToNumber(decimal)
   }
 
   #row(label, value, color) {
     return {
       label,
-      value,
+      value: this.#fmtNum(value, 2),
       color,
     }
   }
