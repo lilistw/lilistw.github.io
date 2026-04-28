@@ -7,7 +7,7 @@
  *   Qty≈462, Price≈529, Proceeds≈580, Comm≈625, Fee≈668, OrderType≈700, Code≈737
  *
  * Row types per page:
- *   Sub-header (first item col<30): asset category ("Stocks", "Forex") or currency ("EUR"/"USD")
+ *   Sub-header (single text item): asset category ("Stocks", "Forex") or currency ("EUR"/"USD")
  *   Summary row (AcktID col≈38, exchange="-"): aggregate — skip
  *   Detail row (AcktID col≈44, actual exchange): execution — emit
  *
@@ -25,26 +25,18 @@ export function parseTradePdf(pages) {
       const items = pRow.items
       if (!items.length) continue
 
-      const first = items[0]
-
-      // Sub-header: first item at far-left identifies asset category or currency.
-      // AcktID appears at col≥38, so col<30 is safe for sub-headers only.
-      if (first.col < 30) {
-        const text = first.str
-        if (text === 'Forex' || text === 'FX') {
-          skipSection = true
-          continue
+      // Sub-header rows contain a single text item — never trade rows which always
+      // have many columns (AcktID, symbol, date, exchange, qty, price, …).
+      if (items.length === 1) {
+        const text = items[0].str.trim()
+        if (/^(forex|fx)$/i.test(text)) { skipSection = true; continue }
+        if (/^stocks?$/i.test(text) || /^equit/i.test(text)) { skipSection = false; asset = 'Stocks'; continue }
+        if (/^options?$/i.test(text)) { skipSection = false; asset = 'Options'; continue }
+        if (/^bonds?$/i.test(text)) { skipSection = false; asset = 'Bonds'; continue }
+        if (/^(EUR|USD|GBP|CHF|JPY|CAD|AUD|HKD|SEK|NOK|DKK|SGD|NZD|MXN|ZAR)$/.test(text)) {
+          currency = text; continue
         }
-        if (/^Stocks?$|^Equit/i.test(text)) {
-          skipSection = false
-          asset = 'Stocks'
-          continue
-        }
-        if (text === 'EUR' || text === 'USD') {
-          currency = text
-          continue
-        }
-        continue
+        continue  // page title, account header, totals, etc.
       }
 
       if (skipSection) continue
