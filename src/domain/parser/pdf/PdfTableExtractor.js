@@ -66,27 +66,49 @@ export class PdfTableExtractor {
     if (!page) return []
 
     const colMid = page.colWidth / 2
-    const headerItems = []
-    for (const row of page.rows) {
-      if (row.row >= 100) break
-      for (const item of row.items)
-        if (item.col > colMid) headerItems.push({ row: row.row, ...item })
-    }
-    headerItems.sort((a, b) => a.row - b.row || a.col - b.col)
 
-    const distinctRows = []
-    let lastRow = -1
-    for (const item of headerItems) {
-      if (item.row !== lastRow) {
-        distinctRows.push({ row: item.row, text: item.str })
-        lastRow = item.row
-      } else {
-        distinctRows[distinctRows.length - 1].text += ' ' + item.str
+    // Collect all items from the top 200 rows (full width, both columns).
+    // The Irish entity's PDF has Trade Confirmation cross-reference text in the
+    // top-right at row < 100 — expanding the scan window and anchoring the period
+    // search to the "Activity Statement" item avoids picking up the wrong values.
+    const topItems = []
+    for (const row of page.rows) {
+      if (row.row >= 200) break
+      for (const item of row.items)
+        topItems.push({ row: row.row, col: item.col, str: item.str })
+    }
+
+    // Find "Activity Statement" to determine which side of the page the header is on.
+    const actItem = topItems.find(i => /^activity statement/i.test(i.str))
+    const actRow  = actItem?.row ?? -1
+    const actSide = (actItem?.col ?? 0) >= colMid ? 'right' : 'left'
+
+    // Group items by row so we can reconstruct per-row text strings.
+    const rowMap = new Map()
+    for (const i of topItems) {
+      if (!rowMap.has(i.row)) rowMap.set(i.row, { left: [], right: [] })
+      rowMap.get(i.row)[i.col >= colMid ? 'right' : 'left'].push(i.str)
+    }
+    const sortedRowKeys = [...rowMap.keys()].sort((a, b) => a - b)
+
+    // Locate the period: look for a month+year pattern on the same side as the
+    // title, within ±40 rows of it.  Fall back to a full-page scan if not found.
+    const monthRe = /^(?:January|February|March|April|May|June|July|August|September|October|November|December)\s+\d/
+    let period = ''
+    const rowMin = actRow >= 0 ? actRow - 20 : 0
+    const rowMax = actRow >= 0 ? actRow + 40 : 200
+    for (const rk of sortedRowKeys) {
+      if (rk < rowMin || rk > rowMax) continue
+      const text = rowMap.get(rk)[actSide].join(' ').trim()
+      if (monthRe.test(text) && /\d{4}/.test(text)) { period = text; break }
+    }
+    if (!period) {
+      for (const rk of sortedRowKeys) {
+        const { left, right } = rowMap.get(rk)
+        const text = [...left, ...right].join(' ').trim()
+        if (monthRe.test(text) && /\d{4}/.test(text)) { period = text; break }
       }
     }
-
-    const title = distinctRows[0]?.text ?? 'Activity Statement'
-    const period = distinctRows[1]?.text ?? ''
 
     let brokerName = '', brokerAddress = ''
     for (const row of page.rows) {
@@ -101,7 +123,7 @@ export class PdfTableExtractor {
     }
 
     return [
-      ['Statement', 'Data', 'Title', title],
+      ['Statement', 'Data', 'Title', 'Activity Statement'],
       ['Statement', 'Data', 'Period', period],
       ['Statement', 'Data', 'BrokerName', brokerName],
       ['Statement', 'Data', 'BrokerAddress', brokerAddress],
@@ -154,11 +176,11 @@ export class PdfTableExtractor {
 
     for (const page of pages) {
       for (const pRow of page.rows) {
-        // Use leftmost items only for section/state detection (these always appear left)
-        const anchor = pRow.items.find(i => i.col < 200)
-        if (!anchor) continue
-        const firstText = anchor.str
         const allItems = pRow.items
+        if (!allItems.length) continue
+        // Use truly leftmost item (no col constraint) so layouts where columns
+        // start beyond col 200 are handled correctly — mirrors #extractFii.
+        const firstText = allItems[0].str
 
         if (firstText === 'Open Positions') { inSection = true; continue }
         if (!inSection) continue
@@ -172,8 +194,10 @@ export class PdfTableExtractor {
         if (firstText === 'EUR' || firstText === 'USD') { currency = firstText; continue }
         if (firstText.startsWith('Total') || firstText === 'Forex') continue
 
-        // Column-header row: first item = "Symbol"; use full row to capture all columns
-        if (firstText === 'Symbol' && allItems.length >= 2) {
+        // Column-header row: detect "Symbol" anywhere in the row (not just as the
+        // leftmost item) so layouts where a prefix column precedes "Symbol" still work.
+        const symbolInRow = allItems.find(i => i.str === 'Symbol')
+        if (symbolInRow && allItems.length >= 2) {
           colPositions = this.#detectColumns(allItems)
           if (!headerEmitted) {
             const colNames = allItems.map(i => i.str)
@@ -185,8 +209,8 @@ export class PdfTableExtractor {
 
         if (!colPositions) continue
 
-        // Data row: first (leftmost) item must be near the Symbol column anchor
-        if (Math.abs(anchor.col - colPositions[0]) > 40 || anchor.str.startsWith('Total')) continue
+        // Data row: leftmost item must be near the Symbol column anchor
+        if (Math.abs(allItems[0].col - colPositions[0]) > 40 || allItems[0].str.startsWith('Total')) continue
 
         const cells = this.#assignToColumns(allItems, colPositions)
         rows.push(['Open Positions', 'Data', 'Summary', assetCategory, currency, ...cells])
@@ -210,15 +234,15 @@ export class PdfTableExtractor {
     let dateColPos = 146  // fallback if not detected
 
     // First pass: collect items within the Trades section for date/time proximity lookup.
+    // Use truly leftmost item (no col constraint) for section boundary detection.
     const pageOffsets = this.#pageOffsets(pages)
     const tradeItems = []
     let collecting = false
     for (let pi = 0; pi < pages.length; pi++) {
       const offset = pageOffsets[pi]
       for (const pRow of pages[pi].rows) {
-        const anchor = pRow.items.find(i => i.col < 200)
-        if (!anchor) continue
-        const ft = anchor.str
+        if (!pRow.items.length) continue
+        const ft = pRow.items[0].str
         if (ft === 'Trades') { collecting = true; continue }
         if (!collecting) continue
         if (PdfTableExtractor.#MAJOR_SECTIONS.has(ft) && ft !== 'Trades') { collecting = false; break }
@@ -231,10 +255,10 @@ export class PdfTableExtractor {
     for (let pi = 0; pi < pages.length; pi++) {
       const offset = pageOffsets[pi]
       for (const pRow of pages[pi].rows) {
-        const anchor = pRow.items.find(i => i.col < 200)
-        if (!anchor) continue
-        const firstText = anchor.str
         const allItems = pRow.items
+        if (!allItems.length) continue
+        // Use truly leftmost item (no col constraint) — mirrors #extractOpenPositions fix.
+        const firstText = allItems[0].str
 
         if (firstText === 'Trades') {
           inSection = true; inForex = false; continue
@@ -253,9 +277,11 @@ export class PdfTableExtractor {
         if (firstText === 'EUR' || firstText === 'USD') { currency = firstText; continue }
         if (firstText.startsWith('Total') || firstText === ' Total') continue
 
-        // Column-header row: first item = "Symbol" or "DataDiscriminator"; use full row
-        if (firstText === 'Symbol' || firstText === 'DataDiscriminator') {
-          if (firstText === 'Symbol') {
+        // Column-header row: detect "Symbol" anywhere in the row (not just as leftmost item)
+        // so layouts where a prefix column precedes "Symbol" still work.
+        const symbolInRow = allItems.find(i => i.str === 'Symbol')
+        if (symbolInRow || firstText === 'DataDiscriminator') {
+          if (symbolInRow) {
             colPositions = this.#detectColumns(allItems)
             if (colPositions.length >= 2) dateColPos = colPositions[1]
             if (!headerEmitted) {
@@ -275,7 +301,7 @@ export class PdfTableExtractor {
         if (!colPositions) continue
 
         // Data row: leftmost item must be near the Symbol column anchor
-        if (Math.abs(anchor.col - colPositions[0]) > 40 || anchor.str.startsWith('Total') || anchor.str === 'Symbol') continue
+        if (Math.abs(allItems[0].col - colPositions[0]) > 40 || allItems[0].str.startsWith('Total') || allItems[0].str === 'Symbol') continue
 
         const symAbsRow = pRow.row + offset
 
@@ -294,6 +320,9 @@ export class PdfTableExtractor {
         if (/^(forex|fx)$/i.test(assetCategory)) continue
 
         const cells = this.#assignToColumns(allItems, colPositions)
+        // Belt-and-suspenders: skip forex pair trades even when the "Forex"
+        // sub-header row is not detected (e.g. it has more than one PDF item).
+        if (/^[A-Z]{3}\.[A-Z]{3}$/.test(cells[0] ?? '')) continue
         // Find the first signed-number cell to determine Buy/Sell side
         const qty = cells.find(c => /^-?\d/.test(c)) ?? ''
         const side = qty.startsWith('-') ? 'SELL' : 'BUY'
@@ -516,6 +545,7 @@ export class PdfTableExtractor {
         if (firstText === 'Stocks' || firstText === 'Options' || firstText === 'Bonds') {
           assetCategory = firstText; continue
         }
+        if (/^(forex|fx)$/i.test(firstText)) { assetCategory = 'Forex'; continue }
 
         // Column-header row: first item = "Symbol"
         if (firstText === 'Symbol') {
@@ -553,6 +583,9 @@ export class PdfTableExtractor {
         const cells = this.#assignToColumns(items, colPositions)
         // Overwrite description slot (colPositions[1]) with the assembled multi-row description
         if (cells.length >= 2) cells[1] = description
+
+        // Skip Forex instruments (e.g. EUR.USD) — they are currency pairs, not securities
+        if (assetCategory === 'Forex' || /^[A-Z]{3}\.[A-Z]{3}$/.test(cells[0] ?? '')) continue
 
         rows.push(['Financial Instrument Information', 'Data', assetCategory, ...cells])
       }
