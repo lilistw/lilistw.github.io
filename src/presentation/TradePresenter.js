@@ -1,8 +1,8 @@
 // TradePresenter.js
-import { getInstrumentTypeLabel } from '../domain/instrument/classifier.js'
+import { getInstrumentTypeLabel } from '../core/domain/instrument/classifier.js'
 import { t } from '../localization/i18n.js'
 import { fmt } from './fmt.js'
-import { decimalToNumber } from '../domain/numStr.js'
+import { decimalToNumber } from '../core/domain/numStr.js'
 
 const TRADE_COLUMNS = (lcl) => [
   { key: '#',               label: '#',                                  align: 'right', mono: true, decimals: 0 },
@@ -13,8 +13,8 @@ const TRADE_COLUMNS = (lcl) => [
     chip: true,
     chipColors: {
       [t('app.taxStatus.exempt')]: 'success',
-      [t('app.taxStatus.taxable')]: 'default'
-    }
+      [t('app.taxStatus.taxable')]: 'default',
+    },
   },
   { key: 'securityId',      shortLabel: 'ISIN',
     label: t('tradeTableCols.securityIdHelp'),
@@ -43,7 +43,7 @@ const TRADE_COLUMNS = (lcl) => [
 
 export class TradePresenter {
   constructor({ lcl, mode = 'display' }) {
-    this.lcl = lcl
+    this.lcl = t(`currencyLabels.${lcl.toLowerCase()}`)
     this.mode = mode
   }
 
@@ -90,7 +90,7 @@ export class TradePresenter {
       instrType: r._total ? r.instrType : getInstrumentTypeLabel({ type: r.instrType }),
 
       taxExemptLabel: r._total
-        ? r.taxExemptLabel
+        ? t(`app.taxStatus.${r.taxExemptLabel.toLowerCase()}`)
         : r.taxable == null
           ? ''
           : r.taxable

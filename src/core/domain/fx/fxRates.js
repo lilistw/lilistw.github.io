@@ -2,8 +2,6 @@ import Decimal from 'decimal.js'
 import rates2024 from './rates/2024.fx.json'
 import rates2025 from './rates/2025.fx.json'
 import rates2026 from './rates/2026.fx.json'
-import { t } from '../../localization/i18n.js'
-
 export const EUR_BGN = new Decimal('1.95583')  // fixed peg
 
 
@@ -55,6 +53,6 @@ export function toLocalCurrency(amount, currency, dateStr, taxYear) {
 // ── Tax-year helpers ──────────────────────────────────────────────────────────
 
 export function getLocalCurrencyCode(taxYear)      { return taxYear >= 2026 ? 'EUR' : 'BGN' }
-export function getLocalCurrencyLabel(taxYear)     { return taxYear >= 2026 ? t('currencyLabels.eur') : t('currencyLabels.bgnShort') }
+export function getLocalCurrencyLabel(taxYear)     { return taxYear >= 2026 ? 'EUR' : 'BGN' }
 export function getYearEndDate(taxYear)            { return `${taxYear}-12-31` }
 export function getPrevYearEndDate(taxYear) { return `${taxYear - 1}-12-31` }

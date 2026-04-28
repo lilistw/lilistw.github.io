@@ -4,7 +4,7 @@ import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
 import {
   findUsdRate, getPrevYearEndDate, getLocalCurrencyLabel,
-} from '../domain/fx/fxRates.js'
+} from '../core/domain/fx/fxRates.js'
 
 function fmtNum(n, decimals = 2) {
   return Number(n).toLocaleString('bg-BG', {
@@ -22,7 +22,7 @@ function fmtDate(dateStr) {
 export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
   if (!rows || rows.length === 0) return null
 
-  const lcl             = getLocalCurrencyLabel(taxYear)
+  const lcl             = t(`currencyLabels.${getLocalCurrencyLabel(taxYear).toLowerCase()}`)
   const prevYearEndDate = getPrevYearEndDate(taxYear)
   const prevRate        = findUsdRate(prevYearEndDate, taxYear)
   const prevYearLabel   = String(taxYear - 1)

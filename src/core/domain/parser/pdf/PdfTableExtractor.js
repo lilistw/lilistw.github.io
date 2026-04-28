@@ -1,5 +1,3 @@
-import { t } from '../../../localization/i18n.js'
-
 /**
  * Extracts IBKR Activity Statement PDF page data into string[][] rows,
  * matching the format that PapaParse produces from the CSV Activity Statement.
@@ -9,9 +7,9 @@ import { t } from '../../../localization/i18n.js'
  * Each section's data rows are assigned to columns by nearest-anchor matching.
  */
 export class PdfTableExtractor {
-  /** @param {import('../../../io/readPdf.js').PdfPage[]} pages @returns {string[][]} */
+  /** @param {import('../../../../platform/web/readPdf.js').PdfPage[]} pages @returns {string[][]} */
   adapt(pages) {
-    if (!pages || pages.length === 0) throw new Error(t('errors.invalidPdfFormat'))
+    if (!pages || pages.length === 0) throw Object.assign(new Error('INVALID_PDF_FORMAT'), { code: 'INVALID_PDF_FORMAT' })
 
     const colMid = (pages[0]?.colWidth ?? 792) / 2
     const rows = [
@@ -25,7 +23,7 @@ export class PdfTableExtractor {
     ]
 
     if (!rows.some(r => r[0] === 'Statement' && r[1] === 'Data'))
-      throw new Error(t('errors.invalidPdfFormat'))
+      throw Object.assign(new Error('INVALID_PDF_FORMAT'), { code: 'INVALID_PDF_FORMAT' })
 
     return rows
   }

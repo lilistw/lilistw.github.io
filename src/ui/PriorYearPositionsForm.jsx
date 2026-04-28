@@ -7,7 +7,7 @@ import {
 import { InfoOutlined } from '@mui/icons-material'
 import {
   findUsdRate, getPrevYearEndDate, getLocalCurrencyLabel,
-} from '../domain/fx/fxRates.js'
+} from '../core/domain/fx/fxRates.js'
 
 function fmtNum(n, decimals = 2) {
   if (n == null) return '—'
@@ -33,7 +33,7 @@ function fmtDate(dateStr) {
  *   taxYear         – current tax year (determines currency label and prev-year date)
  */
 export default function PriorYearPositionsForm({ positions, onPositionChange, taxYear = 2025 }) {
-  const lcl             = getLocalCurrencyLabel(taxYear)
+  const lcl             = t(`currencyLabels.${getLocalCurrencyLabel(taxYear).toLowerCase()}`)
   const prevYearEndDate = getPrevYearEndDate(taxYear)
   const prevRate        = findUsdRate(prevYearEndDate, taxYear)
   const prevYearLabel   = String(taxYear - 1)

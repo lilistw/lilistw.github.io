@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PdfTableExtractor } from '../PdfTableExtractor.js'
-import { validatePdfContent } from '../../../../parsing/validateInput.js'
+import { validatePdfContent } from '../../../../input/validateInput.js'
 
 // ---------------------------------------------------------------------------
 // Helpers — minimal synthetic PdfPage objects
@@ -69,11 +69,11 @@ describe('PdfTableExtractor', () => {
   const extractor = new PdfTableExtractor()
 
   it('throws for empty pages array', () => {
-    expect(() => extractor.adapt([])).toThrow('Невалиден PDF файл')
+    expect(() => extractor.adapt([])).toThrow('INVALID_PDF_FORMAT')
   })
 
   it('throws for null pages', () => {
-    expect(() => extractor.adapt(null)).toThrow('Невалиден PDF файл')
+    expect(() => extractor.adapt(null)).toThrow('INVALID_PDF_FORMAT')
   })
 
   it('produces Statement Data rows with title', () => {

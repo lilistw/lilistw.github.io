@@ -3,7 +3,6 @@
  * Both functions are pure and operate on the current trade data rows from App state.
  */
 import Decimal from 'decimal.js'
-import { t } from '../localization/i18n.js'
 import { D0 } from './numStr.js'
 
 const TRADE_SUM_COLS     = ['proceeds', 'commission', 'fee', 'total']
@@ -17,8 +16,8 @@ const TRADE_SUM_LCL_COLS = ['totalLcl', 'costBasisLcl']
 export function buildTradeTotals(dataRows, localCurrencyCode) {
   const totals = []
   const groups = [
-    { taxable: true,  label: t('app.taxStatus.taxable') },
-    { taxable: false, label: t('app.taxStatus.exempt') },
+    { taxable: true,  label: 'TAXABLE' },
+    { taxable: false, label: 'EXEMPT' },
   ]
 
   for (const { taxable, label } of groups) {

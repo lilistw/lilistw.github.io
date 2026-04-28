@@ -1,11 +1,11 @@
 // HoldingsPresenter.js
 import { t } from '../localization/i18n.js'
 import { fmt } from './fmt.js'
-import { decimalToNumber } from '../domain/numStr.js'
+import { decimalToNumber } from '../core/domain/numStr.js'
 
 export class HoldingPresenter {
   constructor({ lcl, mode = 'display' }) {
-    this.lcl = lcl
+    this.lcl = t(`currencyLabels.${lcl.toLowerCase()}`)
     this.mode = mode
   }
 
@@ -76,15 +76,22 @@ export class HoldingPresenter {
   }
 
   #mapRows(rows) {
-    return rows.map(r => ({
-      ...r,
-      type: r.type === 'ETF' ? t('taxApp8Holdings.funds') : t('taxApp8Holdings.shares'),
-      acquDate: r.acquDate
-        ? r.acquDate.split('-').reverse().join('.')
-        : null,
-      costBasis: this.#fmtNum(r.costBasis, 2),
-      costLcl:   this.#fmtNum(r.costLcl, 2),
-      quantity:  r.quantity != null ? decimalToNumber(r.quantity) : null,
-    }))
+    return rows.map(r => {
+      const countryKey = `countryNames.${r.country}`
+      const countryDisplay = r.country
+        ? (t(countryKey) !== countryKey ? t(countryKey) : r.country)
+        : ''
+      return {
+        ...r,
+        type: r.type === 'ETF' ? t('taxApp8Holdings.funds') : t('taxApp8Holdings.shares'),
+        country: countryDisplay,
+        acquDate: r.acquDate
+          ? r.acquDate.split('-').reverse().join('.')
+          : null,
+        costBasis: this.#fmtNum(r.costBasis, 2),
+        costLcl:   this.#fmtNum(r.costLcl, 2),
+        quantity:  r.quantity != null ? decimalToNumber(r.quantity) : null,
+      }
+    })
   }
 }
