@@ -3,7 +3,7 @@ import { t } from '../localization/i18n.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
-import { toDecimal, D0 } from '../domain/numStr.js'
+import { toDecimal, D0 } from '../core/domain/numStr.js'
 
 const EUR_BGN = new Decimal('1.95583')
 const SPB8_THRESHOLD_EUR = new Decimal(25000)
@@ -18,7 +18,7 @@ function fmtNum(n) {
 }
 
 export default function ThresholdWarning({ holdings, localCurrencyLabel, localCurrencyCode }) {
-
+  const currencyDisplay = t(`currencyLabels.${localCurrencyLabel.toLowerCase()}`)
   const totalLcl = holdings.reduce((sum, h) => sum.plus(toDecimal(h.costLcl ?? D0)), D0)
   if (totalToEur(totalLcl, localCurrencyCode).lte(SPB8_THRESHOLD_EUR)) return null
 
@@ -46,7 +46,7 @@ export default function ThresholdWarning({ holdings, localCurrencyLabel, localCu
           {t('spb8Warning.body')}
         </Typography>
         <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-          {t('spb8Warning.totalLine', { total: fmtNum(totalLcl), currency: localCurrencyLabel })}
+          {t('spb8Warning.totalLine', { total: fmtNum(totalLcl), currency: currencyDisplay })}
         </Typography>
         <Box component="ul" sx={{ m: 0, pl: 2.5 }}>
           {details.map((d, i) => (

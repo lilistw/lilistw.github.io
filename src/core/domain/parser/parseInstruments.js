@@ -1,5 +1,3 @@
-import { t } from '../../localization/i18n.js'
-
 /**
  * Parses "Financial Instrument Information" section into a raw array.
  * Each symbol field may contain comma-separated aliases (e.g. "EXS1, EXS1d").
@@ -48,7 +46,6 @@ export function buildInstrumentInfo(instruments) {
     const info = {
       securityId:   inst.securityId,
       country,
-      countryName:  t(`countryNames.${country}`) !== `countryNames.${country}` ? t(`countryNames.${country}`) : country,
       type:         inst.type,
       listingExch:  inst.listingExchange,
       description:  inst.description,

@@ -1,5 +1,4 @@
 import { getInstrumentTypeLabel } from '../instrument/classifier.js'
-import { t } from '../../localization/i18n.js'
 import { parseToDecimal, toDecimal } from '../numStr.js'
 
 /**
@@ -57,7 +56,7 @@ export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsC
       currency:      r.currency,
       symbol,
       instrType,
-      country:      info.countryName || info.country || '',
+      country:      info.country || '',
       quantity,
       multiplier:   r.multiplier,
       costPrice,
@@ -71,17 +70,17 @@ export function buildOpenPositions(rawPositions, instrumentInfo = {}, positionsC
 
   return {
     columns: [
-      { key: 'assetCategory', label: t('openPositionsCols.assetCategory') },
-      { key: 'currency',      label: t('openPositionsCols.currency') },
-      { key: 'symbol',        label: t('openPositionsCols.symbol'), bold: true },
-      { key: 'instrType',     label: t('openPositionsCols.instrType'), chip: true, chipColors: { ETF: 'primary', Stock: 'default', Other: 'default' } },
-      { key: 'quantity',      label: t('openPositionsCols.quantity'), align: 'right', mono: true, decimals: 4 },
-      { key: 'multiplier',    label: t('openPositionsCols.multiplier'), align: 'right', mono: true, decimals: 2 },
-      { key: 'costPrice',     label: t('openPositionsCols.costPrice'), align: 'right', mono: true, decimals: 4, nullAs: '—' },
-      { key: 'costBasis',     label: t('openPositionsCols.costBasis'), align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'closePrice',    label: t('openPositionsCols.closePrice'), align: 'right', mono: true, decimals: 4, nullAs: '—' },
-      { key: 'value',         label: t('openPositionsCols.value'), align: 'right', mono: true, decimals: 2, nullAs: '—' },
-      { key: 'unrealizedPL',  label: t('openPositionsCols.unrealizedPL'), align: 'right', mono: true, decimals: 2, pnl: true, nullAs: '—' },
+      { key: 'assetCategory', labelKey: 'openPositionsCols.assetCategory' },
+      { key: 'currency',      labelKey: 'openPositionsCols.currency' },
+      { key: 'symbol',        labelKey: 'openPositionsCols.symbol', bold: true },
+      { key: 'instrType',     labelKey: 'openPositionsCols.instrType', chip: true, chipColors: { ETF: 'primary', Stock: 'default', Other: 'default' } },
+      { key: 'quantity',      labelKey: 'openPositionsCols.quantity', align: 'right', mono: true, decimals: 4 },
+      { key: 'multiplier',    labelKey: 'openPositionsCols.multiplier', align: 'right', mono: true, decimals: 2 },
+      { key: 'costPrice',     labelKey: 'openPositionsCols.costPrice', align: 'right', mono: true, decimals: 4, nullAs: '—' },
+      { key: 'costBasis',     labelKey: 'openPositionsCols.costBasis', align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'closePrice',    labelKey: 'openPositionsCols.closePrice', align: 'right', mono: true, decimals: 4, nullAs: '—' },
+      { key: 'value',         labelKey: 'openPositionsCols.value', align: 'right', mono: true, decimals: 2, nullAs: '—' },
+      { key: 'unrealizedPL',  labelKey: 'openPositionsCols.unrealizedPL', align: 'right', mono: true, decimals: 2, pnl: true, nullAs: '—' },
     ],
     rows: dataRows,
   }

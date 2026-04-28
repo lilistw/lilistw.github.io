@@ -2,11 +2,11 @@ import { useState, useEffect } from 'react'
 import { t } from '../localization/i18n.js'
 import { SUPPORTED_FORMATS } from '../config.js'
 import { readInputFromFiles } from '../platform/web/fileReader.js'
-import { calculateTax } from '../application/calculateTax.js'
-import { inferPriorPositions } from '../application/inferPriorPositions.js'
-import { getPrevYearEndDate } from '../domain/fx/fxRates.js'
-import { useThemeMode } from '../hooks/useThemeMode.js'
-import { decimalJsonReplacer } from '../domain/numStr.js'
+import { calculateTax } from '../core/services/calculateTax.js'
+import { inferPriorPositions } from '../core/services/inferPriorPositions.js'
+import { getPrevYearEndDate } from '../core/domain/fx/fxRates.js'
+import { useThemeMode } from './useThemeMode.js'
+import { decimalJsonReplacer } from '../core/domain/numStr.js'
 
 export function useTaxAppController() {
   const [nightMode, setNightMode] = useThemeMode()
@@ -95,7 +95,10 @@ export function useTaxAppController() {
       })
       .catch(e => {
         if (cancelled) return
-        setError(e.message)
+        const msg = e.code
+          ? t(`errors.${e.code.toLowerCase().replace(/_([a-z])/g, (_, c) => c.toUpperCase())}`, e)
+          : e.message
+        setError(msg)
         setInputData(null)
         setPendingPositions([])
       })
@@ -166,7 +169,10 @@ export function useTaxAppController() {
 
       setResult(calculateTax(inputData, priorPositions, { strategy: costBasisStrategy }))
     } catch (e) {
-      setError(e.message)
+      const msg = e.code
+        ? t(`errors.${e.code.toLowerCase().replace(/_([a-z])/g, (_, c) => c.toUpperCase())}`, e)
+        : e.message
+      setError(msg)
       console.error(e)
     }
   }

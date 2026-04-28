@@ -40,7 +40,7 @@
   },
   "currencyLabels": {
     "eur": "евро",
-    "bgnShort": "лв"
+    "bgn": "лв"
   },
   "countryNames": {
     "US": "САЩ",

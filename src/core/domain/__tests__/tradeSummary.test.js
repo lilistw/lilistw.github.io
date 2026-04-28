@@ -41,8 +41,8 @@ describe('buildTradeTotals', () => {
       makeSell({ currency: 'EUR', taxable: true,  totalLcl: 391.17 }),
     ]
     const totals = buildTradeTotals(rows)
-    expect(totals.some(r => r.currency === 'USD' && r.taxExemptLabel === 'Облагаем')).toBe(true)
-    expect(totals.some(r => r.currency === 'EUR' && r.taxExemptLabel === 'Облагаем')).toBe(true)
+    expect(totals.some(r => r.currency === 'USD' && r.taxExemptLabel === 'TAXABLE')).toBe(true)
+    expect(totals.some(r => r.currency === 'EUR' && r.taxExemptLabel === 'TAXABLE')).toBe(true)
   })
 
   it('includes a BGN grand total row per group', () => {
@@ -63,7 +63,7 @@ describe('buildTradeTotals', () => {
       makeSell({ currency: 'USD', taxable: true, proceeds: 200, commission: -3, fee: -2, total: 195 }),
     ]
     const totals = buildTradeTotals(rows)
-    const usdTotal = totals.find(r => r.currency === 'USD' && r.taxExemptLabel === 'Облагаем')
+    const usdTotal = totals.find(r => r.currency === 'USD' && r.taxExemptLabel === 'TAXABLE')
     expect(usdTotal.proceeds.toNumber()).toBeCloseTo(300)
     expect(usdTotal.commission.toNumber()).toBeCloseTo(-5)
     expect(usdTotal.total.toNumber()).toBeCloseTo(292)
@@ -75,8 +75,8 @@ describe('buildTradeTotals', () => {
       makeSell({ taxable: false, totalLcl: 200 }),
     ]
     const totals = buildTradeTotals(rows)
-    const taxableTotal = totals.find(r => r.taxExemptLabel === 'Облагаем')
-    const exemptTotal  = totals.find(r => r.taxExemptLabel === 'Освободен')
+    const taxableTotal = totals.find(r => r.taxExemptLabel === 'TAXABLE')
+    const exemptTotal  = totals.find(r => r.taxExemptLabel === 'EXEMPT')
     expect(taxableTotal?.totalLcl.toNumber()).toBeCloseTo(100)
     expect(exemptTotal?.totalLcl.toNumber()).toBeCloseTo(200)
   })

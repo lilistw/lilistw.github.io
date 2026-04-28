@@ -4,7 +4,7 @@ import {
   parseTradeConfirmationHtml,
   parseTradeConfirmationPdf,
   buildInputData,
-} from '../parsing/parseInput.js'
+} from '../input/parseInput.js'
 
 /**
  * Parse pre-read content into InputData. All inputs are plain data — no File or browser APIs.

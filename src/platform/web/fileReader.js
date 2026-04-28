@@ -1,6 +1,6 @@
-import { readPdfPages } from '../../io/readPdf.js'
+import { readPdfPages } from './readPdf.js'
 import { parseHtmlDocument } from './htmlParser.js'
-import { parseInput } from '../../application/parseInput.js'
+import { parseInput } from '../../core/services/parseInput.js'
 
 /**
  * Read uploaded File objects and return InputData.

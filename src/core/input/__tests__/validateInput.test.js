@@ -12,7 +12,7 @@ describe('validateCsvContent', () => {
   })
 
   it('throws for empty row array', () => {
-    expect(() => validateCsvContent([])).toThrow('IBKR')
+    expect(() => validateCsvContent([])).toThrow('INVALID_CSV_FORMAT')
   })
 
   it('throws for rows that look like a non-IBKR CSV', () => {
@@ -77,7 +77,7 @@ describe('validateTradeCurrencies', () => {
 
   it('throws for trades with unsupported currency', () => {
     const trades = [{ currency: 'GBP', symbol: 'GSK' }]
-    expect(() => validateTradeCurrencies(trades)).toThrow('GBP')
+    expect(() => validateTradeCurrencies(trades)).toThrow('UNSUPPORTED_CURRENCY')
   })
 
   it('throws on the first unsupported currency found', () => {
@@ -85,6 +85,6 @@ describe('validateTradeCurrencies', () => {
       { currency: 'USD', symbol: 'AAPL' },
       { currency: 'CHF', symbol: 'NESN' },
     ]
-    expect(() => validateTradeCurrencies(trades)).toThrow('CHF')
+    expect(() => validateTradeCurrencies(trades)).toThrow('UNSUPPORTED_CURRENCY')
   })
 })

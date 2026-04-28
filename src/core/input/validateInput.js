@@ -1,5 +1,3 @@
-import { t } from '../localization/i18n.js'
-
 const SUPPORTED_CURRENCIES = new Set(['USD', 'EUR'])
 
 /**
@@ -11,7 +9,7 @@ const SUPPORTED_CURRENCIES = new Set(['USD', 'EUR'])
 export function validateCsvContent(csvRows) {
   const hasIbkrMarker = csvRows.some(r => r[0] === 'Statement' && r[1] === 'Data')
   if (!hasIbkrMarker) {
-    throw new Error(t('errors.invalidCsvFormat'))
+    throw Object.assign(new Error('INVALID_CSV_FORMAT'), { code: 'INVALID_CSV_FORMAT' })
   }
 }
 
@@ -36,12 +34,12 @@ export function validateHtmlContent(doc) {
   const hasTable = doc.querySelector('table') !== null
 
   if (!hasIbkrTable && !hasTable) {
-    throw new Error(t('errors.invalidHtmlFormat'))
+    throw Object.assign(new Error('INVALID_HTML_FORMAT'), { code: 'INVALID_HTML_FORMAT' })
   }
 
   if (!hasIbkrTable && hasTable) {
     // Has tables but no IBKR-specific markers — likely wrong file type
-    throw new Error(t('errors.invalidHtmlFormat'))
+    throw Object.assign(new Error('INVALID_HTML_FORMAT'), { code: 'INVALID_HTML_FORMAT' })
   }
 }
 
@@ -54,7 +52,7 @@ export function validateHtmlContent(doc) {
 export function validatePdfContent(rows) {
   const hasIbkrMarker = rows.some(r => r[0] === 'Statement' && r[1] === 'Data')
   if (!hasIbkrMarker) {
-    throw new Error(t('errors.invalidPdfFormat'))
+    throw Object.assign(new Error('INVALID_PDF_FORMAT'), { code: 'INVALID_PDF_FORMAT' })
   }
 }
 
@@ -67,7 +65,7 @@ export function validatePdfContent(rows) {
 export function validateTradeCurrencies(trades) {
   for (const trade of trades) {
     if (trade.currency && !SUPPORTED_CURRENCIES.has(trade.currency)) {
-      throw new Error(t('errors.unsupportedCurrency', { currency: trade.currency }))
+      throw Object.assign(new Error('UNSUPPORTED_CURRENCY'), { code: 'UNSUPPORTED_CURRENCY', currency: trade.currency })
     }
   }
 }

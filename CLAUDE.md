@@ -79,39 +79,24 @@ No business logic. No direct browser API calls.
 
 ---
 
-### Application layer (`src/application/`)
+### Core layer (`src/core/`)
 
-Pure orchestration / service logic. No File or browser APIs.
+Pure pipeline — no browser APIs, no React. Safe to run on a server.
+
+**`src/core/services/`** — use-case orchestration:
 
 * `parseInput({ csvText, htmlDoc, csvPdfPages, tradePdfPages })` — pure InputData assembly
 * `inferPriorPositions`
 * `calculateTax`
 
-No React imports. No browser globals.
-
----
-
-### Domain layer (`src/domain/`)
-
-Pure business logic:
+**`src/core/domain/`** — business logic:
 
 * parsers (`parser/`) — accept strings or pre-parsed DOM objects
 * tax calculators (`tax/`)
 * FX utilities (`fx/`)
+* `TradeCalculator`, `DividendCalculator`, `HoldingsCalculator`
 
-Examples:
-
-* `TradeCalculator`
-* `DividendCalculator`
-* `HoldingsCalculator`
-
-No React imports. No browser APIs.
-
----
-
-### Parsing layer (`src/parsing/`)
-
-Low-level parser functions. Pure — accepts already-read text or pages.
+**`src/core/input/`** — input boundary: format detection, validation, InputData assembly:
 
 * `parseActivityStatementCsv(csvText)`
 * `parseActivityStatementPdf(pages)`
@@ -119,11 +104,13 @@ Low-level parser functions. Pure — accepts already-read text or pages.
 * `parseTradeConfirmationPdf(pages)`
 * `buildInputData(csvRows, trades)`
 
+No React imports. No browser globals. No localization calls (`t` is forbidden inside `src/core/`).
+
 ---
 
 ### Presentation layer (`src/presentation/`)
 
-Output formatters — maps domain result objects to display-ready values.
+Output formatters — maps domain result objects to display-ready values. Translates currency codes and country codes to display strings at this boundary.
 
 * `TradePresenter`, `HoldingPresenter`, `DividendPresenter`, `InterestPresenter`
 * `TradeSummaryPresenter`, `ExcelPresenter`
@@ -140,14 +127,18 @@ Browser-specific adapters. The only place that may use browser globals.
 * `fileReader.js` — reads File objects, calls `parseInput`
 * `htmlParser.js` — wraps `DOMParser`
 * `themeStorage.js` — wraps `localStorage` + `document.documentElement`
+* `readPdf.js` — reads PDF files via `pdfjs-dist`
 
 ---
 
-### Hooks layer (`src/hooks/`)
+### Controller layer (`src/controllers/`)
 
-Reusable React hooks that compose platform adapters.
+Page-level state and commands. One hook per page workflow.
 
+* `useTaxAppController` — the main app workflow hook
 * `useThemeMode` — day/night toggle with persistence
+
+No business logic. No direct browser API calls.
 
 ---
 
@@ -168,9 +159,11 @@ No business logic. No direct browser API imports.
 ### Dependency direction
 
 ```
-ui → controllers → application → domain
-           ↓
-       platform/web    (injected at edges, never imported by domain)
+ui → controllers → core/services → core/domain
+           ↓              ↓
+       platform/web    core/input
+                          ↓
+                       core/domain
 ```
 
 ---
@@ -210,7 +203,7 @@ Do not hardcode colors.
 ## 7) i18n rules
 
 * All strings → `src/localization/bg.json`
-* Use `import { t } from '../localization/translate.js'`
+* Use `import { t } from '../localization/i18n.js'`
 * `t` is a plain function (not a React hook) — safe to call anywhere
 * Use `t('key', { returnObjects: true })` for structured content
 * Use interpolation: `t('key', { varName: value })` → `{{ varName }}` in JSON
@@ -270,16 +263,16 @@ Do not hardcode colors.
 
 ```
 src/
-  application/   ← pure orchestration (no browser APIs)
-  domain/        ← pure logic (no browser APIs)
-  parsing/       ← pure text parsers (no browser APIs)
-  presentation/  ← output formatters
-  io/            ← PDF reading (File.arrayBuffer)
+  core/          ← pure pipeline (server-exportable, no browser APIs, no React)
+    services/    ← use-case orchestration (calculateTax, parseInput, …)
+    domain/      ← business logic (tax calculators, FX, parsers)
+    input/       ← input boundary (format detection, validation, InputData assembly)
+  presentation/  ← output formatters (translate codes → display strings)
   platform/
-    web/         ← browser adapters (DOMParser, File, localStorage)
-  controllers/   ← page-level hooks (workflow state + commands)
-  hooks/         ← reusable React hooks
+    web/         ← browser adapters (DOMParser, File, localStorage, PDF reading)
+  controllers/   ← page-level hooks (workflow state + commands, useThemeMode)
   ui/            ← React components (passive)
+  localization/  ← Bulgarian strings (bg.json + i18n.js)
 ```
 
 ---

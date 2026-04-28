@@ -102,9 +102,9 @@ describe('buildOpenPositions', () => {
 
   it('enriches rows with country from instrumentInfo', () => {
     const rawPositions = parseOpenPositions([makeHeader(), makePositionRow({ symbol: 'AAPL' })])
-    const instrumentInfo = { AAPL: { countryName: 'САЩ', country: 'US' } }
+    const instrumentInfo = { AAPL: { country: 'US' } }
     const { rows } = buildOpenPositions(rawPositions, instrumentInfo, {})
-    expect(rows[0].country).toBe('САЩ')
+    expect(rows[0].country).toBe('US')
   })
 
   it('handles empty positions array', () => {
