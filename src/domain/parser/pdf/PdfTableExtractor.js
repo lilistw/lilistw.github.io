@@ -320,6 +320,9 @@ export class PdfTableExtractor {
         if (/^(forex|fx)$/i.test(assetCategory)) continue
 
         const cells = this.#assignToColumns(allItems, colPositions)
+        // Belt-and-suspenders: skip forex pair trades even when the "Forex"
+        // sub-header row is not detected (e.g. it has more than one PDF item).
+        if (/^[A-Z]{3}\.[A-Z]{3}$/.test(cells[0] ?? '')) continue
         // Find the first signed-number cell to determine Buy/Sell side
         const qty = cells.find(c => /^-?\d/.test(c)) ?? ''
         const side = qty.startsWith('-') ? 'SELL' : 'BUY'

@@ -54,6 +54,9 @@ export function parseTradePdf(pages) {
 
       const symbol = pick(85, 130)
       if (!symbol) continue
+      // Belt-and-suspenders: skip forex pair trades even when the "Forex"
+      // sub-header row is not detected (e.g. it has more than one PDF item).
+      if (/^[A-Z]{3}\.[A-Z]{3}$/.test(symbol)) continue
 
       const quantity = pick(450, 510)
       if (!quantity) continue // non-parseable row (page header, totals, etc.)
