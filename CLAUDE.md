@@ -120,6 +120,16 @@ No React imports. No business logic.
 
 ---
 
+### Readers layer (`src/readers/`)
+
+Format-specific text readers — no browser APIs, no domain logic.
+
+* `readCsv.js` — wraps PapaParse; accepts CSV text, returns `string[][]`
+
+`readPdf.js` stays in `src/platform/web/` because it requires browser globals.
+
+---
+
 ### Platform layer (`src/platform/web/`)
 
 Browser-specific adapters. The only place that may use browser globals.
@@ -161,7 +171,7 @@ No business logic. No direct browser API imports.
 ```
 ui → controllers → core/services → core/domain
            ↓              ↓
-       platform/web    core/input
+       platform/web    core/input ← readers/
                           ↓
                        core/domain
 ```
@@ -268,6 +278,7 @@ src/
     domain/      ← business logic (tax calculators, FX, parsers)
     input/       ← input boundary (format detection, validation, InputData assembly)
   presentation/  ← output formatters (translate codes → display strings)
+  readers/       ← format readers (no browser APIs, no domain logic)
   platform/
     web/         ← browser adapters (DOMParser, File, localStorage, PDF reading)
   controllers/   ← page-level hooks (workflow state + commands, useThemeMode)
