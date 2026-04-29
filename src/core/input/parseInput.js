@@ -13,7 +13,7 @@
  *   buildInputData(csvRows, trades)     → InputData
  */
 
-import { parseCSV }                                        from './readCsv.js'
+import { parseCSV }                                        from '../../readers/readCsv.js'
 import { PdfTableExtractor }                                from '../domain/parser/pdf/PdfTableExtractor.js'
 import { parseTradePdf }                                   from '../domain/parser/pdf/PdfTradeConfirmationParser.js'
 import { parseTradesFromHtml }                             from '../domain/parser/parseTradesHtml.js'
