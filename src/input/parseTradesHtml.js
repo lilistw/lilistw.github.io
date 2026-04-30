@@ -1,4 +1,4 @@
-import { parseToDecimal } from '../numStr.js'
+import { parseToDecimal } from '../core/domain/numStr.js'
 
 /**
  * Parses an IBKR Trade Confirmation Report HTML document into a raw array.

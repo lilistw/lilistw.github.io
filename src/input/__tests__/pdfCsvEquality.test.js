@@ -22,14 +22,14 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { describe, it, expect } from 'vitest'
 import { parseActivityStatementCsv, parseTradeConfirmationHtml, buildInputData } from '../parseInput.js'
-import { PdfTableExtractor } from '../../domain/parser/PdfTableExtractor.js'
+import { PdfTableExtractor } from '../PdfTableExtractor.js'
 import { validatePdfContent } from '../validateInput.js'
 
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
-const DEMO_DIR = resolve(import.meta.dirname, '../../../../public/demo')
+const DEMO_DIR = resolve(import.meta.dirname, '../../../public/demo')
 
 function loadDemoCsv() {
   return readFileSync(resolve(DEMO_DIR, 'U0_2025_activity_demo.csv'), 'utf-8')

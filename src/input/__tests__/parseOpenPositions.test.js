@@ -1,6 +1,7 @@
 import { describe, it, expect } from 'vitest'
 import Decimal from 'decimal.js'
-import { parseOpenPositions, buildOpenPositions } from '../parseOpenPositions.js'
+import { parseOpenPositions } from '../parseOpenPositions.js'
+import { buildOpenPositions } from '../../core/domain/positions.js'
 
 // Real IBKR CSV: index 2 of the header row is 'DataDiscriminator';
 // data rows have 'Summary' at index 2 as the discriminator value.

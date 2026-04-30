@@ -43,9 +43,11 @@ React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers
 ```
 User selects CSV + HTML
         ↓
-useTaxAppController → readInputFromFiles() → parseInput() → inputData
+useTaxAppController → readInputFromFiles()
+        ↓  (input/ layer: reads files, parses IBKR formats, assembles InputData)
+inputData  ← instrumentInfo and csvTradeBasis pre-built here
         ↓
-inferPriorPositions() → pendingPositions
+inferPriorPositions(inputData) → pendingPositions
         ↓
 PriorYearPositionsForm (user edits)
         ↓
@@ -85,41 +87,40 @@ No business logic. No direct browser API calls beyond `themeStorage.js`.
 
 Pure pipeline — no browser APIs, no React. Safe to run on a server.
 
-**`src/core/services/`** — use-case orchestration:
+Two public entry points (called with a fully-assembled `InputData`):
 
-* `parseInput({ csvText, htmlDoc, csvPdfPages, tradePdfPages })` — pure InputData assembly
-* `inferPriorPositions`
-* `calculateTax`
+* `inferPriorPositions(inputData)` — infers prior-year open positions
+* `calculateTax(inputData, priorPositions, options)` — computes full tax result
+
+**`src/core/services/`** — use-case orchestration for the two entry points above.
 
 **`src/core/domain/`** — business logic:
 
-* parsers (`parser/`) — accept strings or pre-parsed DOM objects; PDF parsers colocated here too
 * tax calculators (`tax/`) — `TradeCalculator`, `DividendCalculator`, `HoldingsCalculator`
 * FX utilities (`fx/`) — rates + conversion
+* `aliases.js` — `expandByAliases`: expands symbol-keyed dicts to cover IBKR aliases
+* `positions.js` — `buildOpenPositions`: enriches raw open-position rows with cost-basis overrides
 * `classifier.js` — instrument classification and tax-exemption rules
 
-**`src/core/input/`** — input boundary: format detection, validation, InputData assembly:
-
-* `parseActivityStatementCsv(csvText)`
-* `parseActivityStatementPdf(pages)`
-* `parseTradeConfirmationHtml(doc)` — accepts pre-parsed Document
-* `parseTradeConfirmationPdf(pages)`
-* `buildInputData(csvRows, trades)`
-
 No React imports. No browser globals. No localization calls (`t` is forbidden inside `src/core/`).
+`InputData` arrives pre-assembled with `instrumentInfo` and `csvTradeBasis` already built — core reads them directly.
 
 ---
 
-### Readers layer (`src/readers/`)
+### Input layer (`src/input/`)
 
-All file format readers — decode raw files into generic structures. No domain logic.
+Full File→InputData pipeline. Contains all IBKR-specific parsing knowledge and all browser file-reading utilities.
 
 * `readCsv.js` — CSV text → `string[][]` (wraps PapaParse, no browser APIs)
 * `readPdf.js` — PDF bytes → `PdfPage[]` (uses pdfjs-dist, requires browser globals)
 * `readHtml.js` — HTML string → `Document` (wraps DOMParser, requires browser globals)
-* `fileReader.js` — browser entry point: reads `File` objects, delegates to the readers above, then calls `core/services/parseInput`
-
-**Reading vs. Parsing:** Readers decode file formats into generic structures (rows, pages, DOM). Parsers in `core/domain/parser/` extract domain objects (trades, dividends) from those structures.
+* `fileReader.js` — browser entry point: reads `File` objects, delegates to format readers, then calls the parsers and `buildInputData`
+* `parseInput.js` — pure parsing entry points:
+  * `parseActivityStatementCsv(csvText)` / `parseActivityStatementPdf(pages)`
+  * `parseTradeConfirmationHtml(doc)` / `parseTradeConfirmationPdf(pages)`
+  * `buildInputData(csvRows, trades)` — assembles full InputData including `instrumentInfo` and `csvTradeBasis`
+* Domain-specific parsers: `parseCsvTrades`, `parseDividends`, `parseInstruments`, `parseOpenPositions`, `parseStatementInfo`, `parseTradesHtml`, etc.
+* `validateInput.js` — format detection and validation
 
 ---
 
@@ -145,10 +146,9 @@ No business logic in components. No direct browser API imports.
 
 ```
 ui → hooks → core/services → core/domain
-       ↓           ↓
-   readers/    core/input ← readers/readCsv
-                   ↓
-               core/domain
+       ↓
+   input/ ──────────────────→ core/domain
+   (reads files, parses IBKR formats, assembles InputData)
 ```
 
 ---
@@ -248,11 +248,10 @@ Do not hardcode colors.
 
 ```
 src/
-  core/          ← pure pipeline (server-exportable, no browser APIs, no React)
-    services/    ← use-case orchestration (calculateTax, parseInput, …)
-    domain/      ← business logic (tax calculators, FX, parsers)
-    input/       ← input boundary (format detection, validation, InputData assembly)
-  readers/       ← all file readers (readCsv, readPdf, readHtml, fileReader)
+  core/          ← pure domain pipeline (no browser APIs, no React, server-safe)
+    services/    ← 2 entry points: inferPriorPositions, calculateTax
+    domain/      ← business logic (tax calculators, FX, aliases, positions, classifier)
+  input/         ← full File→InputData pipeline (IBKR parsing + file reading)
   hooks/         ← page-level hooks (useTaxAppController, useThemeMode, themeStorage)
   ui/            ← React components (passive, flat)
     presenters/  ← output formatters (translate codes → display strings)

@@ -1,4 +1,4 @@
-import { parseToDecimal } from '../numStr.js'
+import { parseToDecimal } from '../core/domain/numStr.js'
 
 /**
  * Parses the Dividends section into a raw array.

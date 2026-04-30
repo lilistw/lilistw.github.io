@@ -1,5 +1,6 @@
 import { describe, it, expect } from 'vitest'
-import { parseInstruments, buildInstrumentInfo, expandByAliases } from '../parseInstruments.js'
+import { parseInstruments, buildInstrumentInfo } from '../parseInstruments.js'
+import { expandByAliases } from '../../core/domain/aliases.js'
 
 function makeRows(dataRows = []) {
   const header = [

@@ -1,4 +1,4 @@
-import { parseToDecimal, toDecimal } from '../numStr.js'
+import { parseToDecimal, toDecimal } from '../core/domain/numStr.js'
 
 /**
  * Parses the "Trades" section of an IBKR Activity Statement CSV into a raw array.
