@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { t } from '../../localization/i18n.js'
+import { t } from '../localization/i18n.js'
 import { Box, Tabs, Tab } from '@mui/material'
 
 import TradesTab from './TradesTab'

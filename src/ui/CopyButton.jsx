@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { t } from '../../localization/i18n.js'
+import { t } from '../localization/i18n.js'
 import { IconButton } from '@mui/material'
 import { Check, ContentCopy } from '@mui/icons-material'
 

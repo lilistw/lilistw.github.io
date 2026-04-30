@@ -1,10 +1,10 @@
-import { t } from '../../localization/i18n.js'
+import { t } from '../localization/i18n.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
 import DataTable from './DataTable.jsx'
-import { HoldingPresenter } from '../../presentation/HoldingPresenter.js'
-import ThresholdWarning from '../ThresholdWarning.jsx'
+import { HoldingPresenter } from './presenters/HoldingPresenter.js'
+import ThresholdWarning from './ThresholdWarning.jsx'
 
 function addRowNumbers(rows) {
   let i = 1

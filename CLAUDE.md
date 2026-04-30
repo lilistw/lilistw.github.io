@@ -37,7 +37,7 @@ React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers
 
 ## 4) Runtime flow
 
-`src/controllers/useTaxAppController.js` owns page state and orchestration.
+`src/hooks/useTaxAppController.js` owns page state and orchestration.
 `src/App.jsx` is a thin composition shell.
 
 ```
@@ -69,13 +69,15 @@ ResultTabs (trades / holdings / dividends / interest)
 
 ## 5) Architecture layers
 
-### Controller layer (`src/controllers/`)
+### Hooks layer (`src/hooks/`)
 
 Page-level state and commands. One hook per page workflow.
 
 * `useTaxAppController` — the main app workflow hook
+* `useThemeMode` — day/night toggle with persistence
+* `themeStorage.js` — localStorage + DOM adapter for theme (used only by `useThemeMode`)
 
-No business logic. No direct browser API calls.
+No business logic. No direct browser API calls beyond `themeStorage.js`.
 
 ---
 
@@ -108,47 +110,16 @@ No React imports. No browser globals. No localization calls (`t` is forbidden in
 
 ---
 
-### Presentation layer (`src/presentation/`)
-
-Output formatters — maps domain result objects to display-ready values. Translates currency codes and country codes to display strings at this boundary.
-
-* `TradePresenter`, `HoldingPresenter`, `DividendPresenter`, `InterestPresenter`
-* `TradeSummaryPresenter`, `ExcelPresenter`
-* `fmt.js` — locale number formatting
-
-No React imports. No business logic.
-
----
-
 ### Readers layer (`src/readers/`)
 
-Format-specific text readers — no browser APIs, no domain logic.
+All file format readers — decode raw files into generic structures. No domain logic.
 
-* `readCsv.js` — wraps PapaParse; accepts CSV text, returns `string[][]`
+* `readCsv.js` — CSV text → `string[][]` (wraps PapaParse, no browser APIs)
+* `readPdf.js` — PDF bytes → `PdfPage[]` (uses pdfjs-dist, requires browser globals)
+* `readHtml.js` — HTML string → `Document` (wraps DOMParser, requires browser globals)
+* `fileReader.js` — browser entry point: reads `File` objects, delegates to the readers above, then calls `core/services/parseInput`
 
-`readPdf.js` stays in `src/platform/web/` because it requires browser globals.
-
----
-
-### Platform layer (`src/platform/web/`)
-
-Browser-specific adapters. The only place that may use browser globals.
-
-* `fileReader.js` — reads File objects, calls `parseInput`
-* `htmlParser.js` — wraps `DOMParser`
-* `themeStorage.js` — wraps `localStorage` + `document.documentElement`
-* `readPdf.js` — reads PDF files via `pdfjs-dist`
-
----
-
-### Controller layer (`src/controllers/`)
-
-Page-level state and commands. One hook per page workflow.
-
-* `useTaxAppController` — the main app workflow hook
-* `useThemeMode` — day/night toggle with persistence
-
-No business logic. No direct browser API calls.
+**Reading vs. Parsing:** Readers decode file formats into generic structures (rows, pages, DOM). Parsers in `core/domain/parser/` extract domain objects (trades, dividends) from those structures.
 
 ---
 
@@ -156,24 +127,28 @@ No business logic. No direct browser API calls.
 
 All React components. Passive — render props only, emit events.
 
-* `AppHeader`, `AppFooter`
-* `Dropzone`
-* `PriorYearPositionsForm`
-* `ResultTabs/` (modular subfolder)
-* `Disclaimer`, `InfoModal`
+* `AppHeader`, `AppFooter`, `Dropzone`, `PriorYearPositionsForm`, `Disclaimer`, `InfoModal`
+* `ResultTabs`, `TradesTab`, `HoldingsTab`, `DividendsTab`, `InterestTab` — all flat in `ui/`
+* `DataTable`, `TaxSummary`, `TaxFormSection`, `ExcelCopyButton`, `CopyButton`, `DevTab`
 
-No business logic. No direct browser API imports.
+**`src/ui/presenters/`** — output formatters: map domain result objects to display-ready values. No React imports. No business logic.
+
+* `TradePresenter`, `HoldingPresenter`, `DividendPresenter`, `InterestPresenter`
+* `TradeSummaryPresenter`, `ExcelPresenter`
+* `fmt.js` — locale number formatting
+
+No business logic in components. No direct browser API imports.
 
 ---
 
 ### Dependency direction
 
 ```
-ui → controllers → core/services → core/domain
-           ↓              ↓
-       platform/web    core/input ← readers/
-                          ↓
-                       core/domain
+ui → hooks → core/services → core/domain
+       ↓           ↓
+   readers/    core/input ← readers/readCsv
+                   ↓
+               core/domain
 ```
 
 ---
@@ -185,7 +160,7 @@ Themes defined in `src/theme.js`:
 * `dayTheme`
 * `nightTheme`
 
-Applied via `useThemeMode` hook → `platform/web/themeStorage.js`:
+Applied via `useThemeMode` hook → `hooks/themeStorage.js`:
 
 ```js
 document.documentElement.setAttribute('data-theme', 'night' | 'day')
@@ -277,12 +252,10 @@ src/
     services/    ← use-case orchestration (calculateTax, parseInput, …)
     domain/      ← business logic (tax calculators, FX, parsers)
     input/       ← input boundary (format detection, validation, InputData assembly)
-  presentation/  ← output formatters (translate codes → display strings)
-  readers/       ← format readers (no browser APIs, no domain logic)
-  platform/
-    web/         ← browser adapters (DOMParser, File, localStorage, PDF reading)
-  controllers/   ← page-level hooks (workflow state + commands, useThemeMode)
-  ui/            ← React components (passive)
+  readers/       ← all file readers (readCsv, readPdf, readHtml, fileReader)
+  hooks/         ← page-level hooks (useTaxAppController, useThemeMode, themeStorage)
+  ui/            ← React components (passive, flat)
+    presenters/  ← output formatters (translate codes → display strings)
   localization/  ← Bulgarian strings (bg.json + i18n.js)
 ```
 
@@ -314,7 +287,7 @@ Test only:
 Do NOT test:
 
 * UI
-* controllers/hooks
+* hooks
 * styling
 
 ### Structure

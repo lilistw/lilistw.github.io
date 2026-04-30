@@ -1,9 +1,9 @@
-import { t } from '../../localization/i18n.js'
+import { t } from '../localization/i18n.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
 import DataTable from './DataTable'
-import { InterestPresenter } from '../../presentation/InterestPresenter.js'
+import { InterestPresenter } from './presenters/InterestPresenter.js'
 
 export default function InterestTab({ result }) {
   const { localCurrencyLabel, localCurrencyCode } = result

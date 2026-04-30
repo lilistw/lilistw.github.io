@@ -6,7 +6,7 @@ import {
   IconButton,
   Box
 } from '@mui/material'
-import { t } from '../../localization/i18n.js'
+import { t } from '../localization/i18n.js'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 

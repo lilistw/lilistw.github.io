@@ -1,7 +1,7 @@
 // TradeSummaryPresenter.js
 import Decimal from 'decimal.js'
 import { fmt } from './fmt.js'
-import { toDecimal, decimalToNumber, D0 } from '../core/domain/numStr.js'
+import { toDecimal, decimalToNumber, D0 } from '../../core/domain/numStr.js'
 
 export class TradeSummaryPresenter {
   constructor({ t, lcl, mode = 'display' }) {

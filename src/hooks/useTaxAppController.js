@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react'
 import { t } from '../localization/i18n.js'
 import { SUPPORTED_FORMATS } from '../config.js'
-import { readInputFromFiles } from '../platform/web/fileReader.js'
+import { readInputFromFiles } from '../readers/fileReader.js'
 import { calculateTax } from '../core/services/calculateTax.js'
 import { inferPriorPositions } from '../core/services/inferPriorPositions.js'
 import { getPrevYearEndDate } from '../core/domain/fx/fxRates.js'

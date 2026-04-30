@@ -7,7 +7,7 @@
  * Each section's data rows are assigned to columns by nearest-anchor matching.
  */
 export class PdfTableExtractor {
-  /** @param {import('../../../../platform/web/readPdf.js').PdfPage[]} pages @returns {string[][]} */
+  /** @param {import('../../../../readers/readPdf.js').PdfPage[]} pages @returns {string[][]} */
   adapt(pages) {
     if (!pages || pages.length === 0) throw Object.assign(new Error('INVALID_PDF_FORMAT'), { code: 'INVALID_PDF_FORMAT' })
 

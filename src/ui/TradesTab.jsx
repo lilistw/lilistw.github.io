@@ -1,14 +1,14 @@
 import { useState, useMemo } from 'react'
-import { t } from '../../localization/i18n.js'
+import { t } from '../localization/i18n.js'
 import DataTable from './DataTable'
 import TaxSummary from './TaxSummary'
-import PriorYearApproxWarning from '../PriorYearApproxWarning'
-import { buildTradeTotals, buildTaxSummary } from '../../core/domain/tradeSummary'
+import PriorYearApproxWarning from './PriorYearApproxWarning'
+import { buildTradeTotals, buildTaxSummary } from '../core/domain/tradeSummary'
 import TaxableToggleDialog from './TaxableToggleDialog'
 import { alpha } from '@mui/material/styles'
 import { Box, Typography } from '@mui/material'
 import { WarningOutlined } from '@mui/icons-material'
-import { TradePresenter } from '../../presentation/TradePresenter.js'
+import { TradePresenter } from './presenters/TradePresenter.js'
 
 
 export default function TradesTab({ result }) {
