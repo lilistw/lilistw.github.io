@@ -22,7 +22,7 @@ import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { describe, it, expect } from 'vitest'
 import { parseActivityStatementCsv, parseTradeConfirmationHtml, buildInputData } from '../parseInput.js'
-import { PdfTableExtractor } from '../../domain/parser/pdf/PdfTableExtractor.js'
+import { PdfTableExtractor } from '../../domain/parser/PdfTableExtractor.js'
 import { validatePdfContent } from '../validateInput.js'
 
 // ---------------------------------------------------------------------------

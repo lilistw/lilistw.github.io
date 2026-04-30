@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import { PdfTableExtractor } from '../PdfTableExtractor.js'
-import { validatePdfContent } from '../../../../input/validateInput.js'
+import { validatePdfContent } from '../../../input/validateInput.js'
 
 // ---------------------------------------------------------------------------
 // Helpers — minimal synthetic PdfPage objects

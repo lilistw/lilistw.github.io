@@ -14,8 +14,8 @@
  */
 
 import { parseCSV }                                        from '../../readers/readCsv.js'
-import { PdfTableExtractor }                                from '../domain/parser/pdf/PdfTableExtractor.js'
-import { parseTradePdf }                                   from '../domain/parser/pdf/PdfTradeConfirmationParser.js'
+import { PdfTableExtractor }                                from '../domain/parser/PdfTableExtractor.js'
+import { parseTradePdf }                                   from '../domain/parser/PdfTradeConfirmationParser.js'
 import { parseTradesFromHtml }                             from '../domain/parser/parseTradesHtml.js'
 import { parseStatementInfo }                              from '../domain/parser/parseStatementInfo.js'
 import { parseInstruments }                                from '../domain/parser/parseInstruments.js'

@@ -1,5 +1,5 @@
 // TradePresenter.js
-import { getInstrumentTypeLabel } from '../../core/domain/instrument/classifier.js'
+import { getInstrumentTypeLabel } from '../../core/domain/classifier.js'
 import { t } from '../../localization/i18n.js'
 import { fmt } from './fmt.js'
 import { decimalToNumber } from '../../core/domain/numStr.js'

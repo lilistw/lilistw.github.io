@@ -93,10 +93,10 @@ Pure pipeline — no browser APIs, no React. Safe to run on a server.
 
 **`src/core/domain/`** — business logic:
 
-* parsers (`parser/`) — accept strings or pre-parsed DOM objects
-* tax calculators (`tax/`)
-* FX utilities (`fx/`)
-* `TradeCalculator`, `DividendCalculator`, `HoldingsCalculator`
+* parsers (`parser/`) — accept strings or pre-parsed DOM objects; PDF parsers colocated here too
+* tax calculators (`tax/`) — `TradeCalculator`, `DividendCalculator`, `HoldingsCalculator`
+* FX utilities (`fx/`) — rates + conversion
+* `classifier.js` — instrument classification and tax-exemption rules
 
 **`src/core/input/`** — input boundary: format detection, validation, InputData assembly:
 
