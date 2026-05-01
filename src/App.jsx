@@ -4,7 +4,6 @@ import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from
 import { InfoOutlined } from '@mui/icons-material'
 
 import { dayTheme, nightTheme } from './theme.js'
-import { SUPPORTED_FORMATS } from './config.js'
 import { useTaxAppController } from './controllers/useTaxAppController.js'
 
 import AppHeader from './ui/AppHeader.jsx'
@@ -20,8 +19,8 @@ export default function App() {
   const {
     nightMode, setNightMode,
     costBasisStrategy, setCostBasisStrategy,
-    csvFile, csvFileUrl, isPdf,
-    htmlFile, htmlFileUrl, isHtmlPdf,
+    csvFile, csvFileUrl,
+    htmlFile, htmlFileUrl,
     inputData, pendingPositions, result,
     parsing, error,
     taxYear, inputJsonText, outputJsonText,
@@ -50,10 +49,10 @@ export default function App() {
                 <Dropzone
                   file={csvFile} fileUrl={csvFileUrl}
                   onFileSelect={selectCsvFile} onClearFile={clearCsvFile}
-                  accept={SUPPORTED_FORMATS.pdf ? '.csv,text/csv,.pdf' : '.csv,text/csv'}
-                  label={t(SUPPORTED_FORMATS.pdf ? 'dropzone.csvLabel' : 'dropzone.csvLabelNoPdf')}
-                  infoKey={SUPPORTED_FORMATS.pdf ? 'csv' : 'csvNoPdf'}
-                  fileType={csvFile ? (isPdf ? 'PDF' : 'CSV') : undefined}
+                  accept=".csv,text/csv"
+                  label={t('dropzone.csvLabel')}
+                  infoKey="csv"
+                  fileType={csvFile ? 'CSV' : undefined}
                 />
                 <Typography variant="caption" color="text.secondary"
                   sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
@@ -65,15 +64,15 @@ export default function App() {
                 <Dropzone
                   file={htmlFile} fileUrl={htmlFileUrl}
                   onFileSelect={selectHtmlFile} onClearFile={clearHtmlFile}
-                  accept={SUPPORTED_FORMATS.pdf ? '.htm,.html,.pdf' : '.htm,.html'}
-                  label={t(SUPPORTED_FORMATS.pdf ? 'dropzone.htmlLabel' : 'dropzone.htmlLabelNoPdf')}
-                  infoKey={SUPPORTED_FORMATS.pdf ? 'htm' : 'htmNoPdf'}
-                  fileType={htmlFile ? (isHtmlPdf ? 'PDF' : 'HTML') : undefined}
+                  accept=".htm,.html"
+                  label={t('dropzone.htmlLabel')}
+                  infoKey="htm"
+                  fileType={htmlFile ? 'HTML' : undefined}
                 />
                 <Typography variant="caption" color="text.secondary"
                   sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
                   <InfoOutlined sx={{ fontSize: 13 }} />
-                  {t(SUPPORTED_FORMATS.pdf ? 'app.htmlHint' : 'app.htmlHintNoPdf')}
+                  {t('app.htmlHint')}
                 </Typography>
               </Box>
             </Box>
