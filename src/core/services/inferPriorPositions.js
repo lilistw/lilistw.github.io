@@ -75,13 +75,14 @@ export function inferPriorPositions(input) {
     if (priorQtyD.lte(0)) continue  // all shares were bought in current year
 
     const priorCostD   = openCostD.plus(sym.sellBasisUSD).minus(sym.buyCostUSD)
-    const priorCostLcl = toLocalCurrency(priorCostD, h.currency, prevYearEndDate, taxYear)
+    const costForFx    = priorCostD.gt(D0) ? priorCostD : D0
+    const priorCostLcl = toLocalCurrency(costForFx, h.currency, prevYearEndDate, taxYear)
 
     result.push({
       symbol:      h.symbol,
       currency:    h.currency,
       qty:         priorQtyD.toNumber(),
-      costUSD:     priorCostD.toNumber(),
+      costUSD:     costForFx.toNumber(),
       costLcl:     priorCostLcl ? priorCostLcl.toNumber() : null,
       lastBuyDate: prevYearEndDate,
     })
@@ -96,16 +97,15 @@ export function inferPriorPositions(input) {
     const priorQtyD = sym.sellQty.minus(sym.buyQty)
     if (priorQtyD.lte(0)) continue
 
-    const priorCostD = sym.sellBasisUSD.minus(sym.buyCostUSD)
-    if (priorCostD.lte(0)) continue
-
-    const priorCostLcl = toLocalCurrency(priorCostD, sym.currency, prevYearEndDate, taxYear)
+    const priorCostD   = sym.sellBasisUSD.minus(sym.buyCostUSD)
+    const safeCostD    = priorCostD.gt(D0) ? priorCostD : D0
+    const priorCostLcl = toLocalCurrency(safeCostD, sym.currency, prevYearEndDate, taxYear)
 
     result.push({
       symbol,
       currency:    sym.currency,
       qty:         priorQtyD.toNumber(),
-      costUSD:     priorCostD.toNumber(),
+      costUSD:     safeCostD.toNumber(),
       costLcl:     priorCostLcl ? priorCostLcl.toNumber() : null,
       lastBuyDate: prevYearEndDate,
     })
