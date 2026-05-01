@@ -1,6 +1,9 @@
 import {
   toLocalCurrency, getPrevYearEndDate,
 } from '../domain/fx/fxRates.js'
+import { buildInstrumentInfo } from '../domain/parser/parseInstruments.js'
+import { buildCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
+import { parseTaxYear } from '../domain/parser/parseTaxYear.js'
 import { toDecimal, D0 } from '../domain/numStr.js'
 
 /**
@@ -10,12 +13,20 @@ import { toDecimal, D0 } from '../domain/numStr.js'
  *   priorQty     = openQty + sellQty - buyQty
  *   priorCostUSD = openCostUSD + sellBasisUSD - buyCostUSD
  *
- * @param {InputData} input
+ * @param {{ trades, openPositions, csvTrades, instruments, period }} param0
+ *   trades        – raw array from parseTradesFromHtml (string fields, side/commission/datetime)
+ *   openPositions – raw array from parseOpenPositions (string fields)
+ *   csvTrades     – raw array from parseCsvTrades
+ *   instruments   – raw array from parseInstruments
+ *   period        – period string e.g. "January 1, 2025 - December 31, 2025"
+ *
  * @returns {Array<{ symbol, currency, qty, costUSD, costLcl, lastBuyDate }>}
  */
-export function inferPriorPositions(input) {
-  const { taxYear, instrumentInfo, csvTradeBasis, trades, openPositions } = input
-  const prevYearEndDate = getPrevYearEndDate(taxYear)
+export function inferPriorPositions({ trades, openPositions, csvTrades, instruments = [], period }) {
+  const taxYear            = parseTaxYear(period)
+  const instrumentInfo     = buildInstrumentInfo(instruments)
+  const csvTradeBasis      = buildCsvTradeBasis(csvTrades)
+  const prevYearEndDate    = getPrevYearEndDate(taxYear)
 
   // Aggregate per-symbol: qty bought/sold, cost of buys (positive), basis of sells (positive)
   const bySymbol = {}
