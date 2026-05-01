@@ -77,6 +77,7 @@ export function buildInputData(csvRows, trades) {
     statement,
     account,
     taxYear,
+    period:         statement.period,
     instruments:    parseInstruments(csvRows),
     dividends:      parseDividends(csvRows),
     withholdingTax: parseWithholdingTax(csvRows),
