@@ -5,14 +5,14 @@ import { InfoOutlined } from '@mui/icons-material'
 
 import { dayTheme, nightTheme } from './theme.js'
 import { SUPPORTED_FORMATS } from './config.js'
-import { useTaxAppController } from './hooks/useTaxAppController.js'
+import { useTaxAppController } from './controllers/useTaxAppController.js'
 
 import AppHeader from './ui/AppHeader.jsx'
 import AppFooter from './ui/AppFooter.jsx'
 import Disclaimer from './ui/Disclaimer.jsx'
 import InfoModal from './ui/InfoModal.jsx'
 import Dropzone from './ui/Dropzone.jsx'
-import ResultTabs from './ui/ResultTabs.jsx'
+import ResultTabs from './ui/ResultTabs/ResultTabs.jsx'
 import PriorYearPositionsForm from './ui/PriorYearPositionsForm.jsx'
 import CostBasisStrategySelector from './ui/CostBasisStrategySelector.jsx'
 
