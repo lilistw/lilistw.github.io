@@ -74,13 +74,7 @@ export function useTaxAppController() {
 
         setInputData(data)
 
-        const inferred = inferPriorPositions({
-          trades: data.trades,
-          openPositions: data.openPositions,
-          csvTrades: data.csvTrades,
-          instruments: data.instruments,
-          period: data.statement.period,
-        })
+        const inferred = inferPriorPositions(data)
 
         const defaultDate = getPrevYearEndDate(data.taxYear)
 
