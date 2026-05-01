@@ -2,7 +2,7 @@
 import Decimal from 'decimal.js'
 import { toLocalCurrency } from '../fx/fxRates.js'
 import { IBKR_EXCHANGES } from '../constants.js'
-import { isTaxable } from '../instrument/classifier.js'
+import { isTaxable } from '../classifier.js'
 import { toDecimal, D0 } from '../numStr.js'
 import { createCostBasisStrategy } from './costBasis/createCostBasisStrategy.js'
 

@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { classifyInstrument, isTaxable, getInstrumentTypeLabel } from '../instrument/classifier.js'
+import { classifyInstrument, isTaxable, getInstrumentTypeLabel } from '../classifier.js'
 
 describe('classifyInstrument', () => {
 
