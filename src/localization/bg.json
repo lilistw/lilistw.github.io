@@ -19,7 +19,7 @@
     },
     "dialog": {
       "title": "Как работи приложението",
-      "intro": "Обработва IBKR Activity Statement (CSV) и Trade Confirmation (HTML; PDF — експериментален). Поддържат се само USD и EUR. Опции, крипто и валути извън USD/EUR не се поддържат.",
+      "intro": "Обработва IBKR Activity Statement (CSV) и Trade Confirmation (HTML). Поддържат се само USD и EUR. Опции, крипто и валути извън USD/EUR не се поддържат.",
       "steps": [
         "Сделките се четат от Trade Confirmation — количество, цена, комисиони и такси.",
         "От Activity Statement CSV се четат отворените позиции и данни за инструментите.",
@@ -180,12 +180,8 @@
   },
   "errors": {
     "invalidFileTypeCsv": "Невалиден тип файл. Очаква се .csv файл.",
-    "invalidFileTypeCsvOrPdf": "Невалиден тип файл. Очаква се .csv или .pdf файл.",
     "invalidFileTypeHtml": "Невалиден тип файл. Очаква се .htm или .html файл.",
-    "invalidFileTypeHtmlOrPdf": "Невалиден тип файл. Очаква се .htm, .html или .pdf файл.",
     "invalidCsvFormat": "Невалиден файл. Очаква се Activity Statement CSV от IBKR.",
-    "invalidPdfFormat": "Невалиден PDF файл. Очаква се Activity Statement от IBKR.",
-    "pdfParseError": "Грешка при четене на PDF файл.",
     "invalidHtmlFormat": "Невалиден файл. Очаква се Trade Confirmation HTML от IBKR.",
     "unsupportedCurrency": "Неподдържана валута: {{currency}}. Поддържат се само USD и EUR.",
     "missingRequiredData": "Липсват задължителни данни: {{field}}."
@@ -237,8 +233,7 @@
     "termsAgree": "Съгласен/на съм с",
     "termsAgreeLink": "условията за ползване",
     "csvHint": "IBKR Portal → Reports → Statements → Activity (формат CSV)",
-    "htmlHint": "IBKR Portal → Reports → Trade Confirmation (HTML или PDF)",
-    "htmlHintNoPdf": "IBKR Portal → Reports → Trade Confirmation (HTML)",
+    "htmlHint": "IBKR Portal → Reports → Trade Confirmation (HTML)",
     "interest": {
       "title": "Приложение №6 – Доходи от други източници (чл. 35 ЗДДФЛ)",
       "bodyPart1": "Лихвите от IBKR се декларират в",
@@ -251,10 +246,8 @@
     }
   },
   "dropzone": {
-    "csvLabel": "Activity Statement CSV / PDF тук",
-    "csvLabelNoPdf": "Activity Statement CSV тук",
-    "htmlLabel": "Trade Confirmation HTML / PDF тук",
-    "htmlLabelNoPdf": "Trade Confirmation HTML тук",
+    "csvLabel": "Activity Statement CSV тук",
+    "htmlLabel": "Trade Confirmation HTML тук",
     "openFile": "Отвори файл",
     "downloadFile": "Свали файл",
     "removeFile": "Премахни файл",
@@ -268,32 +261,10 @@
         "Отидете на Performance & Reports > Statements",
         "Изберете Activity Statement",
         "Във формата изберете желания период — \"Annual\"",
-        "Генерирайте и изтеглете CSV файла",
-        "Алтернативно — изтеглете PDF версията на Activity Statement"
-      ]
-    },
-    "csvNoPdf": {
-      "title": "Как да изтеглите Activity Statement",
-      "steps": [
-        "Влезте в Client Portal на Interactive Brokers",
-        "Отидете на Performance & Reports > Statements",
-        "Изберете Activity Statement",
-        "Във формата изберете желания период — \"Annual\"",
         "Генерирайте и изтеглете CSV файла"
       ]
     },
     "htm": {
-      "title": "Как да изтеглите Trade Confirmation",
-      "steps": [
-        "Влезте в Client Portal на Interactive Brokers",
-        "Отидете на Performance & Reports > Trade Confirmations",
-        "Изберете желания период",
-        "Кликнете Run и след генерирането — Download",
-        "Изтеглете файла във формат HTML",
-        "Алтернативно — изтеглете файла във формат PDF"
-      ]
-    },
-    "htmNoPdf": {
       "title": "Как да изтеглите Trade Confirmation",
       "steps": [
         "Влезте в Client Portal на Interactive Brokers",

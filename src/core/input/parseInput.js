@@ -1,21 +1,17 @@
 /**
  * Parsing module — pure functions, no file I/O.
  *
- * Accepts already-read content (text or PdfPage[]) and returns normalized
+ * Accepts already-read content (text or Document) and returns normalized
  * domain objects. The InputData schema is identical regardless of whether
- * the source was CSV, HTML, or PDF.
+ * the source was CSV or HTML.
  *
  * Entry points:
- *   parseActivityStatementCsv(csvText)  → string[][]
- *   parseActivityStatementPdf(pages)    → string[][]
+ *   parseActivityStatementCsv(csvText)   → string[][]
  *   parseTradeConfirmationHtml(htmlText) → Trade[]
- *   parseTradeConfirmationPdf(pages)    → Trade[]
- *   buildInputData(csvRows, trades)     → InputData
+ *   buildInputData(csvRows, trades)      → InputData
  */
 
 import { parseCSV }                                        from '../../readers/readCsv.js'
-import { PdfTableExtractor }                                from '../domain/parser/pdf/PdfTableExtractor.js'
-import { parseTradePdf }                                   from '../domain/parser/pdf/PdfTradeConfirmationParser.js'
 import { parseTradesFromHtml }                             from '../domain/parser/parseTradesHtml.js'
 import { parseStatementInfo }                              from '../domain/parser/parseStatementInfo.js'
 import { parseInstruments }                                from '../domain/parser/parseInstruments.js'
@@ -27,7 +23,6 @@ import { parseTaxYear }                                    from '../domain/parse
 import {
   validateCsvContent,
   validateHtmlContent,
-  validatePdfContent,
   validateTradeCurrencies,
 } from './validateInput.js'
 
@@ -46,17 +41,6 @@ export function parseActivityStatementCsv(csvText) {
   return rows
 }
 
-/**
- * Parse an Activity Statement PDF into normalized rows.
- * @param {import('../io/readPdf.js').PdfPage[]} pages
- * @returns {string[][]}
- */
-export function parseActivityStatementPdf(pages) {
-  const rows = new PdfTableExtractor().adapt(pages)
-  validatePdfContent(rows)
-  return rows
-}
-
 // ---------------------------------------------------------------------------
 // Trade Confirmation
 // ---------------------------------------------------------------------------
@@ -69,17 +53,6 @@ export function parseActivityStatementPdf(pages) {
 export function parseTradeConfirmationHtml(doc) {
   validateHtmlContent(doc)
   const trades = parseTradesFromHtml(doc)
-  validateTradeCurrencies(trades)
-  return trades
-}
-
-/**
- * Parse a Trade Confirmation PDF into normalized trade objects.
- * @param {import('../io/readPdf.js').PdfPage[]} pages
- * @returns {object[]}
- */
-export function parseTradeConfirmationPdf(pages) {
-  const trades = parseTradePdf(pages)
   validateTradeCurrencies(trades)
   return trades
 }

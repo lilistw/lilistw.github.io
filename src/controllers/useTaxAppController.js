@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react'
 import { t } from '../localization/i18n.js'
-import { SUPPORTED_FORMATS } from '../config.js'
 import { readInputFromFiles } from '../platform/web/fileReader.js'
 import { calculateTax } from '../core/services/calculateTax.js'
 import { inferPriorPositions } from '../core/services/inferPriorPositions.js'
@@ -12,15 +11,11 @@ export function useTaxAppController() {
   const [nightMode, setNightMode] = useThemeMode()
   const [costBasisStrategy, setCostBasisStrategy] = useState('ibkr')
 
-  // Files — csvFile holds either a CSV or PDF Activity Statement
   const [csvFile, setCsvFile] = useState(null)
   const [htmlFile, setHtmlFile] = useState(null)
 
   const [csvFileUrl, setCsvFileUrl] = useState('')
   const [htmlFileUrl, setHtmlFileUrl] = useState('')
-
-  const isPdf = csvFile?.name?.toLowerCase().endsWith('.pdf') ?? false
-  const isHtmlPdf = htmlFile?.name?.toLowerCase().endsWith('.pdf') ?? false
 
   // Data pipeline
   const [inputData, setInputData] = useState(null)
@@ -63,12 +58,7 @@ export function useTaxAppController() {
     setParsing(true)
     setError(null)
 
-    readInputFromFiles({
-      csvFile:      isPdf     ? undefined : csvFile,
-      pdfFile:      isPdf     ? csvFile   : undefined,
-      htmlFile:     isHtmlPdf ? undefined : htmlFile,
-      tradePdfFile: isHtmlPdf ? htmlFile  : undefined,
-    })
+    readInputFromFiles({ csvFile, htmlFile })
       .then(data => {
         if (cancelled) return
 
@@ -106,9 +96,8 @@ export function useTaxAppController() {
   function selectCsvFile(file) {
     if (!file) return
     const name = file.name.toLowerCase()
-    const pdfOk = SUPPORTED_FORMATS.pdf && name.endsWith('.pdf')
-    if (!name.endsWith('.csv') && !pdfOk) {
-      setError(t(SUPPORTED_FORMATS.pdf ? 'errors.invalidFileTypeCsvOrPdf' : 'errors.invalidFileTypeCsv'))
+    if (!name.endsWith('.csv')) {
+      setError(t('errors.invalidFileTypeCsv'))
       return
     }
     setCsvFile(file)
@@ -125,9 +114,8 @@ export function useTaxAppController() {
   function selectHtmlFile(file) {
     if (!file) return
     const name = file.name.toLowerCase()
-    const pdfOk = SUPPORTED_FORMATS.pdf && name.endsWith('.pdf')
-    if (!name.endsWith('.htm') && !name.endsWith('.html') && !pdfOk) {
-      setError(t(SUPPORTED_FORMATS.pdf ? 'errors.invalidFileTypeHtmlOrPdf' : 'errors.invalidFileTypeHtml'))
+    if (!name.endsWith('.htm') && !name.endsWith('.html')) {
+      setError(t('errors.invalidFileTypeHtml'))
       return
     }
     setHtmlFile(file)
@@ -196,8 +184,8 @@ export function useTaxAppController() {
   return {
     nightMode, setNightMode,
     costBasisStrategy, setCostBasisStrategy,
-    csvFile, csvFileUrl, isPdf,
-    htmlFile, htmlFileUrl, isHtmlPdf,
+    csvFile, csvFileUrl,
+    htmlFile, htmlFileUrl,
     inputData, pendingPositions, result,
     parsing, error,
     taxYear, inputJsonText, outputJsonText,
