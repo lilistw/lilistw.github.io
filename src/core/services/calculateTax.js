@@ -1,3 +1,5 @@
+import { buildInstrumentInfo } from '../domain/parser/parseInstruments.js'
+import { buildCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
 import {
   getLocalCurrencyCode,
   getLocalCurrencyLabel,
@@ -29,7 +31,8 @@ export function calculateTax(input, priorPositions = [], { strategy = 'ibkr' } =
 
   const context = buildTaxContext(taxYear)
 
-  const { instrumentInfo, csvTradeBasis } = input
+  const instrumentInfo = buildInstrumentInfo(input.instruments)
+  const csvTradeBasis = buildCsvTradeBasis(input.csvTrades)
 
   // --- TRADES ---
   const tradeCalc = new TradeCalculator({ instrumentInfo, csvTradeBasis, context, strategy })
