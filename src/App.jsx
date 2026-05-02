@@ -4,7 +4,7 @@ import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from
 import { InfoOutlined } from '@mui/icons-material'
 
 import { dayTheme, nightTheme } from './theme.js'
-import { useTaxAppController } from './controllers/useTaxAppController.js'
+import { useTaxAppController } from './hooks/useTaxAppController.js'
 
 import AppHeader from './ui/AppHeader.jsx'
 import AppFooter from './ui/AppFooter.jsx'

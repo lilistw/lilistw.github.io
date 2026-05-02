@@ -1,8 +1,8 @@
 // TradePresenter.js
-import { getInstrumentTypeLabel } from '../core/domain/instrument/classifier.js'
-import { t } from '../localization/i18n.js'
+import { getInstrumentTypeLabel } from '../../core/domain/instrument/classifier.js'
+import { t } from '../../localization/i18n.js'
 import { fmt } from './fmt.js'
-import { decimalToNumber } from '../core/domain/numStr.js'
+import { decimalToNumber } from '../../core/domain/numStr.js'
 
 const TRADE_COLUMNS = (lcl) => [
   { key: '#',               label: '#',                                  align: 'right', mono: true, decimals: 0 },

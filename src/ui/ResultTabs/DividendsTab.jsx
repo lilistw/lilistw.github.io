@@ -3,7 +3,7 @@ import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
 import DataTable from './DataTable.jsx'
-import { DividendPresenter } from '../../presentation/DividendPresenter.js'
+import { DividendPresenter } from '../presentation/DividendPresenter.js'
 
 export default function DividendsTab({ result }) {
   // --- DIVIDENDS (presentation) ---
