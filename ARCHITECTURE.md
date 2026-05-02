@@ -13,8 +13,9 @@ No data leaves the browser.
 ```
 src/
   core/           Pure pipeline — no browser APIs, no React
-    services/     Use-case orchestration (calculateTax, inferPriorPositions)
-    domain/       Business logic (tax, FX, parsers)
+    services/     Use-case orchestration (calculateTax, parseInput)
+    parser/       Input normalization + inference (buildInputData, inferPriorPositions)
+    domain/       Business logic (tax, FX)
       tax/
         costBasis/  Cost-basis strategies
   app/            Everything React and browser-specific
@@ -33,10 +34,13 @@ src/
 ### Dependency direction
 
 ```
-app/ui/ResultTabs → app/ui/presentation ─────┐
-app/App.jsx       → app/hooks                │
-                       ├── core/services ─────┤→ core/domain
-                       └── app/input ─────────┘
+app/ui/ResultTabs → app/ui/presentation
+app/App.jsx       → app/hooks
+                       ├── app/input/fileReader
+                       │     └── app/input/{csvParser,htmlParser}
+                       └── core/services/{parseInput,calculateTax}
+                              ├── core/parser
+                              └── core/domain
 ```
 
 `core/` has no imports from `app/` or `styles/`. This keeps the pipeline
@@ -53,15 +57,21 @@ User drops CSV + HTML files
 app/input/fileReader.js
   readInputFromFiles({ csvFile, htmlFile })
         |
-        v
-app/input/parseInput.js
-  parseInput({ csvText, htmlDoc })
+        +-> app/input/csvParser.js
+        +-> app/input/htmlParser.js
         |
         v
-app/input/buildInputData.js
+Raw parsed payload ({ activityStatement, tradeConfirmation })
+        |
+        v
+app/hooks/useTaxAppController.js
+  parseInput(payload) via core/services/parseInput.js
+        |
+        v
+core/parser/buildInputData.js
   parseActivityStatementCsv(csvText)   -- CSV rows
   parseTradeConfirmationHtml(htmlDoc)  -- Trade[]
-  buildInputData(csvRows, trades)       -- InputData
+  buildInputData(csvRows, trades)      -- InputData
         |
         v
 app/hooks/useTaxAppController.js
@@ -92,26 +102,22 @@ app/ui/ResultTabs/ (TradesTab, HoldingsTab, DividendsTab, InterestTab)
 
 ### `app/input/`
 
-The only layer that may use browser globals or read files. It converts raw
-browser inputs into plain data and hands off to `core/`.
+Browser-facing adapters for file parsing/validation before handing raw text to
+`core/` services.
 
-- `fileReader.js` — reads `File` objects, delegates to `parseInput`
+- `fileReader.js` — reads `File` objects and orchestrates CSV/HTML extraction
+- `csvParser.js` — wraps PapaParse for CSV input
 - `htmlParser.js` — wraps `DOMParser`
-- `readCsv.js` — wraps PapaParse; returns `string[][]`
-- `parseInput.js` — thin entry-point: `parseInput({ csvText, htmlDoc })` → `InputData`
-- `buildInputData.js` — orchestrates domain parsers, returns canonical `InputData`
 - `validateInput.js` — validates IBKR file content before parsing
-- `themeStorage.js` — browser storage adapter for theme persistence (wraps
-  `localStorage` + `document.documentElement`; used only by `app/hooks/useThemeMode`)
 
 ### `core/services/`
 
 Thin use-case orchestrators. No business logic.
 
 - `calculateTax.js` — builds `TaxContext`, wires domain calculators, returns result
-- `inferPriorPositions.js` — detects sells with no matching buys in the statement
+- `parseInput.js` — parses CSV + HTML into canonical `InputData`
 
-### `core/domain/parser/`
+### `core/parser/`
 
 Parse specific CSV sections or HTML into plain objects.
 Inputs are raw strings or pre-parsed DOM nodes; outputs are typed arrays.
@@ -183,7 +189,7 @@ writes back to the result array held in the controller.
 
 ### `core/` has no browser dependencies
 
-All browser globals are confined to `app/input/`. `core/domain/parser/` receives
+All browser globals are confined to `app/input/`. `core/parser/` receives
 pre-parsed DOM nodes (passed in from `app/input/htmlParser.js`) rather than
 calling `DOMParser` itself. This keeps the entire `core/` tree runnable in Node.
 
@@ -227,7 +233,7 @@ Top-level components:
 ## Theming
 
 Two themes defined in `src/app/theme.js` (`dayTheme`, `nightTheme`).
-`useThemeMode` hook persists the choice via `app/input/themeStorage.js`,
+`useThemeMode` hook persists the choice via `app/hooks/themeStorage.js`,
 which writes `data-theme="day|night"` on `document.documentElement`.
 MUI theme is applied via `ThemeProvider`; `styles/index.css` uses `[data-theme]`
 selectors only for the non-MUI layout shell.

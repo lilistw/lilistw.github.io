@@ -43,7 +43,7 @@ React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers
 ```
 User selects CSV + HTML
         ↓
-useTaxAppController → readInputFromFiles() → parseInput() → inputData
+useTaxAppController → fileReader(csvParser/htmlParser) → parseInput() → inputData
         ↓
 inferPriorPositions() → pendingPositions
         ↓
@@ -86,12 +86,16 @@ Pure pipeline — no browser APIs, no React. Safe to run on a server.
 
 **`src/core/services/`** — use-case orchestration:
 
-* `inferPriorPositions`
+* `parseInput`
 * `calculateTax`
+
+**`src/core/parser/`** — parsing and input normalization:
+
+* input parsers — accept strings or pre-parsed DOM objects
+* `buildInputData` and `inferPriorPositions`
 
 **`src/core/domain/`** — business logic:
 
-* parsers (`parser/`) — accept strings or pre-parsed DOM objects
 * tax calculators (`tax/`) — `TradeCalculator`, `DividendCalculator`, `HoldingsCalculator`, `InterestCalculator`
 * cost-basis strategies (`tax/costBasis/`) — `WeightedAverageCostBasisStrategy` (BG-law default), `IbkrCostBasisStrategy` (uses CSV value, falls back to weighted-average); `createCostBasisStrategy(name)` factory
 * FX utilities (`fx/`)
@@ -102,17 +106,11 @@ No React imports. No browser globals. No localization calls (`t` is forbidden in
 
 ### Input layer (`src/app/input/`)
 
-File I/O and input assembly — the only place that reads browser File/DOM objects and turns them into domain data. The orchestrator reads input and passes it to core.
+Browser adapters for parsing/validation before passing raw text/DOM into core.
 
-* `fileReader.js` — reads File objects, calls `parseInput`
+* `fileReader.js` — reads `File` objects and orchestrates CSV/HTML extraction
+* `csvParser.js` — wraps PapaParse
 * `htmlParser.js` — wraps `DOMParser`
-* `themeStorage.js` — browser storage adapter for theme persistence (used only by `app/hooks/useThemeMode`)
-* `readCsv.js` — wraps PapaParse; accepts CSV text, returns `string[][]`
-* `parseInput.js` — thin entry-point: `parseInput({ csvText, htmlDoc })` → InputData
-* `buildInputData.js` — format detection, validation, InputData assembly:
-  * `parseActivityStatementCsv(csvText)`
-  * `parseTradeConfirmationHtml(doc)` — accepts pre-parsed Document
-  * `buildInputData(csvRows, trades)`
 * `validateInput.js` — validates IBKR file content
 
 ---
@@ -143,10 +141,13 @@ No business logic. No direct browser API imports (except `presentation/` which i
 ### Dependency direction
 
 ```
-app/ui/ResultTabs → app/ui/presentation ─────┐
-app/App.jsx       → app/hooks                │
-                       ├── core/services ─────┤→ core/domain
-                       └── app/input ─────────┘
+app/ui/ResultTabs → app/ui/presentation
+app/App.jsx       → app/hooks
+                       ├── app/input/fileReader
+                       │     └── app/input/{csvParser,htmlParser}
+                       └── core/services/{parseInput,calculateTax}
+                              ├── core/parser
+                              └── core/domain
 ```
 
 ---
@@ -158,7 +159,7 @@ Themes defined in `src/app/theme.js`:
 * `dayTheme`
 * `nightTheme`
 
-Applied via `useThemeMode` hook → `app/input/themeStorage.js`:
+Applied via `useThemeMode` hook → `app/hooks/themeStorage.js`:
 
 ```js
 document.documentElement.setAttribute('data-theme', 'night' | 'day')
@@ -247,8 +248,9 @@ Do not hardcode colors.
 ```
 src/
   core/          ← pure pipeline (server-exportable, no browser APIs, no React)
-    services/    ← use-case orchestration (calculateTax, inferPriorPositions)
-    domain/      ← business logic (tax calculators, FX, parsers)
+    services/    ← use-case orchestration (calculateTax, parseInput)
+    parser/      ← input normalization + inference
+    domain/      ← business logic (tax calculators, FX)
       tax/costBasis/  ← cost-basis strategies (weighted-average, IBKR)
   app/           ← everything React and browser-specific
     App.jsx      ← composition shell
