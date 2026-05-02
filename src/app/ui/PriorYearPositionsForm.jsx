@@ -7,7 +7,7 @@ import {
 import { InfoOutlined } from '@mui/icons-material'
 import {
   findUsdRate, getPrevYearEndDate, getLocalCurrencyLabel,
-} from '../core/domain/fx/fxRates.js'
+} from '../../core/domain/fx/fxRates.js'
 
 function fmtNum(n, decimals = 2) {
   if (n == null) return '—'

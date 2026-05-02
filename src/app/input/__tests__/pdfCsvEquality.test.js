@@ -11,7 +11,7 @@ import { parseActivityStatementCsv, parseTradeConfirmationHtml, buildInputData }
 // Helpers
 // ---------------------------------------------------------------------------
 
-const DEMO_DIR = resolve(import.meta.dirname, '../../../public/demo')
+const DEMO_DIR = resolve(import.meta.dirname, '../../../../public/demo')
 
 function loadDemoCsv() {
   return readFileSync(resolve(DEMO_DIR, 'U0_2025_activity_demo.csv'), 'utf-8')

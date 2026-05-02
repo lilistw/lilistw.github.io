@@ -37,8 +37,8 @@ React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers
 
 ## 4) Runtime flow
 
-`src/hooks/useTaxAppController.js` owns page state and orchestration.
-`src/App.jsx` is a thin composition shell.
+`src/app/hooks/useTaxAppController.js` owns page state and orchestration.
+`src/app/App.jsx` is a thin composition shell.
 
 ```
 User selects CSV + HTML
@@ -69,7 +69,7 @@ ResultTabs (trades / holdings / dividends / interest)
 
 ## 5) Architecture layers
 
-### Hooks layer (`src/hooks/`)
+### Hooks layer (`src/app/hooks/`)
 
 Page-level state and commands. One hook per page workflow.
 
@@ -100,13 +100,13 @@ No React imports. No browser globals. No localization calls (`t` is forbidden in
 
 ---
 
-### Input layer (`src/input/`)
+### Input layer (`src/app/input/`)
 
 File I/O and input assembly — the only place that reads browser File/DOM objects and turns them into domain data. The orchestrator reads input and passes it to core.
 
 * `fileReader.js` — reads File objects, calls `parseInput`
 * `htmlParser.js` — wraps `DOMParser`
-* `themeStorage.js` — wraps `localStorage` + `document.documentElement`
+* `themeStorage.js` — browser storage adapter for theme persistence (used only by `app/hooks/useThemeMode`)
 * `readCsv.js` — wraps PapaParse; accepts CSV text, returns `string[][]`
 * `parseInput.js` — thin entry-point: `parseInput({ csvText, htmlDoc })` → InputData
 * `buildInputData.js` — format detection, validation, InputData assembly:
@@ -117,7 +117,7 @@ File I/O and input assembly — the only place that reads browser File/DOM objec
 
 ---
 
-### UI layer (`src/ui/`)
+### UI layer (`src/app/ui/`)
 
 All React components and output formatters. Passive — render props only, emit events.
 
@@ -143,29 +143,28 @@ No business logic. No direct browser API imports (except `presentation/` which i
 ### Dependency direction
 
 ```
-ui → hooks → core/services → core/domain
-       ↓           ↓
-     input      core/domain
-       ↓
-    core/domain
+app/ui/ResultTabs → app/ui/presentation ─────┐
+app/App.jsx       → app/hooks                │
+                       ├── core/services ─────┤→ core/domain
+                       └── app/input ─────────┘
 ```
 
 ---
 
 ## 6) Theming
 
-Themes defined in `src/theme.js`:
+Themes defined in `src/app/theme.js`:
 
 * `dayTheme`
 * `nightTheme`
 
-Applied via `useThemeMode` hook → `input/themeStorage.js`:
+Applied via `useThemeMode` hook → `app/input/themeStorage.js`:
 
 ```js
 document.documentElement.setAttribute('data-theme', 'night' | 'day')
 ```
 
-`index.css` uses `[data-theme]` for non-MUI styling (layout shell only).
+`styles/index.css` uses `[data-theme]` for non-MUI styling (layout shell only).
 
 ---
 
@@ -186,8 +185,8 @@ Do not hardcode colors.
 
 ## 7) i18n rules
 
-* All strings → `src/localization/bg.json`
-* Use `import { t } from '../localization/i18n.js'`
+* All strings → `src/app/localization/bg.json`
+* Use `import { t } from '../localization/i18n.js'` (relative to each file's location within `app/`)
 * `t` is a plain function (not a React hook) — safe to call anywhere
 * Use `t('key', { returnObjects: true })` for structured content
 * Use interpolation: `t('key', { varName: value })` → `{{ varName }}` in JSON
@@ -251,11 +250,17 @@ src/
     services/    ← use-case orchestration (calculateTax, inferPriorPositions)
     domain/      ← business logic (tax calculators, FX, parsers)
       tax/costBasis/  ← cost-basis strategies (weighted-average, IBKR)
-  input/         ← file I/O + input assembly (browser adapters, CSV/HTML reading, validation)
-  hooks/         ← page-level hooks (workflow state + commands, useThemeMode)
-  ui/            ← React components (passive)
-    presentation/ ← output formatters (translate codes → display strings)
-  localization/  ← Bulgarian strings (bg.json + i18n.js)
+  app/           ← everything React and browser-specific
+    App.jsx      ← composition shell
+    theme.js     ← MUI day/night themes
+    hooks/       ← page-level hooks (workflow state + commands, useThemeMode)
+    input/       ← file I/O + input assembly (browser adapters, CSV/HTML reading, validation)
+    ui/          ← React components (passive)
+      presentation/ ← output formatters (translate codes → display strings)
+    localization/ ← Bulgarian strings (bg.json + i18n.js)
+  styles/        ← global CSS (index.css)
+  assets/        ← static assets
+  main.jsx       ← entry point
 ```
 
 ---

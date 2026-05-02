@@ -1,7 +1,7 @@
 // HoldingsPresenter.js
 import { t } from '../../localization/i18n.js'
 import { fmt } from './fmt.js'
-import { decimalToNumber } from '../../core/domain/numStr.js'
+import { decimalToNumber } from '../../../core/domain/numStr.js'
 
 export class HoldingPresenter {
   constructor({ lcl, mode = 'display' }) {
