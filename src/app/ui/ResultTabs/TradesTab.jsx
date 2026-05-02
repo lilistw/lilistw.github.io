@@ -3,47 +3,31 @@ import { t } from '../../localization/i18n.js'
 import DataTable from './DataTable'
 import TaxSummary from './TaxSummary'
 import PriorYearApproxWarning from '../PriorYearApproxWarning'
-import { buildTradeTotals, buildTaxSummary } from '../../../core/domain/tradeSummary'
 import TaxableToggleDialog from './TaxableToggleDialog'
 import { alpha } from '@mui/material/styles'
 import { Box, Typography } from '@mui/material'
 import { WarningOutlined } from '@mui/icons-material'
 import { TradePresenter } from '../presentation/TradePresenter.js'
-
+import { useTradesViewModel } from '../../hooks/useTradesViewModel.js'
 
 export default function TradesTab({ result }) {
-
   const { localCurrencyCode, localCurrencyLabel } = result.taxContext
-
-  const tradePresenter = new TradePresenter({ lcl: localCurrencyLabel })
 
   // Raw Decimal rows (no _total rows); updated when user toggles taxable status
   const [rawRows, setRawRows] = useState(
     () => result.trades.filter(r => !r._total)
   )
 
-  // Presented display rows (Decimal → locale strings)
-  const displayRows = useMemo(
-    () => tradePresenter.buildTable(rawRows).rows,
-    [rawRows]
+  const tradePresenter = useMemo(
+    () => new TradePresenter({ lcl: localCurrencyLabel }),
+    [localCurrencyLabel]
   )
 
-  // Domain totals (Decimal sums) then presented
-  const totalRows = useMemo(
-    () => buildTradeTotals(rawRows, localCurrencyCode),
-    [rawRows, localCurrencyCode]
-  )
-  const displayTotals = useMemo(
-    () => tradePresenter.buildTable(totalRows).rows,
-    [totalRows]
-  )
-
-  const trades = useMemo(() => ({
-    columns: tradePresenter.buildTable([]).columns,
-    rows: [...displayRows, ...displayTotals],
-  }), [displayRows, displayTotals])
-
-  const taxSummary = useMemo(() => buildTaxSummary(rawRows), [rawRows])
+  const { columns, rows, taxSummary } = useTradesViewModel({
+    rawRows,
+    localCurrencyCode,
+    presenter: tradePresenter
+  })
 
   const approxRows = useMemo(
     () => rawRows.filter(r => r.side === 'SELL' && r.costBasisLclApprox),
@@ -52,9 +36,9 @@ export default function TradesTab({ result }) {
 
   const [pending, setPending] = useState(null)
 
-  function handleToggle(idx, _colKey) {
+  function handleToggle(idx) {
     const row = rawRows[idx]
-    if (row.taxable === null) return
+    if (!row || row.taxable === null) return
 
     const newTaxable = !row.taxable
     const newLabel = newTaxable
@@ -88,19 +72,26 @@ export default function TradesTab({ result }) {
     <>
       <DataTable
         title={t('app.tradesTableTitle')}
-        columns={trades.columns}
-        rows={trades.rows}
+        columns={columns}
+        rows={rows}
         countLabel={t('app.countLabel.trades')}
         onToggle={handleToggle}
         hint={
-          <Box sx={{
-            display: 'flex', alignItems: 'flex-start', gap: 1,
-            px: 2, py: 1,
-            bgcolor: (theme) => theme.palette.mode === 'dark'
-              ? alpha(theme.palette.primary.main, 0.10)
-              : '#EFF6FF',
-            borderBottom: '1px solid', borderColor: 'divider',
-          }}>
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'flex-start',
+              gap: 1,
+              px: 2,
+              py: 1,
+              bgcolor: (theme) =>
+                theme.palette.mode === 'dark'
+                  ? alpha(theme.palette.primary.main, 0.10)
+                  : '#EFF6FF',
+              borderBottom: '1px solid',
+              borderColor: 'divider',
+            }}
+          >
             <WarningOutlined sx={{ fontSize: 15, color: 'warning.main', mt: 0.2, flexShrink: 0 }} />
             <Typography variant="caption" color="text.secondary" sx={{ lineHeight: 1.6 }}>
               <strong>{t('etfClassificationWarning.title')}</strong>{' '}

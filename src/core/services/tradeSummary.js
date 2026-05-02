@@ -12,7 +12,7 @@ const TRADE_SUM_LCL_COLS = ['totalLcl', 'costBasisLcl']
  * Groups by taxable boolean (true = taxable, false = exempt), then by currency,
  * plus a local-currency grand total per group.
  */
-export function buildTradeTotals(dataRows, localCurrencyCode) {
+function buildTradeTotals(dataRows, localCurrencyCode) {
   const totals = []
   const groups = [
     { taxable: true,  label: 'TAXABLE' },
@@ -41,7 +41,7 @@ export function buildTradeTotals(dataRows, localCurrencyCode) {
  * Build App5 (taxable) and App13 (exempt) summaries from the current trade rows.
  * Reflects any taxable-status toggles the user has made.
  */
-export function buildTaxSummary(dataRows) {
+function buildTaxSummary(dataRows) {
   const sells   = dataRows.filter(r => r.side === 'SELL')
   const taxable = sells.filter(r => r.taxable === true)
   const exempt  = sells.filter(r => r.taxable === false)
@@ -64,4 +64,14 @@ export function buildTaxSummary(dataRows) {
   }
 
   return { sumTaxable: summarize(taxable), sumExempt: summarize(exempt) }
+}
+
+export function calculateTotals(rawRows, currency) {
+  const totals = buildTradeTotals(rawRows, currency)
+  const taxSummary = buildTaxSummary(rawRows)
+
+  return {
+    totals,
+    taxSummary,
+  }
 }

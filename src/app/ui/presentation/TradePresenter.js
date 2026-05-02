@@ -53,6 +53,14 @@ export class TradePresenter {
     }
   }
 
+  buildColumns() {
+    return TRADE_COLUMNS(this.lcl)
+  }
+
+  buildRows(rows) {
+    return this.#mapRows(rows)
+  }
+
   // -------------------------
 
   #fmtNum(decimal, decimals) {
