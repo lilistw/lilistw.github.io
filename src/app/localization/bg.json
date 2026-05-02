@@ -233,7 +233,7 @@
     "termsAgree": "Съгласен/на съм с",
     "termsAgreeLink": "условията за ползване",
     "csvHint": "IBKR Portal → Reports → Statements → Activity (формат CSV)",
-    "htmlHint": "IBKR Portal → Reports → Trade Confirmation (HTML)",
+    "htmlHint": "IBKR Portal → Reports → Statements → Trade Confirmation (HTML)",
     "interest": {
       "title": "Приложение №6 – Доходи от други източници (чл. 35 ЗДДФЛ)",
       "bodyPart1": "Лихвите от IBKR се декларират в",
