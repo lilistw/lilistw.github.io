@@ -15,7 +15,7 @@ const NUM_COL = { key: '#', label: '#', align: 'right', mono: true, decimals: 0 
 
 export default function TaxApp8Holdings({ result }) {
   const holdingsPresenter = new HoldingPresenter({
-    lcl: result.localCurrencyLabel
+    lcl: result.taxContext.localCurrencyLabel
   })
 
   const data = holdingsPresenter.buildHoldings(result.holdings)
@@ -54,8 +54,8 @@ export default function TaxApp8Holdings({ result }) {
       />
       <ThresholdWarning
         holdings={result.holdings}
-        localCurrencyLabel={result.localCurrencyLabel}
-        localCurrencyCode={result.localCurrencyCode}
+        localCurrencyLabel={result.taxContext.localCurrencyLabel}
+        localCurrencyCode={result.taxContext.localCurrencyCode}
       />
     </Box>
   )

@@ -5,9 +5,9 @@ import { toDecimal, D0 } from '@util/numStr.js'
 const BG_DIVIDEND_TAX_RATE = new Decimal('0.05')
 
 export class DividendCalculator {
-  constructor({ instrumentInfo, context }) {
+  constructor({ instrumentInfo, taxContext }) {
     this.instrumentInfo = instrumentInfo
-    this.ctx = context
+    this.ctx = taxContext
   }
 
   calculate({ dividends, withholdingTax }) {

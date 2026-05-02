@@ -89,7 +89,7 @@ export class TradePresenter {
       instrType: r._total ? r.instrType : r.instrTypeLabel,
 
       taxExemptLabel: r._total
-        ? t(`app.taxStatus.${r.taxExemptLabel.toLowerCase()}`)
+        ? t(`app.taxStatus.${r.taxExemptLabel?.toLowerCase()}`)
         : r.taxable == null
           ? ''
           : r.taxable

@@ -22,7 +22,7 @@ export default function App() {
     htmlFile, htmlFileUrl,
     inputData, pendingPositions, result,
     parsing, error,
-    taxYear, inputJsonText, outputJsonText,
+    taxContext, inputJsonText, outputJsonText,
     agreed, setAgreed,
     showTerms, setShowTerms,
     showPrivacy, setShowPrivacy,
@@ -109,7 +109,7 @@ export default function App() {
               <PriorYearPositionsForm
                 positions={pendingPositions}
                 onPositionChange={updatePendingPosition}
-                taxYear={taxYear}
+                taxContext={taxContext}
               />
             )}
 

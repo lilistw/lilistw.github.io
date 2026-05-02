@@ -20,7 +20,26 @@ import { parseInterest }                                   from './parsers/parse
 import { parseTaxYear }                                    from './parsers/parseTaxYear.js'
 import { inferPriorPositions }                             from './inferPriorPositions.js'
 
+import {
+  getLocalCurrencyCode,
+  getLocalCurrencyLabel,
+  getPrevYearEndDate,
+  findUsdRate
+} from '../domain/fx/fxRates.js'
 
+// -------------------------
+// CONTEXT
+// -------------------------
+function buildTaxContext(taxYear) {
+  const prevYearEndDate = getPrevYearEndDate(taxYear)
+  return Object.freeze({
+    taxYear,
+    localCurrencyCode: getLocalCurrencyCode(taxYear),
+    localCurrencyLabel: getLocalCurrencyLabel(taxYear),
+    prevYearEndDate,
+    prevYearUsdRate: findUsdRate(prevYearEndDate, taxYear)
+  })
+}
 
 // ---------------------------------------------------------------------------
 // Assembly
@@ -39,23 +58,30 @@ export function buildInputData({activityStatement, tradeConfirmation}) {
   const period = statement.period  
   const taxYear = parseTaxYear(period)
 
+  const taxContext = buildTaxContext(taxYear)
+
   const instruments = parseInstruments(activityStatement)
   const openPositions = parseOpenPositions(activityStatement)
   const csvTrades = parseCsvTrades(activityStatement)
   const inferredPriorPositions = inferPriorPositions({ trades: tradeConfirmation, openPositions, csvTrades, instruments, period})
+  const dividends = parseDividends(activityStatement)
+  const withholdingTax = parseWithholdingTax(activityStatement)
+  const interest = parseInterest(activityStatement)
+  const trades = tradeConfirmation
+
 
   return {
     statement,
     account,
-    taxYear,
     period,
     instruments,
-    dividends:      parseDividends(activityStatement),
-    withholdingTax: parseWithholdingTax(activityStatement),
-    trades : tradeConfirmation,
+    dividends,
+    withholdingTax,
+    trades,
     openPositions,
     csvTrades,
     inferredPriorPositions,
-    interest:       parseInterest(activityStatement),
+    interest,
+    taxContext
   }
 }

@@ -13,7 +13,7 @@ import { TradePresenter } from '../presentation/TradePresenter.js'
 
 export default function TradesTab({ result }) {
 
-  const { taxYear, localCurrencyCode, localCurrencyLabel } = result
+  const { localCurrencyCode, localCurrencyLabel } = result.taxContext
 
   const tradePresenter = new TradePresenter({ lcl: localCurrencyLabel })
 
@@ -113,7 +113,7 @@ export default function TradesTab({ result }) {
         }
       />
 
-      <PriorYearApproxWarning rows={approxRows} taxYear={taxYear} />
+      <PriorYearApproxWarning rows={approxRows} taxContext={result.taxContext} />
 
       <TaxSummary taxSummary={taxSummary} localCurrencyLabel={localCurrencyLabel} />
 
