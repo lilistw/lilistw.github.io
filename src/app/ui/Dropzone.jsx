@@ -12,6 +12,7 @@ export default function Dropzone({
   showInfo: showInfoProp = true,
   infoKey = 'csv',
   fileType,
+  hint,
 }) {
   const [showInfo, setShowInfo] = useState(false)
   const inputRef = useRef(null)
@@ -82,6 +83,20 @@ export default function Dropzone({
           </Box>
         )}
       </Box>
+
+      {hint && showInfoProp && (
+        <Link
+          component="button"
+          variant="caption"
+          color="text.secondary"
+          underline="hover"
+          onClick={() => setShowInfo(true)}
+          sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}
+        >
+          <InfoOutlined sx={{ fontSize: 13 }} />
+          {hint}
+        </Link>
+      )}
 
       {showInfoProp && (
         <Dialog open={showInfo} onClose={() => setShowInfo(false)} maxWidth="sm" fullWidth>
