@@ -1,7 +1,6 @@
 import { t } from './localization/i18n.js'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from '@mui/material'
-import { InfoOutlined } from '@mui/icons-material'
 
 import { dayTheme, nightTheme } from './theme.js'
 import { useTaxAppController } from './hooks/useTaxAppController.js'
@@ -53,12 +52,8 @@ export default function App() {
                   label={t('dropzone.csvLabel')}
                   infoKey="csv"
                   fileType={csvFile ? 'CSV' : undefined}
+                  hint={t('app.csvHint')}
                 />
-                <Typography variant="caption" color="text.secondary"
-                  sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
-                  <InfoOutlined sx={{ fontSize: 13 }} />
-                  {t('app.csvHint')}
-                </Typography>
               </Box>
               <Box>
                 <Dropzone
@@ -68,12 +63,8 @@ export default function App() {
                   label={t('dropzone.htmlLabel')}
                   infoKey="htm"
                   fileType={htmlFile ? 'HTML' : undefined}
+                  hint={t('app.htmlHint')}
                 />
-                <Typography variant="caption" color="text.secondary"
-                  sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: -1, mb: 1.5, px: 0.5 }}>
-                  <InfoOutlined sx={{ fontSize: 13 }} />
-                  {t('app.htmlHint')}
-                </Typography>
               </Box>
             </Box>
 
