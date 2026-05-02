@@ -1,5 +1,5 @@
-import { buildInstrumentInfo } from '../domain/parser/parseInstruments.js'
-import { buildCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
+import { buildInstrumentInfo } from '../../app/input/parser/parseInstruments.js'
+import { buildCsvTradeBasis } from '../../app/input/parser/parseCsvTrades.js'
 import {
   getLocalCurrencyCode,
   getLocalCurrencyLabel,

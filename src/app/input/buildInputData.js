@@ -12,14 +12,14 @@
  */
 
 import { parseCSV }                                        from './readCsv.js'
-import { parseTradesFromHtml }                             from '../parser/parseTradesHtml.js'
-import { parseStatementInfo }                              from '../parser/parseStatementInfo.js'
-import { parseInstruments }                                from '../parser/parseInstruments.js'
-import { parseDividends, parseWithholdingTax }             from '../parser/parseDividends.js'
-import { parseOpenPositions }                              from '../parser/parseOpenPositions.js'
-import { parseCsvTrades }                                  from '../parser/parseCsvTrades.js'
-import { parseInterest }                                   from '../parser/parseInterest.js'
-import { parseTaxYear }                                    from '../parser/parseTaxYear.js'
+import { parseTradesFromHtml }                             from './parser/parseTradesHtml.js'
+import { parseStatementInfo }                              from './parser/parseStatementInfo.js'
+import { parseInstruments }                                from './parser/parseInstruments.js'
+import { parseDividends, parseWithholdingTax }             from './parser/parseDividends.js'
+import { parseOpenPositions }                              from './parser/parseOpenPositions.js'
+import { parseCsvTrades }                                  from './parser/parseCsvTrades.js'
+import { parseInterest }                                   from './parser/parseInterest.js'
+import { parseTaxYear }                                    from './parser/parseTaxYear.js'
 import {
   validateCsvContent,
   validateHtmlContent,

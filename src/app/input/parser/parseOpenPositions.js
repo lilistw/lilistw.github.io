@@ -1,4 +1,4 @@
-import { getInstrumentTypeLabel } from '../instrument/classifier.js'
+import { getInstrumentTypeLabel } from '../../../core/domain/instrument/classifier.js'
 import { parseToDecimal, toDecimal } from '@util/numStr.js'
 
 /**
