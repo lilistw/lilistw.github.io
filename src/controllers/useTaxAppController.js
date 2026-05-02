@@ -1,3 +1,4 @@
+// Browser-only: uses fetch, URL.createObjectURL, URL.revokeObjectURL
 import { useState, useEffect } from 'react'
 import { t } from '../localization/i18n.js'
 import { readInputFromFiles } from '../platform/web/fileReader.js'

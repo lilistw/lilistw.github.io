@@ -1,3 +1,4 @@
+// Browser-only: uses navigator.clipboard
 import {
   Accordion,
   AccordionSummary,

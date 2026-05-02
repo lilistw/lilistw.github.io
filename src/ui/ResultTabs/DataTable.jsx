@@ -1,3 +1,4 @@
+// Browser-only: uses navigator.clipboard
 import { useState } from 'react'
 import { t } from '../../localization/i18n.js'
 import {

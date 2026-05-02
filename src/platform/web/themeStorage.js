@@ -1,3 +1,4 @@
+// Browser-only: uses localStorage and document.documentElement
 const THEME_KEY = 'theme'
 
 export function getStoredTheme() {
