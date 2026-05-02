@@ -46,6 +46,7 @@ export default function TaxApp8Holdings({ result }) {
         </Box>
       </Box>
       <DataTable
+        title={t('taxApp8Holdings.tableTitle')}
         columns={[NUM_COL, ...data.columns]}
         rows={addRowNumbers(data.rows)}
         countLabel={t('taxApp8Holdings.countLabel')}
