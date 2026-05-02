@@ -1,5 +1,6 @@
-import { parseHtmlDocument } from './htmlParser.js'
-import { parseInput } from './parseInput.js'
+import { parseTradesFromHtml } from './htmlParser.js'
+import { parseActivityStatementCsv } from './csvParser.js'
+
 
 /**
  * Read uploaded File objects and return InputData.
@@ -11,7 +12,7 @@ import { parseInput } from './parseInput.js'
  * @returns {Promise<InputData>}
  */
 export async function readInputFromFiles({ csvFile, htmlFile }) {
-  const csvText = await csvFile.text()
-  const htmlDoc = parseHtmlDocument(await htmlFile.text())
-  return parseInput({ csvText, htmlDoc })
+  const activityStatement = parseActivityStatementCsv(await csvFile.text())
+  const tradeConfirmation = parseTradesFromHtml(await htmlFile.text())
+  return { activityStatement, tradeConfirmation }
 }

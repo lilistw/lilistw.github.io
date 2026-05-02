@@ -4,6 +4,7 @@
 const keywords = ['BITCOIN', 'CRYPTO', 'BTC', 'ETH']
 
 export function classifyInstrument(instrument) {
+  if (!instrument) return { isETF: false, isCryptoRelated: false, isRegulatedMarket: false }
   const isETF = (instrument.type || '').toUpperCase() === 'ETF'
   const instrumentName = instrument.name?.toUpperCase() || false;
   const isCryptoRelated = instrumentName && keywords.some(k => instrumentName.includes(k))
@@ -19,7 +20,7 @@ export function classifyInstrument(instrument) {
 export function getInstrumentTypeLabel(instrument) {
   const { isETF } = classifyInstrument(instrument)
   if (isETF) return 'ETF'
-  const t = (instrument.type || '').toUpperCase()
+  const t = (instrument?.type || '').toUpperCase()
   if (!t || t === 'COMMON' || t === 'STOCK' || t === 'ADR' || t === 'REIT') return 'Stock'
   return 'Other'
 }

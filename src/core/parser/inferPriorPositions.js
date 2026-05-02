@@ -1,9 +1,9 @@
 import {
   toLocalCurrency, getPrevYearEndDate,
 } from '../domain/fx/fxRates.js'
-import { buildInstrumentInfo } from '../domain/parser/parseInstruments.js'
-import { buildCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
-import { parseTaxYear } from '../domain/parser/parseTaxYear.js'
+import { buildInstrumentInfo } from './parsers/parseInstruments.js'
+import { buildCsvTradeBasis } from './parsers/parseCsvTrades.js'
+import { parseTaxYear } from './parsers/parseTaxYear.js'
 import { toDecimal, D0 } from '@util/numStr.js'
 
 /**

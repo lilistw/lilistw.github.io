@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { t } from '../localization/i18n.js'
 import { readInputFromFiles } from '../input/fileReader.js'
 import { calculateTax } from '@core/services/calculateTax.js'
-import { inferPriorPositions } from '@/core/services/inferPriorPositions.js'
+import { parseInput } from '@core/services/parseInput.js'
 import { useThemeMode } from './useThemeMode.js'
 import { decimalJsonReplacer } from '@util/numStr.js'
 
@@ -45,7 +45,6 @@ export function useTaxAppController() {
     return () => URL.revokeObjectURL(url)
   }, [htmlFile])
 
-  // Phase 1: parse input
   useEffect(() => {
     if (!csvFile || !htmlFile) {
       setInputData(null)
@@ -61,9 +60,11 @@ export function useTaxAppController() {
       .then(data => {
         if (cancelled) return
 
-        setInputData(data)
+        const parsedInput = parseInput(data)
 
-        const inferred = inferPriorPositions(data)
+        setInputData(parsedInput)
+
+        const inferred = parsedInput.inferredPriorPositions;
 
         setPendingPositions(
           inferred.map(p => ({

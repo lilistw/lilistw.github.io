@@ -3,7 +3,7 @@ import { t } from '../localization/i18n.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
-import { toDecimal, D0 } from '../../core/domain/numStr.js'
+import { toDecimal, D0 } from '@util/numStr.js'
 
 const EUR_BGN = new Decimal('1.95583')
 const SPB8_THRESHOLD_EUR = new Decimal(25000)

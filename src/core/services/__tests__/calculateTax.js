@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest'
 import Decimal from 'decimal.js'
-import { calculateTax } from '../taxService.js'
+import { calculateTax } from '../calculateTax.js'
 
 import input from './fixtures/demoInput.json'
 import expected from './fixtures/demoOutput.json'
@@ -84,7 +84,7 @@ describe('calculateTax', () => {
 // MOCKS
 // -------------------------
 
-vi.mock('../domain/parser/parseInstruments.js', () => ({
+vi.mock('@core/parser/parsers/parseInstruments.js', () => ({
   buildInstrumentInfo: vi.fn(() => ({
     AAPL: {
       description: 'Apple Inc.',
@@ -96,7 +96,7 @@ vi.mock('../domain/parser/parseInstruments.js', () => ({
   })),
 }))
 
-vi.mock('../domain/parser/parseCsvTrades.js', () => ({
+vi.mock('@core/parser/parsers/parseCsvTrades.js', () => ({
   buildCsvTradeBasis: vi.fn(() => new Map()),
 }))
 

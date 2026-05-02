@@ -86,7 +86,7 @@ export class TradePresenter {
       proceedsLcl:   this.#fmtNum(r.proceedsLcl, 2),
       realizedPLLcl: this.#fmtNum(r.realizedPLLcl, 2),
 
-      instrType: r._total ? r.instrType : r.instrTypeLabel ),
+      instrType: r._total ? r.instrType : r.instrTypeLabel,
 
       taxExemptLabel: r._total
         ? t(`app.taxStatus.${r.taxExemptLabel.toLowerCase()}`)
