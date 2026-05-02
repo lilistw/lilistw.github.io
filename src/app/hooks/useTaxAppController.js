@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { t } from '../localization/i18n.js'
 import { readInputFromFiles } from '../input/fileReader.js'
 import { calculateTax } from '@core/services/calculateTax.js'
-import { inferPriorPositions } from '@/core/services/inferPriorPositions.js'
+import { inferPriorPositions } from '@core/services/inferPriorPositions.js'
 import { useThemeMode } from './useThemeMode.js'
 import { decimalJsonReplacer } from '@util/numStr.js'
 
