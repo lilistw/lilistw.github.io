@@ -106,7 +106,7 @@ File I/O and input assembly — the only place that reads browser File/DOM objec
 
 * `fileReader.js` — reads File objects, calls `parseInput`
 * `htmlParser.js` — wraps `DOMParser`
-* `themeStorage.js` — wraps `localStorage` + `document.documentElement`
+* `themeStorage.js` — browser storage adapter for theme persistence (used only by `hooks/useThemeMode`)
 * `readCsv.js` — wraps PapaParse; accepts CSV text, returns `string[][]`
 * `parseInput.js` — thin entry-point: `parseInput({ csvText, htmlDoc })` → InputData
 * `buildInputData.js` — format detection, validation, InputData assembly:
@@ -143,11 +143,10 @@ No business logic. No direct browser API imports (except `presentation/` which i
 ### Dependency direction
 
 ```
-ui → hooks → core/services → core/domain
-       ↓           ↓
-     input      core/domain
-       ↓
-    core/domain
+ui/ResultTabs → ui/presentation ─────┐
+ui (App.jsx)  → hooks                │
+                  ├── core/services ──┤→ core/domain
+                  └── input ──────────┘
 ```
 
 ---

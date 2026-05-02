@@ -13,32 +13,28 @@ No data leaves the browser.
 ```
 src/
   core/           Pure pipeline — no browser APIs, no React
-    services/     Use-case orchestration
+    services/     Use-case orchestration (calculateTax, inferPriorPositions)
     domain/       Business logic (tax, FX, parsers)
       tax/
         costBasis/  Cost-basis strategies
-    input/        Input boundary (format detection, validation, assembly)
-  presentation/   Output formatters — domain objects to display-ready values
-  readers/        Format readers (no browser APIs, no domain logic)
-  platform/web/   Browser adapters (File, DOMParser, localStorage, PDF)
-  controllers/    Page-level React hooks (workflow state + commands)
+  input/          File I/O + input assembly (browser adapters, CSV/HTML reading, validation)
+  hooks/          Page-level React hooks (workflow state + commands)
   ui/             React components (passive — render props, emit events)
+    presentation/ Output formatters — domain objects to display-ready values
   localization/   Bulgarian strings (bg.json + i18n.js)
 ```
 
 ### Dependency direction
 
 ```
-ui -> controllers -> core/services -> core/domain
-           |               |
-      platform/web     core/input <- readers/
-                            |
-                        core/domain
+ui/ResultTabs → ui/presentation ─────┐
+ui (App.jsx)  → hooks                │
+                  ├── core/services ──┤→ core/domain
+                  └── input ──────────┘
 ```
 
-`core/` has no imports from `ui/`, `controllers/`, `platform/`, or
-`presentation/`. This keeps the pipeline portable and testable without a
-browser.
+`core/` has no imports from `ui/`, `hooks/`, or `input/`. This keeps the
+pipeline portable and testable without a browser.
 
 ---
 
@@ -48,20 +44,21 @@ browser.
 User drops CSV + HTML files
         |
         v
-platform/web/fileReader.js
+input/fileReader.js
   readInputFromFiles({ csvFile, htmlFile })
         |
         v
-core/services/parseInput.js
+input/parseInput.js
   parseInput({ csvText, htmlDoc })
         |
-        +-> core/input/parseInput.js
-        |       parseActivityStatementCsv(csvText)   -- CSV rows
-        |       parseTradeConfirmationHtml(htmlDoc)  -- Trade[]
-        |       buildInputData(csvRows, trades)       -- InputData
+        v
+input/buildInputData.js
+  parseActivityStatementCsv(csvText)   -- CSV rows
+  parseTradeConfirmationHtml(htmlDoc)  -- Trade[]
+  buildInputData(csvRows, trades)       -- InputData
         |
         v
-controllers/useTaxAppController.js
+hooks/useTaxAppController.js
   inferPriorPositions(inputData)  -- detect positions opened before tax year
         |
         v
@@ -77,7 +74,7 @@ core/services/calculateTax.js
         +-> InterestCalculator -- aggregated interest income
         |
         v
-presentation/ (TradePresenter, DividendPresenter, ...)
+ui/presentation/ (TradePresenter, DividendPresenter, ...)
         |
         v
 ui/ResultTabs/ (TradesTab, HoldingsTab, DividendsTab, InterestTab)
@@ -85,13 +82,26 @@ ui/ResultTabs/ (TradesTab, HoldingsTab, DividendsTab, InterestTab)
 
 ---
 
-## Core Layer Details
+## Layer Details
+
+### `input/`
+
+The only layer that may use browser globals or read files. It converts raw
+browser inputs into plain data and hands off to `core/`.
+
+- `fileReader.js` — reads `File` objects, delegates to `parseInput`
+- `htmlParser.js` — wraps `DOMParser`
+- `readCsv.js` — wraps PapaParse; returns `string[][]`
+- `parseInput.js` — thin entry-point: `parseInput({ csvText, htmlDoc })` → `InputData`
+- `buildInputData.js` — orchestrates domain parsers, returns canonical `InputData`
+- `validateInput.js` — validates IBKR file content before parsing
+- `themeStorage.js` — browser storage adapter for theme persistence (wraps
+  `localStorage` + `document.documentElement`; used only by `hooks/useThemeMode`)
 
 ### `core/services/`
 
 Thin use-case orchestrators. No business logic.
 
-- `parseInput.js` — delegates to `core/input/` and returns `InputData`
 - `calculateTax.js` — builds `TaxContext`, wires domain calculators, returns result
 - `inferPriorPositions.js` — detects sells with no matching buys in the statement
 
@@ -132,13 +142,15 @@ FX conversion utilities.
   EUR uses the fixed BGN peg (1.95583); USD uses BNB daily rate from JSON files
 - `rates/2024.fx.json`, `2025.fx.json`, `2026.fx.json` — bundled BNB rate tables
 
-### `core/input/`
+### `ui/presentation/`
 
-Input boundary: validates raw content and assembles `InputData`.
+Output formatters — no React imports, no business logic. Maps `Decimal` domain
+values to locale strings at the display boundary.
 
-- `parseActivityStatementCsv(csvText)` — validates then returns CSV rows
-- `parseTradeConfirmationHtml(doc)` — validates then returns `Trade[]`
-- `buildInputData(csvRows, trades)` — assembles the canonical `InputData` object
+- `TradePresenter`, `DividendPresenter`, `HoldingPresenter`, `InterestPresenter`
+- `TradeSummaryPresenter` — builds App5 (taxable) and App13 (exempt) summaries
+- `ExcelPresenter` — builds TSV export
+- `fmt.js` — `fmt(n, decimals)` — Bulgarian locale number formatting
 
 ---
 
@@ -165,16 +177,15 @@ writes back to the result array held in the controller.
 
 ### `core/` has no browser dependencies
 
-`readCsv.js` (PapaParse wrapper) lives in `readers/` rather than `core/`
-because it wraps a third-party library, but has no browser globals.
-`readPdf.js` is in `platform/web/` because `pdfjs-dist` requires browser
-globals.
+All browser globals are confined to `input/`. `core/domain/parser/` receives
+pre-parsed DOM nodes (passed in from `input/htmlParser.js`) rather than calling
+`DOMParser` itself. This keeps the entire `core/` tree runnable in Node.
 
 ### Decimal.js for all financial arithmetic
 
 JavaScript `number` cannot represent monetary values exactly. All amounts that
 enter the domain are immediately wrapped in `Decimal`; they are only converted
-back to `number` at the presentation boundary.
+back to `number` at the `ui/presentation/` boundary.
 
 ---
 
@@ -210,7 +221,7 @@ Top-level components:
 ## Theming
 
 Two themes defined in `src/theme.js` (`dayTheme`, `nightTheme`).
-`useThemeMode` hook persists the choice via `platform/web/themeStorage.js`,
+`useThemeMode` hook persists the choice via `input/themeStorage.js`,
 which writes `data-theme="day|night"` on `document.documentElement`.
 MUI theme is applied via `ThemeProvider`; `index.css` uses `[data-theme]`
 selectors only for the non-MUI layout shell.
@@ -223,7 +234,7 @@ colors in component `sx` props.
 ## Testing
 
 Vitest only. Tests cover parsers, tax calculators, and pure application
-functions (`parseInput`, `calculateTax`). UI, controllers, and styling are not
+functions (`buildInputData`, `calculateTax`). UI, hooks, and styling are not
 tested.
 
 Test files are colocated with their modules or placed in adjacent `__tests__/`
