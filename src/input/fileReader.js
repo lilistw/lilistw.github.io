@@ -1,5 +1,5 @@
 import { parseHtmlDocument } from './htmlParser.js'
-import { parseInput } from '../../core/services/parseInput.js'
+import { parseInput } from './parseInput.js'
 
 /**
  * Read uploaded File objects and return InputData.

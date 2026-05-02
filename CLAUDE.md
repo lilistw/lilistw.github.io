@@ -37,7 +37,7 @@ React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers
 
 ## 4) Runtime flow
 
-`src/controllers/useTaxAppController.js` owns page state and orchestration.
+`src/hooks/useTaxAppController.js` owns page state and orchestration.
 `src/App.jsx` is a thin composition shell.
 
 ```
@@ -69,11 +69,12 @@ ResultTabs (trades / holdings / dividends / interest)
 
 ## 5) Architecture layers
 
-### Controller layer (`src/controllers/`)
+### Hooks layer (`src/hooks/`)
 
 Page-level state and commands. One hook per page workflow.
 
 * `useTaxAppController` — the main app workflow hook
+* `useThemeMode` — day/night toggle with persistence
 
 No business logic. No direct browser API calls.
 
@@ -85,7 +86,6 @@ Pure pipeline — no browser APIs, no React. Safe to run on a server.
 
 **`src/core/services/`** — use-case orchestration:
 
-* `parseInput({ csvText, htmlDoc, csvPdfPages, tradePdfPages })` — pure InputData assembly
 * `inferPriorPositions`
 * `calculateTax`
 
@@ -96,65 +96,30 @@ Pure pipeline — no browser APIs, no React. Safe to run on a server.
 * cost-basis strategies (`tax/costBasis/`) — `WeightedAverageCostBasisStrategy` (BG-law default), `IbkrCostBasisStrategy` (uses CSV value, falls back to weighted-average); `createCostBasisStrategy(name)` factory
 * FX utilities (`fx/`)
 
-**`src/core/input/`** — input boundary: format detection, validation, InputData assembly:
-
-* `parseActivityStatementCsv(csvText)`
-* `parseActivityStatementPdf(pages)`
-* `parseTradeConfirmationHtml(doc)` — accepts pre-parsed Document
-* `parseTradeConfirmationPdf(pages)`
-* `buildInputData(csvRows, trades)`
-
 No React imports. No browser globals. No localization calls (`t` is forbidden inside `src/core/`).
 
 ---
 
-### Presentation layer (`src/presentation/`)
+### Input layer (`src/input/`)
 
-Output formatters — maps domain result objects to display-ready values. Translates currency codes and country codes to display strings at this boundary.
-
-* `TradePresenter`, `HoldingPresenter`, `DividendPresenter`, `InterestPresenter`
-* `TradeSummaryPresenter`, `ExcelPresenter`
-* `fmt.js` — locale number formatting
-
-No React imports. No business logic.
-
----
-
-### Readers layer (`src/readers/`)
-
-Format-specific text readers — no browser APIs, no domain logic.
-
-* `readCsv.js` — wraps PapaParse; accepts CSV text, returns `string[][]`
-
-`readPdf.js` stays in `src/platform/web/` because it requires browser globals.
-
----
-
-### Platform layer (`src/platform/web/`)
-
-Browser-specific adapters. The only place that may use browser globals.
+File I/O and input assembly — the only place that reads browser File/DOM objects and turns them into domain data. The orchestrator reads input and passes it to core.
 
 * `fileReader.js` — reads File objects, calls `parseInput`
 * `htmlParser.js` — wraps `DOMParser`
 * `themeStorage.js` — wraps `localStorage` + `document.documentElement`
-* `readPdf.js` — reads PDF files via `pdfjs-dist`
-
----
-
-### Controller layer (`src/controllers/`)
-
-Page-level state and commands. One hook per page workflow.
-
-* `useTaxAppController` — the main app workflow hook
-* `useThemeMode` — day/night toggle with persistence
-
-No business logic. No direct browser API calls.
+* `readCsv.js` — wraps PapaParse; accepts CSV text, returns `string[][]`
+* `parseInput.js` — thin entry-point: `parseInput({ csvText, htmlDoc })` → InputData
+* `buildInputData.js` — format detection, validation, InputData assembly:
+  * `parseActivityStatementCsv(csvText)`
+  * `parseTradeConfirmationHtml(doc)` — accepts pre-parsed Document
+  * `buildInputData(csvRows, trades)`
+* `validateInput.js` — validates IBKR file content
 
 ---
 
 ### UI layer (`src/ui/`)
 
-All React components. Passive — render props only, emit events.
+All React components and output formatters. Passive — render props only, emit events.
 
 * `AppHeader`, `AppFooter`
 * `Dropzone`
@@ -166,19 +131,23 @@ All React components. Passive — render props only, emit events.
   * `TaxableToggleDialog` — confirmation dialog for App5/App13 manual override
   * `DevTab` — raw JSON inspector for input/output (dev aid)
 * `Disclaimer`, `InfoModal`
+* `presentation/` — output formatters (maps domain objects to display-ready values):
+  * `TradePresenter`, `HoldingPresenter`, `DividendPresenter`, `InterestPresenter`
+  * `TradeSummaryPresenter`, `ExcelPresenter`
+  * `fmt.js` — locale number formatting
 
-No business logic. No direct browser API imports.
+No business logic. No direct browser API imports (except `presentation/` which is React-free).
 
 ---
 
 ### Dependency direction
 
 ```
-ui → controllers → core/services → core/domain
-           ↓              ↓
-       platform/web    core/input ← readers/
-                          ↓
-                       core/domain
+ui → hooks → core/services → core/domain
+       ↓           ↓
+     input      core/domain
+       ↓
+    core/domain
 ```
 
 ---
@@ -190,7 +159,7 @@ Themes defined in `src/theme.js`:
 * `dayTheme`
 * `nightTheme`
 
-Applied via `useThemeMode` hook → `platform/web/themeStorage.js`:
+Applied via `useThemeMode` hook → `input/themeStorage.js`:
 
 ```js
 document.documentElement.setAttribute('data-theme', 'night' | 'day')
@@ -279,16 +248,13 @@ Do not hardcode colors.
 ```
 src/
   core/          ← pure pipeline (server-exportable, no browser APIs, no React)
-    services/    ← use-case orchestration (calculateTax, parseInput, …)
+    services/    ← use-case orchestration (calculateTax, inferPriorPositions)
     domain/      ← business logic (tax calculators, FX, parsers)
       tax/costBasis/  ← cost-basis strategies (weighted-average, IBKR)
-    input/       ← input boundary (format detection, validation, InputData assembly)
-  presentation/  ← output formatters (translate codes → display strings)
-  readers/       ← format readers (no browser APIs, no domain logic)
-  platform/
-    web/         ← browser adapters (DOMParser, File, localStorage, PDF reading)
-  controllers/   ← page-level hooks (workflow state + commands, useThemeMode)
+  input/         ← file I/O + input assembly (browser adapters, CSV/HTML reading, validation)
+  hooks/         ← page-level hooks (workflow state + commands, useThemeMode)
   ui/            ← React components (passive)
+    presentation/ ← output formatters (translate codes → display strings)
   localization/  ← Bulgarian strings (bg.json + i18n.js)
 ```
 
@@ -320,7 +286,7 @@ Test only:
 Do NOT test:
 
 * UI
-* controllers/hooks
+* hooks
 * styling
 
 ### Structure

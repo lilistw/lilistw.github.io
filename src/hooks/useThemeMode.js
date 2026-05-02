@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { getStoredTheme, storeTheme, applyThemeAttribute } from '../platform/web/themeStorage.js'
+import { getStoredTheme, storeTheme, applyThemeAttribute } from '../input/themeStorage.js'
 
 export function useThemeMode() {
   const [nightMode, setNightMode] = useState(

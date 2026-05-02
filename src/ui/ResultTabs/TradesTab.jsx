@@ -8,7 +8,7 @@ import TaxableToggleDialog from './TaxableToggleDialog'
 import { alpha } from '@mui/material/styles'
 import { Box, Typography } from '@mui/material'
 import { WarningOutlined } from '@mui/icons-material'
-import { TradePresenter } from '../../presentation/TradePresenter.js'
+import { TradePresenter } from '../presentation/TradePresenter.js'
 
 
 export default function TradesTab({ result }) {

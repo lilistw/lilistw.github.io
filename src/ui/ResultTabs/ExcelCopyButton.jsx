@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { t } from '../../localization/i18n.js'
 import { Button, Tooltip } from '@mui/material'
 import { ContentCopyOutlined, CheckOutlined, ErrorOutlineOutlined } from '@mui/icons-material'
-import { ExcelPresenter } from '../../presentation/ExcelPresenter.js'
+import { ExcelPresenter } from '../presentation/ExcelPresenter.js'
 
 const RESET_DELAY = 2500
 

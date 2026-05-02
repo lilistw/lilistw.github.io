@@ -2,7 +2,7 @@ import {
   parseActivityStatementCsv,
   parseTradeConfirmationHtml,
   buildInputData,
-} from '../input/parseInput.js'
+} from './buildInputData.js'
 
 /**
  * Parse pre-read content into InputData. All inputs are plain data — no File or browser APIs.
