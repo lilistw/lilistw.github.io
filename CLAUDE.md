@@ -92,9 +92,9 @@ Pure pipeline — no browser APIs, no React. Safe to run on a server.
 **`src/core/domain/`** — business logic:
 
 * parsers (`parser/`) — accept strings or pre-parsed DOM objects
-* tax calculators (`tax/`)
+* tax calculators (`tax/`) — `TradeCalculator`, `DividendCalculator`, `HoldingsCalculator`, `InterestCalculator`
+* cost-basis strategies (`tax/costBasis/`) — `WeightedAverageCostBasisStrategy` (BG-law default), `IbkrCostBasisStrategy` (uses CSV value, falls back to weighted-average); `createCostBasisStrategy(name)` factory
 * FX utilities (`fx/`)
-* `TradeCalculator`, `DividendCalculator`, `HoldingsCalculator`
 
 **`src/core/input/`** — input boundary: format detection, validation, InputData assembly:
 
@@ -158,8 +158,13 @@ All React components. Passive — render props only, emit events.
 
 * `AppHeader`, `AppFooter`
 * `Dropzone`
+* `CostBasisStrategySelector` — radio group for cost-basis strategy choice
 * `PriorYearPositionsForm`
+* `PriorYearApproxWarning` — warning when prior-year cost is approximated
+* `ThresholdWarning` — warns when holdings exceed SPB8 EUR 25 000 threshold
 * `ResultTabs/` (modular subfolder)
+  * `TaxableToggleDialog` — confirmation dialog for App5/App13 manual override
+  * `DevTab` — raw JSON inspector for input/output (dev aid)
 * `Disclaimer`, `InfoModal`
 
 No business logic. No direct browser API imports.
@@ -276,6 +281,7 @@ src/
   core/          ← pure pipeline (server-exportable, no browser APIs, no React)
     services/    ← use-case orchestration (calculateTax, parseInput, …)
     domain/      ← business logic (tax calculators, FX, parsers)
+      tax/costBasis/  ← cost-basis strategies (weighted-average, IBKR)
     input/       ← input boundary (format detection, validation, InputData assembly)
   presentation/  ← output formatters (translate codes → display strings)
   readers/       ← format readers (no browser APIs, no domain logic)
