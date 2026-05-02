@@ -1,11 +1,11 @@
 import { useState, useEffect } from 'react'
 import { t } from '../localization/i18n.js'
 import { readInputFromFiles } from '../input/fileReader.js'
-import { calculateTax } from '../core/services/calculateTax.js'
-import { inferPriorPositions } from '../core/services/inferPriorPositions.js'
-import { getPrevYearEndDate } from '../core/domain/fx/fxRates.js'
+import { calculateTax } from '../../core/services/calculateTax.js'
+import { inferPriorPositions } from '../../core/services/inferPriorPositions.js'
+import { getPrevYearEndDate } from '../../core/domain/fx/fxRates.js'
 import { useThemeMode } from './useThemeMode.js'
-import { decimalJsonReplacer } from '../core/domain/numStr.js'
+import { decimalJsonReplacer } from '../../core/domain/numStr.js'
 
 export function useTaxAppController() {
   const [nightMode, setNightMode] = useThemeMode()

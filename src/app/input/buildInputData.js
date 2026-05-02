@@ -12,14 +12,14 @@
  */
 
 import { parseCSV }                                        from './readCsv.js'
-import { parseTradesFromHtml }                             from '../core/domain/parser/parseTradesHtml.js'
-import { parseStatementInfo }                              from '../core/domain/parser/parseStatementInfo.js'
-import { parseInstruments }                                from '../core/domain/parser/parseInstruments.js'
-import { parseDividends, parseWithholdingTax }             from '../core/domain/parser/parseDividends.js'
-import { parseOpenPositions }                              from '../core/domain/parser/parseOpenPositions.js'
-import { parseCsvTrades }                                  from '../core/domain/parser/parseCsvTrades.js'
-import { parseInterest }                                   from '../core/domain/parser/parseInterest.js'
-import { parseTaxYear }                                    from '../core/domain/parser/parseTaxYear.js'
+import { parseTradesFromHtml }                             from '../../core/domain/parser/parseTradesHtml.js'
+import { parseStatementInfo }                              from '../../core/domain/parser/parseStatementInfo.js'
+import { parseInstruments }                                from '../../core/domain/parser/parseInstruments.js'
+import { parseDividends, parseWithholdingTax }             from '../../core/domain/parser/parseDividends.js'
+import { parseOpenPositions }                              from '../../core/domain/parser/parseOpenPositions.js'
+import { parseCsvTrades }                                  from '../../core/domain/parser/parseCsvTrades.js'
+import { parseInterest }                                   from '../../core/domain/parser/parseInterest.js'
+import { parseTaxYear }                                    from '../../core/domain/parser/parseTaxYear.js'
 import {
   validateCsvContent,
   validateHtmlContent,

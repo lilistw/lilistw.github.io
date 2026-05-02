@@ -4,7 +4,7 @@ import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
 import {
   findUsdRate, getPrevYearEndDate, getLocalCurrencyLabel,
-} from '../core/domain/fx/fxRates.js'
+} from '../../core/domain/fx/fxRates.js'
 
 function fmtNum(n, decimals = 2) {
   return Number(n).toLocaleString('bg-BG', {
