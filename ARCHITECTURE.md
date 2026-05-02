@@ -34,10 +34,12 @@ src/
 ### Dependency direction
 
 ```
-app/ui/ResultTabs → app/ui/presentation ─────┐
-app/App.jsx       → app/hooks                │
-                       ├── core/services ─────┤→ core/domain
-                       └── app/input ─────────┘
+app/ui/ResultTabs → app/ui/presentation
+app/App.jsx       → app/hooks → app/input/fileReader
+                                  ├── app/input/{csvParser,htmlParser}
+                                  └── core/services/{parseInput,calculateTax}
+                                         ├── core/parser
+                                         └── core/domain
 ```
 
 `core/` has no imports from `app/` or `styles/`. This keeps the pipeline
@@ -51,8 +53,11 @@ portable and testable without a browser.
 User drops CSV + HTML files
         |
         v
-app/input/csvParser.js + app/input/htmlParser.js
-  parse raw files into csvText/htmlDoc
+app/input/fileReader.js
+  readInputFromFiles({ csvFile, htmlFile })
+        |
+        +-> app/input/csvParser.js
+        +-> app/input/htmlParser.js
         |
         v
 core/services/parseInput.js
@@ -96,6 +101,7 @@ app/ui/ResultTabs/ (TradesTab, HoldingsTab, DividendsTab, InterestTab)
 Browser-facing adapters for file parsing/validation before handing raw text to
 `core/` services.
 
+- `fileReader.js` — reads `File` objects and orchestrates CSV/HTML extraction
 - `csvParser.js` — wraps PapaParse for CSV input
 - `htmlParser.js` — wraps `DOMParser`
 - `validateInput.js` — validates IBKR file content before parsing

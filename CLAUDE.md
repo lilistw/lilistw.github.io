@@ -108,6 +108,7 @@ No React imports. No browser globals. No localization calls (`t` is forbidden in
 
 Browser adapters for parsing/validation before passing raw text/DOM into core.
 
+* `fileReader.js` — reads `File` objects and orchestrates CSV/HTML extraction
 * `csvParser.js` — wraps PapaParse
 * `htmlParser.js` — wraps `DOMParser`
 * `validateInput.js` — validates IBKR file content
@@ -140,10 +141,12 @@ No business logic. No direct browser API imports (except `presentation/` which i
 ### Dependency direction
 
 ```
-app/ui/ResultTabs → app/ui/presentation ─────┐
-app/App.jsx       → app/hooks                │
-                       ├── core/services ─────┤→ core/domain
-                       └── app/input ─────────┘
+app/ui/ResultTabs → app/ui/presentation
+app/App.jsx       → app/hooks → app/input/fileReader
+                                  ├── app/input/{csvParser,htmlParser}
+                                  └── core/services/{parseInput,calculateTax}
+                                         ├── core/parser
+                                         └── core/domain
 ```
 
 ---
