@@ -12,8 +12,8 @@ describe('calculateTax', () => {
     // --- BASIC STRUCTURE ---
     expect(result).toBeDefined()
     expect(result.taxYear).toBe(2025)
-    expect(result.localCurrencyCode).toBe('BGN')
-    expect(result.localCurrencyLabel).toBe('лв')
+    expect(result.taxContext.localCurrencyCode).toBe('BGN')
+    expect(result.taxContext.localCurrencyLabel).toBe('лв')
 
     // --- TRADES ---
     expect(result.trades.length).toBeGreaterThan(0)

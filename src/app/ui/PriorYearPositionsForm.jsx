@@ -5,9 +5,6 @@ import {
   TableHead, TableRow, TextField, Typography,
 } from '@mui/material'
 import { InfoOutlined } from '@mui/icons-material'
-import {
-  findUsdRate, getPrevYearEndDate, getLocalCurrencyLabel,
-} from '../../core/domain/fx/fxRates.js'
 
 function fmtNum(n, decimals = 2) {
   if (n == null) return '—'
@@ -30,14 +27,13 @@ function fmtDate(dateStr) {
  * Props:
  *   positions       – array of editable position objects (from App.jsx state)
  *   onPositionChange(i, field, value) – called on every edit
- *   taxYear         – current tax year (determines currency label and prev-year date)
+ *   taxContext         – current tax context (determines currency label and prev-year date)
  */
-export default function PriorYearPositionsForm({ positions, onPositionChange, taxYear = 2025 }) {
-  const lcl             = t(`currencyLabels.${getLocalCurrencyLabel(taxYear).toLowerCase()}`)
-  const prevYearEndDate = getPrevYearEndDate(taxYear)
-  const prevRate        = findUsdRate(prevYearEndDate, taxYear)
-  const prevYearLabel   = String(taxYear - 1)
-
+export default function PriorYearPositionsForm({ positions, onPositionChange, taxContext }) {
+  const lcl             = t(`currencyLabels.${taxContext.localCurrencyLabel.toLowerCase()}`)
+  const prevYearEndDate = taxContext.prevYearEndDate
+  const prevRate        = taxContext.prevYearUsdRate
+  const prevYearLabel   = String(taxContext.taxYear - 1)
   const rateInfo = prevRate != null
     ? t('priorYearForm.rateInfo', { rate: fmtNum(prevRate, 4), lcl })
     : ''

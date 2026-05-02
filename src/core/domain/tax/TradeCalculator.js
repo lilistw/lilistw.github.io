@@ -38,13 +38,13 @@ function summarizeSells(sells) {
 }
 
 export class TradeCalculator {
-  constructor({ instrumentInfo, csvTradeBasis, context, strategy = 'ibkr' }) {
+  constructor({ instrumentInfo, csvTradeBasis, taxContext, strategy = 'ibkr' }) {
     this.instrumentInfo = instrumentInfo
     this.csvTradeBasis = csvTradeBasis
-    this.ctx = context
+    this.ctx = taxContext
     this.costBasisStrategy = createCostBasisStrategy(strategy, {
       csvTradeBasis,
-      ctx: context,
+      ctx: taxContext,
       toLcl: (amount, currency, date) => this.#toLcl(amount, currency, date),
     })
   }

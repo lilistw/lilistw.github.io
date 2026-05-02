@@ -28,7 +28,7 @@ export function useTaxAppController() {
   const [showTerms, setShowTerms] = useState(false)
   const [showPrivacy, setShowPrivacy] = useState(false)
 
-  const taxYear = inputData?.taxYear ?? 2025
+  const taxContext = inputData?.taxContext ?? { taxYear: 2025 }
 
   // Object URL lifecycle
   useEffect(() => {
@@ -186,7 +186,7 @@ export function useTaxAppController() {
     htmlFile, htmlFileUrl,
     inputData, pendingPositions, result,
     parsing, error,
-    taxYear, inputJsonText, outputJsonText,
+    taxContext, inputJsonText, outputJsonText,
     agreed, setAgreed,
     showTerms, setShowTerms,
     showPrivacy, setShowPrivacy,

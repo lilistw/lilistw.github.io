@@ -8,7 +8,7 @@ import { DividendPresenter } from '../presentation/DividendPresenter.js'
 export default function DividendsTab({ result }) {
   // --- DIVIDENDS (presentation) ---
   const data = new DividendPresenter({
-    lcl: result.localCurrencyLabel,
+    lcl: result.taxContext.localCurrencyLabel,
   }).buildDividendsTable(result.dividends)
   if (!data || data.rows.length === 0) return null
   return (

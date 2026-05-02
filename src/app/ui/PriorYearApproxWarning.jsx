@@ -2,9 +2,6 @@ import { t } from '../localization/i18n.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
-import {
-  findUsdRate, getPrevYearEndDate, getLocalCurrencyLabel,
-} from '../../core/domain/fx/fxRates.js'
 
 function fmtNum(n, decimals = 2) {
   return Number(n).toLocaleString('bg-BG', {
@@ -19,13 +16,14 @@ function fmtDate(dateStr) {
   return `${d}.${m}.${y}`
 }
 
-export default function PriorYearApproxWarning({ rows, taxYear = 2025 }) {
+export default function PriorYearApproxWarning({ rows, taxContext = 2025 }) {
   if (!rows || rows.length === 0) return null
 
-  const lcl             = t(`currencyLabels.${getLocalCurrencyLabel(taxYear).toLowerCase()}`)
-  const prevYearEndDate = getPrevYearEndDate(taxYear)
-  const prevRate        = findUsdRate(prevYearEndDate, taxYear)
-  const prevYearLabel   = String(taxYear - 1)
+  const lcl             = t(`currencyLabels.${taxContext.localCurrencyLabel.toLowerCase()}`)
+  const prevYearEndDate = taxContext.prevYearEndDate
+  const prevRate        = taxContext.prevYearUsdRate
+  const prevYearLabel   = String(taxContext.taxYear - 1)
+  
 
   const rateInfo = prevRate != null
     ? t('priorYearWarning.rateInfo', { rate: fmtNum(prevRate, 4), lcl })

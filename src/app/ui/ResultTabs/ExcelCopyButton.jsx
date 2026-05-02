@@ -11,10 +11,11 @@ export default function ExcelCopyButton({ result }) {
 
   async function handleCopy() {
     try {
-      const text = new ExcelPresenter({ t, lcl: result.localCurrencyLabel }).buildTsv(result)
+      const text = new ExcelPresenter({ t, lcl: result.taxContext.localCurrencyLabel }).buildTsv(result)
       await navigator.clipboard.writeText(text)
       setStatus('ok')
-    } catch {
+    } catch (error) {
+      console.log('error copying to clipboard: ', error)
       setStatus('error')
     } finally {
       setTimeout(() => setStatus('idle'), RESET_DELAY)

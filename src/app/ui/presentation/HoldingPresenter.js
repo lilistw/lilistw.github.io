@@ -5,7 +5,7 @@ import { decimalToNumber } from '@util/numStr.js'
 
 export class HoldingPresenter {
   constructor({ lcl, mode = 'display' }) {
-    this.lcl = t(`currencyLabels.${lcl.toLowerCase()}`)
+    this.lcl = t(`currencyLabels.${lcl?.toLowerCase()}`)
     this.mode = mode
   }
 

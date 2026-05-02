@@ -1,10 +1,5 @@
 import { buildInstrumentInfo } from '@core/parser/parsers/parseInstruments.js'
 import { buildCsvTradeBasis } from '@core/parser/parsers/parseCsvTrades.js'
-import {
-  getLocalCurrencyCode,
-  getLocalCurrencyLabel,
-  getPrevYearEndDate,
-} from '../domain/fx/fxRates.js'
 
 import { DividendCalculator } from '../domain/tax/DividendCalculator.js'
 import { InterestCalculator } from '../domain/tax/InterestCalculator.js'
@@ -12,30 +7,16 @@ import { TradeCalculator } from '../domain/tax/TradeCalculator.js'
 import { HoldingsCalculator } from '../domain/tax/HoldingsCalculator.js'
 
 // -------------------------
-// CONTEXT
-// -------------------------
-function buildTaxContext(taxYear) {
-  return Object.freeze({
-    taxYear,
-    localCurrencyCode: getLocalCurrencyCode(taxYear),
-    localCurrencyLabel: getLocalCurrencyLabel(taxYear),
-    prevYearEndDate: getPrevYearEndDate(taxYear),
-  })
-}
-
-// -------------------------
 // SERVICE
 // -------------------------
 export function calculateTax(input, priorPositions = [], { strategy = 'ibkr' } = {}) {
-  const { taxYear } = input
-
-  const context = buildTaxContext(taxYear)
+  const { taxContext } = input
 
   const instrumentInfo = buildInstrumentInfo(input.instruments)
   const csvTradeBasis = buildCsvTradeBasis(input.csvTrades)
 
   // --- TRADES ---
-  const tradeCalc = new TradeCalculator({ instrumentInfo, csvTradeBasis, context, strategy })
+  const tradeCalc = new TradeCalculator({ instrumentInfo, csvTradeBasis, taxContext, strategy })
   const { trades, calculatedPositions, taxSummary } = tradeCalc.calculate(input.trades, priorPositions)
 
   // --- HOLDINGS ---
@@ -51,12 +32,12 @@ export function calculateTax(input, priorPositions = [], { strategy = 'ibkr' } =
   // --- DIVIDENDS (domain) ---
   const dividends = new DividendCalculator({
     instrumentInfo,
-    context,
+    taxContext,
   }).calculate(input)
 
   // --- INTEREST ---
   const interest = new InterestCalculator({
-    context,
+    taxContext,
   }).calculate(input)
 
   // --- RESULT ---
@@ -66,8 +47,6 @@ export function calculateTax(input, priorPositions = [], { strategy = 'ibkr' } =
     holdings,
     dividends,
     interest,
-    taxYear: context.taxYear,
-    localCurrencyCode: context.localCurrencyCode,
-    localCurrencyLabel: context.localCurrencyLabel,
+    taxContext
   }
 }
