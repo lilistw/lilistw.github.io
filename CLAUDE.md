@@ -43,7 +43,7 @@ React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers
 ```
 User selects CSV + HTML
         ↓
-useTaxAppController → csvParser/htmlParser → parseInput() → inputData
+useTaxAppController → fileReader(csvParser/htmlParser) → parseInput() → inputData
         ↓
 inferPriorPositions() → pendingPositions
         ↓
@@ -142,11 +142,12 @@ No business logic. No direct browser API imports (except `presentation/` which i
 
 ```
 app/ui/ResultTabs → app/ui/presentation
-app/App.jsx       → app/hooks → app/input/fileReader
-                                  ├── app/input/{csvParser,htmlParser}
-                                  └── core/services/{parseInput,calculateTax}
-                                         ├── core/parser
-                                         └── core/domain
+app/App.jsx       → app/hooks
+                       ├── app/input/fileReader
+                       │     └── app/input/{csvParser,htmlParser}
+                       └── core/services/{parseInput,calculateTax}
+                              ├── core/parser
+                              └── core/domain
 ```
 
 ---

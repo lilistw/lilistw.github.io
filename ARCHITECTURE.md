@@ -35,11 +35,12 @@ src/
 
 ```
 app/ui/ResultTabs → app/ui/presentation
-app/App.jsx       → app/hooks → app/input/fileReader
-                                  ├── app/input/{csvParser,htmlParser}
-                                  └── core/services/{parseInput,calculateTax}
-                                         ├── core/parser
-                                         └── core/domain
+app/App.jsx       → app/hooks
+                       ├── app/input/fileReader
+                       │     └── app/input/{csvParser,htmlParser}
+                       └── core/services/{parseInput,calculateTax}
+                              ├── core/parser
+                              └── core/domain
 ```
 
 `core/` has no imports from `app/` or `styles/`. This keeps the pipeline
@@ -60,8 +61,11 @@ app/input/fileReader.js
         +-> app/input/htmlParser.js
         |
         v
-core/services/parseInput.js
-  parseInput({ csvText, htmlDoc })
+Raw parsed payload ({ activityStatement, tradeConfirmation })
+        |
+        v
+app/hooks/useTaxAppController.js
+  parseInput(payload) via core/services/parseInput.js
         |
         v
 core/parser/buildInputData.js
