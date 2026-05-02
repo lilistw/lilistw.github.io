@@ -4,7 +4,7 @@ import {
 import { buildInstrumentInfo } from '../domain/parser/parseInstruments.js'
 import { buildCsvTradeBasis } from '../domain/parser/parseCsvTrades.js'
 import { parseTaxYear } from '../domain/parser/parseTaxYear.js'
-import { toDecimal, D0 } from '../domain/numStr.js'
+import { toDecimal, D0 } from '@util/numStr.js'
 
 /**
  * Infer prior-year open positions from current-year trade data.

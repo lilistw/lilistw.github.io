@@ -1,5 +1,5 @@
 import { getInstrumentTypeLabel } from '../instrument/classifier.js'
-import { parseToDecimal, toDecimal } from '../numStr.js'
+import { parseToDecimal, toDecimal } from '@util/numStr.js'
 
 /**
  * Parses IBKR "Open Positions" section into a raw array.

@@ -12,4 +12,10 @@ export default defineConfig({
     environment: 'node',
     globals: true,
   },
+  resolve: {
+    alias: {
+      '@util': '/src/util',
+      '@core': '/src/core'
+    }
+  }
 })

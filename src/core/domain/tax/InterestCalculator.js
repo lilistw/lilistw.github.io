@@ -1,6 +1,6 @@
 // InterestCalculator.js
 import { toLocalCurrency } from '../fx/fxRates.js'
-import { toDecimal, D0 } from '../numStr.js'
+import { toDecimal, D0 } from '@util/numStr.js'
 
 export class InterestCalculator {
   constructor({ context }) {

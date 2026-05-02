@@ -3,7 +3,8 @@ import Decimal from 'decimal.js'
 import { toLocalCurrency } from '../fx/fxRates.js'
 import { IBKR_EXCHANGES } from '../constants.js'
 import { isTaxable } from '../instrument/classifier.js'
-import { toDecimal, D0 } from '../numStr.js'
+import { toDecimal, D0 } from '@util/numStr.js'
+import { getInstrumentTypeLabel } from '../instrument/classifier.js'
 import { createCostBasisStrategy } from './costBasis/createCostBasisStrategy.js'
 
 function makeInstrument(trade, instrumentInfo) {
@@ -180,6 +181,7 @@ export class TradeCalculator {
       realizedPLLcl,
 
       instrType: this.instrumentInfo[t.symbol]?.type,
+      instrTypeLabel: getInstrumentTypeLabel(this.instrumentInfo[t.symbol]),
       taxable: t.side === 'SELL' ? !exempt : null,
 
       securityId: this.instrumentInfo[t.symbol]?.securityId ?? null,

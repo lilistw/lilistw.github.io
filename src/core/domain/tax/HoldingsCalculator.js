@@ -1,7 +1,7 @@
 // HoldingsCalculator.js
 import { expandByAliases } from '../parser/parseInstruments.js'
 import { buildOpenPositions } from '../parser/parseOpenPositions.js'
-import { toDecimal, D0 } from '../numStr.js'
+import { toDecimal, D0 } from '@util/numStr.js'
 
 export class HoldingsCalculator {
   constructor({ instrumentInfo }) {

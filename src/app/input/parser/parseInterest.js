@@ -1,4 +1,4 @@
-import { parseToDecimal } from '../numStr.js'
+import { parseToDecimal } from '@util/numStr.js'
 
 /**
  * Parses the "Interest" section (actual monthly cash payments) into a raw array.

@@ -1,11 +1,10 @@
 import { useState, useEffect } from 'react'
 import { t } from '../localization/i18n.js'
 import { readInputFromFiles } from '../input/fileReader.js'
-import { calculateTax } from '../../core/services/calculateTax.js'
-import { inferPriorPositions } from '../../core/services/inferPriorPositions.js'
-import { getPrevYearEndDate } from '../../core/domain/fx/fxRates.js'
+import { calculateTax } from '@core/services/calculateTax.js'
+import { inferPriorPositions } from '@/core/services/inferPriorPositions.js'
 import { useThemeMode } from './useThemeMode.js'
-import { decimalJsonReplacer } from '../../core/domain/numStr.js'
+import { decimalJsonReplacer } from '@util/numStr.js'
 
 export function useTaxAppController() {
   const [nightMode, setNightMode] = useThemeMode()
@@ -66,14 +65,12 @@ export function useTaxAppController() {
 
         const inferred = inferPriorPositions(data)
 
-        const defaultDate = getPrevYearEndDate(data.taxYear)
-
         setPendingPositions(
           inferred.map(p => ({
             ...p,
             costUSDInput: p.costUSD != null ? String(Number(p.costUSD).toFixed(2)) : '',
             costLclInput: p.costLcl != null ? String(Number(p.costLcl).toFixed(2)) : '',
-            lastBuyDateInput: p.lastBuyDate ?? defaultDate,
+            lastBuyDateInput: p.lastBuyDate,
           }))
         )
       })
@@ -146,7 +143,7 @@ export function useTaxAppController() {
         qty: p.qty,
         costUSD: parseFloat(String(p.costUSDInput).replace(',', '.')) || 0,
         costLcl: parseFloat(String(p.costLclInput).replace(',', '.')) || 0,
-        lastBuyDate: p.lastBuyDateInput || getPrevYearEndDate(taxYear),
+        lastBuyDate: p.lastBuyDateInput,
       }))
 
       setResult(calculateTax(inputData, priorPositions, { strategy: costBasisStrategy }))

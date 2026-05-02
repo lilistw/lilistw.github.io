@@ -2,8 +2,7 @@
  * Reactive trade summaries — recomputed whenever the user toggles taxable status.
  * Both functions are pure and operate on the current trade data rows from App state.
  */
-import Decimal from 'decimal.js'
-import { D0 } from './numStr.js'
+import { D0 } from '@util/numStr.js'
 
 const TRADE_SUM_COLS     = ['proceeds', 'commission', 'fee', 'total']
 const TRADE_SUM_LCL_COLS = ['totalLcl', 'costBasisLcl']

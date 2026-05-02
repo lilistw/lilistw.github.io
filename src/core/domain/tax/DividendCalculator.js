@@ -1,6 +1,6 @@
 import Decimal from 'decimal.js'
 import { toLocalCurrency } from '../fx/fxRates.js'
-import { toDecimal, D0 } from '../numStr.js'
+import { toDecimal, D0 } from '@util/numStr.js'
 
 const BG_DIVIDEND_TAX_RATE = new Decimal('0.05')
 

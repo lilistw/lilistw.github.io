@@ -1,8 +1,7 @@
 // TradePresenter.js
-import { getInstrumentTypeLabel } from '../../../core/domain/instrument/classifier.js'
 import { t } from '../../localization/i18n.js'
 import { fmt } from './fmt.js'
-import { decimalToNumber } from '../../../core/domain/numStr.js'
+import { decimalToNumber } from '@util/numStr.js'
 
 const TRADE_COLUMNS = (lcl) => [
   { key: '#',               label: '#',                                  align: 'right', mono: true, decimals: 0 },
@@ -87,7 +86,7 @@ export class TradePresenter {
       proceedsLcl:   this.#fmtNum(r.proceedsLcl, 2),
       realizedPLLcl: this.#fmtNum(r.realizedPLLcl, 2),
 
-      instrType: r._total ? r.instrType : getInstrumentTypeLabel({ type: r.instrType }),
+      instrType: r._total ? r.instrType : r.instrTypeLabel ),
 
       taxExemptLabel: r._total
         ? t(`app.taxStatus.${r.taxExemptLabel.toLowerCase()}`)

@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import Decimal from 'decimal.js'
-import { toDecimal, decimalToNumber, D0 } from '../numStr.js'
+import { toDecimal, decimalToNumber, D0 } from '@util/numStr.js'
 
 describe('toDecimal', () => {
   it('passes Decimal through unchanged', () => {
