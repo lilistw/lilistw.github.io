@@ -1,6 +1,6 @@
 # IBKR Tax Calculator
 
-[🇬🇧 English](#english) | [🇧🇬 Български](#bulgarian) | [📄 License](#license)
+[🇬🇧 English](#english) | [🇧🇬 Български](#български) | [📄 License](#license)
 
 ---
 ## English
@@ -60,7 +60,7 @@ Verify results before submitting to the NRA.
 
 ---
 
-## Български {#bulgarian}
+## Български
 
 ### IBKR Данъчен Калкулатор
 
@@ -116,7 +116,7 @@ npm run build
 * Не се съхраняват и не се изпращат към сървър
 * Не се използват cookies или проследяване
 
-## 📄 License {#license}
+## 📄 License
 
 Shield: [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
 
