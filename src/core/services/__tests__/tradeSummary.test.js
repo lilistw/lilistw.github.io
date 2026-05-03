@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import Decimal from 'decimal.js'
-import { buildTradeTotals, buildTaxSummary } from '../tradeSummary.js'
+import { calculateTotals } from '../tradeSummary.js'
 
 function makeSell(fields = {}) {
   return {
@@ -32,7 +32,7 @@ function makeBuy(fields = {}) {
 
 describe('buildTradeTotals', () => {
   it('returns empty array for empty input', () => {
-    expect(buildTradeTotals([])).toEqual([])
+    expect(calculateTotals([], "BGN").totals).toEqual([])
   })
 
   it('builds total rows grouped by taxable and currency', () => {
@@ -40,20 +40,20 @@ describe('buildTradeTotals', () => {
       makeSell({ currency: 'USD', taxable: true,  totalLcl: 195.58 }),
       makeSell({ currency: 'EUR', taxable: true,  totalLcl: 391.17 }),
     ]
-    const totals = buildTradeTotals(rows)
+    const totals = calculateTotals(rows, "BGN").totals
     expect(totals.some(r => r.currency === 'USD' && r.taxExemptLabel === 'TAXABLE')).toBe(true)
     expect(totals.some(r => r.currency === 'EUR' && r.taxExemptLabel === 'TAXABLE')).toBe(true)
   })
 
   it('includes a BGN grand total row per group', () => {
     const rows = [makeSell({ currency: 'USD', taxable: true, totalLcl: 195.58 })]
-    const totals = buildTradeTotals(rows, 'BGN')
+    const totals = calculateTotals(rows, "BGN").totals
     expect(totals.some(r => r.currency === 'BGN')).toBe(true)
   })
 
   it('marks all total rows with _total flag', () => {
     const rows = [makeSell()]
-    const totals = buildTradeTotals(rows)
+    const totals = calculateTotals(rows, "BGN").totals
     expect(totals.every(r => r._total === true)).toBe(true)
   })
 
@@ -62,7 +62,7 @@ describe('buildTradeTotals', () => {
       makeSell({ currency: 'USD', taxable: true, proceeds: 100, commission: -2, fee: -1, total: 97 }),
       makeSell({ currency: 'USD', taxable: true, proceeds: 200, commission: -3, fee: -2, total: 195 }),
     ]
-    const totals = buildTradeTotals(rows)
+    const totals = calculateTotals(rows, "BGN").totals
     const usdTotal = totals.find(r => r.currency === 'USD' && r.taxExemptLabel === 'TAXABLE')
     expect(usdTotal.proceeds.toNumber()).toBeCloseTo(300)
     expect(usdTotal.commission.toNumber()).toBeCloseTo(-5)
@@ -74,7 +74,7 @@ describe('buildTradeTotals', () => {
       makeSell({ taxable: true,  totalLcl: 100 }),
       makeSell({ taxable: false, totalLcl: 200 }),
     ]
-    const totals = buildTradeTotals(rows)
+    const totals = calculateTotals(rows, "BGN").totals
     const taxableTotal = totals.find(r => r.taxExemptLabel === 'TAXABLE')
     const exemptTotal  = totals.find(r => r.taxExemptLabel === 'EXEMPT')
     expect(taxableTotal?.totalLcl.toNumber()).toBeCloseTo(100)
@@ -84,20 +84,20 @@ describe('buildTradeTotals', () => {
   it('skips currency groups with no trades', () => {
     // Only USD trades — no EUR totals row should appear
     const rows = [makeSell({ currency: 'USD', taxable: true })]
-    const totals = buildTradeTotals(rows)
+    const totals = calculateTotals(rows, "BGN").totals
     expect(totals.some(r => r.currency === 'EUR')).toBe(false)
   })
 })
 
 describe('buildTaxSummary', () => {
   it('returns sumTaxable and sumExempt summaries', () => {
-    const result = buildTaxSummary([])
+    const result = calculateTotals([], "BGN").taxSummary
     expect(result).toHaveProperty('sumTaxable')
     expect(result).toHaveProperty('sumExempt')
   })
 
   it('returns Decimal zeros for empty input', () => {
-    const { sumTaxable, sumExempt } = buildTaxSummary([])
+    const { sumTaxable, sumExempt } = calculateTotals([], "BGN").taxSummary
     expect(sumTaxable.profits).toBeInstanceOf(Decimal)
     expect(sumTaxable.profits.toNumber()).toBe(0)
     expect(sumTaxable.losses.toNumber()).toBe(0)
@@ -108,7 +108,7 @@ describe('buildTaxSummary', () => {
     const rows = [
       makeSell({ taxable: true, totalLcl: 200, costBasisLcl: 150 }),
     ]
-    const { sumTaxable } = buildTaxSummary(rows)
+    const { sumTaxable } = calculateTotals(rows, "BGN").taxSummary
     expect(sumTaxable.profits.toNumber()).toBeCloseTo(50)
     expect(sumTaxable.losses.toNumber()).toBe(0)
   })
@@ -117,7 +117,7 @@ describe('buildTaxSummary', () => {
     const rows = [
       makeSell({ taxable: true, totalLcl: 100, costBasisLcl: 150 }),
     ]
-    const { sumTaxable } = buildTaxSummary(rows)
+    const { sumTaxable } = calculateTotals(rows, "BGN").taxSummary
     expect(sumTaxable.profits.toNumber()).toBe(0)
     expect(sumTaxable.losses.toNumber()).toBeCloseTo(50)
   })
@@ -126,7 +126,7 @@ describe('buildTaxSummary', () => {
     const rows = [
       makeSell({ taxable: false, totalLcl: 200, costBasisLcl: 150 }),
     ]
-    const { sumTaxable, sumExempt } = buildTaxSummary(rows)
+    const { sumTaxable, sumExempt } = calculateTotals(rows, "BGN").taxSummary
     expect(sumTaxable.profits.toNumber()).toBe(0)
     expect(sumExempt.profits.toNumber()).toBeCloseTo(50)
   })
@@ -135,7 +135,7 @@ describe('buildTaxSummary', () => {
     const rows = [
       makeBuy({ totalLcl: -500 }),
     ]
-    const { sumTaxable, sumExempt } = buildTaxSummary(rows)
+    const { sumTaxable, sumExempt } = calculateTotals(rows, "BGN").taxSummary
     expect(sumTaxable.profits.toNumber()).toBe(0)
     expect(sumExempt.profits.toNumber()).toBe(0)
   })
@@ -145,7 +145,7 @@ describe('buildTaxSummary', () => {
       makeSell({ taxable: true, totalLcl: 200, costBasisLcl: 150 }),
       makeSell({ taxable: true, totalLcl: 80,  costBasisLcl: 100 }),
     ]
-    const { sumTaxable } = buildTaxSummary(rows)
+    const { sumTaxable } = calculateTotals(rows, "BGN").taxSummary
     expect(sumTaxable.profits.toNumber()).toBeCloseTo(50)
     expect(sumTaxable.losses.toNumber()).toBeCloseTo(20)
   })
@@ -155,7 +155,7 @@ describe('buildTaxSummary', () => {
       makeSell({ taxable: true, totalLcl: 200, costBasisLcl: 150 }),
       makeSell({ taxable: true, totalLcl: 300, costBasisLcl: 200 }),
     ]
-    const { sumTaxable } = buildTaxSummary(rows)
+    const { sumTaxable } = calculateTotals(rows, "BGN").taxSummary
     expect(sumTaxable.totalProceedsLcl.toNumber()).toBeCloseTo(500)
     expect(sumTaxable.totalCostBasisLcl.toNumber()).toBeCloseTo(350)
   })

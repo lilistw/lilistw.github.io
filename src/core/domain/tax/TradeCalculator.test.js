@@ -1,3 +1,4 @@
+import { vi } from 'vitest'
 import { describe, it, expect } from 'vitest'
 import Decimal from 'decimal.js'
 import { TradeCalculator } from './TradeCalculator.js'
@@ -52,9 +53,9 @@ describe('TradeCalculator – open position cost after IBKR FIFO sells', () => {
     const totalBuyCost = buys.reduce((s, b) => s + Math.abs(b.proceeds), 0)
 
     const calc = new TradeCalculator({
-      instrumentInfo: {},
+      instrumentInfo: { NOK: { type: 'STK', description: 'Nokian', securityId: 'X' } },
       csvTradeBasis,
-      context: ctx,
+      taxContext: ctx,
       strategy: 'ibkr',
     })
 
@@ -86,9 +87,9 @@ describe('TradeCalculator – open position cost after IBKR FIFO sells', () => {
     ])
 
     const calc = new TradeCalculator({
-      instrumentInfo: {},
+      instrumentInfo: { NOK: { type: 'STK', description: 'Nokian', securityId: 'X' } },
       csvTradeBasis,
-      context: ctx,
+      taxContext: ctx,
       strategy: 'weighted-average',
     })
 
