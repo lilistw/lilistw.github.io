@@ -1,0 +1,184 @@
+{
+  "about": {
+    "cards": {
+      "purpose": {
+        "title": "Purpose",
+        "text": "Processes Activity Statements from Interactive Brokers and calculates taxable income from stock sales and dividends for the purposes of the annual tax return under Bulgarian tax legislation."
+      },
+      "method": {
+        "title": "Method",
+        "text": "FIFO/Weighted average acquisition cost per financial instrument, with conversion to BGN using the Bulgarian National Bank (BNB) official exchange rate applicable on the date of each transaction."
+      },
+      "privacy": {
+        "title": "Privacy",
+        "text": "All processing is performed locally in your browser. No data is transmitted, stored, or accessed by the developer."
+      }
+    },
+    "actions": {
+      "moreInfo": "More information"
+    },
+    "dialog": {
+      "title": "How the Application Works",
+      "intro": "The Application processes IBKR Activity Statement (CSV) and Trade Confirmation (HTML) files. Only USD and EUR are supported. Financial instruments such as options, cryptocurrencies, and transactions in other currencies are not supported.",
+      "steps": [
+        "Trade data is extracted from Trade Confirmation files, including quantity, price, commissions, and fees.",
+        "Open positions and instrument metadata are extracted from the Activity Statement CSV.",
+        "BUY transactions: position cost is accumulated as price plus commissions and fees, calculated both in the original currency and in BGN using the BNB exchange rate applicable on the trade date.",
+        "SELL transactions: proceeds are calculated as price minus commissions and fees, converted to BGN using the BNB exchange rate applicable on the settlement date.",
+        "The acquisition cost upon disposal is determined using the weighted average method across all purchases for the respective instrument.",
+        "Where no purchase data exists for the current tax year, prior-year data or IBKR CSV values are used and explicitly marked as approximate."
+      ],
+      "positions": "Displays open positions as of 31 December together with calculated acquisition cost. Where current-year data is unavailable, prior-year values or IBKR-reported data are used.",
+      "summary": "Transactions are classified as taxable (Appendix No. 5) or exempt (Appendix No. 13) under Bulgarian tax law, including ETFs traded on regulated EU markets. Tax is calculated at a flat rate of 10% on net taxable income after deduction of 10% statutory expenses, in accordance with applicable legislation.",
+      "disclaimer": "The information provided is indicative and for informational purposes only. It does not constitute financial, legal, or tax advice. Users are responsible for verifying all results before submission to the National Revenue Agency (NRA)."
+    }
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "currencyLabels": {
+    "eur": "Euro",
+    "bgn": "BGN"
+  },
+  "countryNames": {
+    "US": "United States",
+    "DE": "Germany",
+    "IE": "Ireland",
+    "FR": "France",
+    "GB": "United Kingdom",
+    "LU": "Luxembourg",
+    "NL": "Netherlands",
+    "CH": "Switzerland",
+    "JP": "Japan",
+    "CN": "China",
+    "CA": "Canada",
+    "AU": "Australia",
+    "SE": "Sweden",
+    "DK": "Denmark",
+    "NO": "Norway",
+    "AT": "Austria",
+    "BE": "Belgium",
+    "IT": "Italy",
+    "ES": "Spain",
+    "PT": "Portugal",
+    "FI": "Finland",
+    "PL": "Poland",
+    "CZ": "Czech Republic",
+    "HU": "Hungary",
+    "RO": "Romania",
+    "GR": "Greece",
+    "BG": "Bulgaria",
+    "HR": "Croatia",
+    "SK": "Slovakia",
+    "SI": "Slovenia",
+    "LT": "Lithuania",
+    "LV": "Latvia",
+    "EE": "Estonia",
+    "MT": "Malta",
+    "CY": "Cyprus",
+    "LI": "Liechtenstein",
+    "IS": "Iceland",
+    "SG": "Singapore",
+    "KY": "Cayman Islands",
+    "XS": "Euroclear"
+  },
+  "disclaimer": {
+    "text": "All data is calculated automatically and may contain inaccuracies. The results are provided for informational purposes only and must be reviewed and validated by the User prior to submission to the Bulgarian National Revenue Agency (NRA)."
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "sections": [
+      {
+        "title": "1. General Provisions",
+        "paragraphs": [
+          "These Terms of Use (“Terms”) govern the relationship between the user (“User”) and the developer of the software application “IBKR Tax Calculator” (“Application”).",
+          "By accessing or using the Application, the User confirms that they have read, understood, and agree to be bound by these Terms."
+        ]
+      },
+      {
+        "title": "2. Scope of the Service",
+        "paragraphs": [
+          "The Application is an informational and auxiliary software tool intended solely to assist in calculations related to personal tax obligations under Bulgarian tax legislation.",
+          "The competent authority on tax matters is the National Revenue Agency (NRA).",
+          "The Application:"
+        ],
+        "list": [
+          "does not provide tax, financial, or legal advice;",
+          "does not replace consultation with a licensed or qualified professional;",
+          "does not constitute an official or legally binding source of information."
+        ]
+      },
+      {
+        "title": "3. Functionality and Data Processing",
+        "paragraphs": [
+          "The Application operates entirely within the User’s browser environment."
+        ],
+        "list": [
+          "No data is transmitted to external servers",
+          "No data is stored by the developer",
+          "All processing is performed locally on the User’s device"
+        ]
+      },
+      {
+        "title": "4. User Responsibility",
+        "paragraphs": [
+          "The User bears full and exclusive responsibility for:"
+        ],
+        "list": [
+          "the accuracy, completeness, and legality of the data provided;",
+          "the verification and validation of all calculated results;",
+          "the use of such results in preparing and submitting tax declarations;",
+          "compliance with applicable Bulgarian legislation."
+        ]
+      },
+      {
+        "title": "5. Disclaimer of Warranties",
+        "paragraphs": [
+          "The Application is provided on an “as is” and “as available” basis, without warranties of any kind, whether express or implied.",
+          "The developer makes no representations or guarantees regarding accuracy, completeness, reliability, or fitness for a particular purpose."
+        ]
+      },
+      {
+        "title": "6. Limitation of Liability",
+        "paragraphs": [
+          "To the maximum extent permitted by law, the developer shall not be liable for any direct, indirect, incidental, consequential, or special damages, including but not limited to financial losses, penalties, missed benefits, or incorrect tax filings arising from the use of the Application."
+        ]
+      },
+      {
+        "title": "7. Personal Data",
+        "paragraphs": [
+          "The Application does not collect, store, or process personal data. It does not use cookies or tracking technologies. All data remains on the User’s device.",
+          "Accordingly, the developer does not act as a data controller or processor within the meaning of applicable data protection laws, including the General Data Protection Regulation (GDPR)."
+        ]
+      },
+      {
+        "title": "8. Intellectual Property",
+        "paragraphs": [
+          "All intellectual property rights in and to the Application, including but not limited to source code, design, and functionality, are owned by the developer.",
+          "Any unauthorized reproduction, modification, distribution, or commercial use is strictly prohibited without prior written consent."
+        ]
+      },
+      {
+        "title": "9. Amendments",
+        "paragraphs": [
+          "The developer reserves the right to amend these Terms at any time. The latest version shall be made available within the Application and shall take effect upon publication."
+        ]
+      },
+      {
+        "title": "10. Governing Law",
+        "paragraphs": [
+          "These Terms shall be governed by and construed in accordance with the laws of the Republic of Bulgaria.",
+          "Any disputes arising from or in connection with these Terms shall be subject to the exclusive jurisdiction of the competent Bulgarian courts."
+        ]
+      },
+      {
+        "title": "11. Contact",
+        "paragraphs": [
+          "For inquiries related to the Application, the User may contact the developer via the contact details provided within the Application."
+        ]
+      }
+    ]
+  }
+}
