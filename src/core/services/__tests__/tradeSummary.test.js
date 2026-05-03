@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest'
 import Decimal from 'decimal.js'
-import { calculateTotals } from '../../services/tradeSummary.js'
+import { calculateTotals } from '../tradeSummary.js'
 
 function makeSell(fields = {}) {
   return {
