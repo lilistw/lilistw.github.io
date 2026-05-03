@@ -116,7 +116,7 @@ npm run build
 * Не се съхраняват и не се изпращат към сървър
 * Не се използват cookies или проследяване
 
-## 📄 License
+## License
 
 Shield: [![CC BY-NC-SA 4.0][cc-by-nc-sa-shield]][cc-by-nc-sa]
 
