@@ -106,8 +106,8 @@ export class DividendCalculator {
         grossAmount,
         withheldTax,
         netAmount:   grossAmount.minus(withheldTax),
-        country:     info.country     || '',
-        countryName: info.countryName || '',
+        country:     info.country || '',
+        countryName: info.country || '',
         taxCode:     withheldTax.gt(D0) ? 1 : 3,
         }
     })
