@@ -478,7 +478,7 @@
       {
         "title": "4. Local Storage",
         "paragraphs": [
-          "The site uses local storage in the user's browser only to save selected display settings (light or dark mode)."
+          "The site uses local storage in the user's browser only to save selected display settings (light or dark mode, and language)."
         ],
         "list": [
           "Stored information does not contain personal data",

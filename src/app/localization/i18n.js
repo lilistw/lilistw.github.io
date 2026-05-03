@@ -4,7 +4,7 @@ import en from './en.json'
 const MISSING = Symbol('missing')
 
 const translations = { bg, en }
-let currentLanguage = new URLSearchParams(window.location.search).get('lang') || 'bg'
+let currentLanguage = new URLSearchParams(window.location.search).get('lang') === 'en' ? 'en' : 'bg'
 
 function getByPath(source, path) {
   return path.split('.').reduce((acc, key) => {
