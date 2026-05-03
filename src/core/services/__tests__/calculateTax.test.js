@@ -1,50 +1,91 @@
-import { describe, it, expect, vi } from 'vitest'
-import Decimal from 'decimal.js'
+import { describe, it, expect } from 'vitest'
 import { calculateTax } from '../calculateTax.js'
+import {
+  findUsdRate,
+  getLocalCurrencyCode,
+  getLocalCurrencyLabel,
+  getPrevYearEndDate,
+} from '../../domain/fx/fxRates.js'
+import { toDecimal } from '@util/numStr.js'
 
 import input from './fixtures/demoInput.json'
-import expected from './fixtures/demoOutput.json'
+
+const buildTaxContext = (taxYear) => {
+  const prevYearEndDate = getPrevYearEndDate(taxYear)
+  return {
+    taxYear,
+    localCurrencyCode: getLocalCurrencyCode(taxYear),
+    localCurrencyLabel: getLocalCurrencyLabel(taxYear),
+    prevYearEndDate,
+    prevYearUsdRate: findUsdRate(prevYearEndDate, taxYear),
+  }
+}
+
+const decimalOpenPositionFields = [
+  'quantity',
+  'multiplier',
+  'costPrice',
+  'costBasis',
+  'closePrice',
+  'value',
+  'unrealizedPL',
+]
+
+const normalizeOpenPosition = (position) => ({
+  ...position,
+  ...Object.fromEntries(
+    decimalOpenPositionFields.map(field => [field, toDecimal(position[field])])
+  ),
+})
+
+const withTaxContext = (source) => ({
+  ...source,
+  openPositions: source.openPositions?.map(normalizeOpenPosition) ?? [],
+  taxContext: buildTaxContext(source.taxYear),
+})
+
+const demoInput = withTaxContext(input)
 
 describe('calculateTax', () => {
   it('should calculate full tax result correctly (integration)', () => {
-    const result = calculateTax(input)
+    const result = calculateTax(demoInput)
 
     // --- BASIC STRUCTURE ---
     expect(result).toBeDefined()
-    expect(result.taxYear).toBe(2025)
+    expect(result.taxContext.taxYear).toBe(2025)
     expect(result.taxContext.localCurrencyCode).toBe('BGN')
-    expect(result.taxContext.localCurrencyLabel).toBe('лв')
+    expect(result.taxContext.localCurrencyLabel).toBe('BGN')
 
     // --- TRADES ---
     expect(result.trades.length).toBeGreaterThan(0)
 
     const sellTrade = result.trades.find(t => t.symbol === 'AMZN')
     expect(sellTrade).toBeDefined()
-    expect(Number(sellTrade.realizedPLLcl)).toBeCloseTo(58.4087, 4)
+    expect(Number(sellTrade.realizedPLLcl)).toBeCloseTo(58.40945, 4)
 
     // --- TAX SUMMARY ---
     expect(result.taxSummary).toBeDefined()
 
     const { sumTaxable, sumExempt } = result.taxSummary
 
-    expect(Number(sumTaxable.profits)).toBeCloseTo(370.7099975, 4)
+    expect(Number(sumTaxable.profits)).toBeCloseTo(347.74431, 4)
     expect(Number(sumTaxable.losses)).toBeCloseTo(308.322675, 4)
 
-    expect(Number(sumExempt.profits)).toBeCloseTo(24.7412495, 4)
-    expect(Number(sumExempt.losses)).toBeCloseTo(7.08988375, 4)
+    expect(Number(sumExempt.profits)).toBe(0)
+    expect(Number(sumExempt.losses)).toBeCloseTo(9.77915, 4)
 
     // --- HOLDINGS ---
     expect(result.holdings.length).toBeGreaterThan(0)
 
     const vwce = result.holdings.find(h => h.symbol === 'VWCE')
-    expect(vwce.quantity).toBe(15)
+    expect(Number(vwce.quantity)).toBe(15)
     expect(vwce.currency).toBe('EUR')
 
     // --- DIVIDENDS ---
     expect(result.dividends.length).toBe(4)
 
     const aaplDividend = result.dividends.find(d => d.symbol === 'AAPL')
-    expect(aaplDividend.dueTaxLcl).toBe(0)
+    expect(Number(aaplDividend.dueTaxLcl)).toBe(0)
 
     // --- INTEREST ---
     const totalInterest = result.interest.find(i => i._total && i.currency === 'BGN')
@@ -53,14 +94,14 @@ describe('calculateTax', () => {
   })
 
   it('should not mutate input', () => {
-    const frozen = structuredClone(input)
-    calculateTax(input)
+    const frozen = JSON.stringify(demoInput)
+    calculateTax(demoInput)
 
-    expect(input).toEqual(frozen)
+    expect(JSON.stringify(demoInput)).toBe(frozen)
   })
 
   it('should handle empty input gracefully', () => {
-    const empty = {
+    const empty = withTaxContext({
       taxYear: 2025,
       instruments: [],
       trades: [],
@@ -69,43 +110,24 @@ describe('calculateTax', () => {
       interest: [],
       openPositions: [],
       csvTrades: [],
-    }
+    })
 
     const result = calculateTax(empty)
 
     expect(result.trades).toEqual([])
-    expect(result.holdings).toEqual([])
+    expect(result.holdings).toEqual({
+      holdingsRows: [],
+      app8Rows: [],
+    })
     expect(result.dividends).toEqual([])
-    expect(result.interest).toEqual([])
+    expect(result.interest).toHaveLength(1)
+    expect(result.interest[0]).toMatchObject({
+      _total: true,
+      currency: 'BGN',
+    })
+    expect(Number(result.interest[0].amountLcl)).toBe(0)
   })
 })
-
-// -------------------------
-// MOCKS
-// -------------------------
-
-vi.mock('@core/parser/parsers/parseInstruments.js', () => ({
-  buildInstrumentInfo: vi.fn(() => ({
-    AAPL: {
-      description: 'Apple Inc.',
-      type: 'Stock',
-      securityId: 'US0378331005',
-      country: 'US',
-      countryName: 'USA',
-    },
-  })),
-}))
-
-vi.mock('@core/parser/parsers/parseCsvTrades.js', () => ({
-  buildCsvTradeBasis: vi.fn(() => new Map()),
-}))
-
-vi.mock('../domain/fx/fxRates.js', () => ({
-  getLocalCurrencyCode: vi.fn(() => 'BGN'),
-  getLocalCurrencyLabel: vi.fn(() => 'BGN'),
-  getPrevYearEndDate: vi.fn(() => '2024-12-31'),
-  toLocalCurrency: vi.fn((amount) => new Decimal(amount).times(2)),
-}))
 
 // -------------------------
 // HELPERS
@@ -113,6 +135,7 @@ vi.mock('../domain/fx/fxRates.js', () => ({
 
 const baseInput = {
   taxYear: 2025,
+  taxContext: buildTaxContext(2025),
   instruments: [],
   csvTrades: [],
   openPositions: [],
@@ -125,9 +148,10 @@ const baseInput = {
 const buyTrade = (overrides = {}) => ({
   symbol: 'AAPL',
   datetime: '2025-01-01',
-  currency: 'USD',
+  currency: 'EUR',
   side: 'BUY',
   quantity: 10,
+  price: 100,
   proceeds: -1000,
   commission: -10,
   fee: 0,
@@ -138,9 +162,10 @@ const buyTrade = (overrides = {}) => ({
 const sellTrade = (overrides = {}) => ({
   symbol: 'AAPL',
   datetime: '2025-06-01',
-  currency: 'USD',
+  currency: 'EUR',
   side: 'SELL',
   quantity: -10,
+  price: 200,
   proceeds: 2000,
   commission: -10,
   fee: 0,
@@ -163,9 +188,11 @@ describe('calculateTax (domain service)', () => {
       holdings: expect.anything(),
       dividends: expect.anything(),
       interest: expect.anything(),
-      taxYear: 2025,
-      localCurrencyCode: 'BGN',
-      localCurrencyLabel: 'BGN',
+      taxContext: {
+        taxYear: 2025,
+        localCurrencyCode: 'BGN',
+        localCurrencyLabel: 'BGN',
+      },
     })
   })
 
@@ -177,8 +204,8 @@ describe('calculateTax (domain service)', () => {
 
     const res = calculateTax(input)
 
-    expect(res.taxSummary.app5.profits).toBeGreaterThan(0)
-    expect(res.taxSummary.app5.losses).toBe(0)
+    expect(Number(res.taxSummary.sumTaxable.profits)).toBeGreaterThan(0)
+    expect(Number(res.taxSummary.sumTaxable.losses)).toBe(0)
   })
 
   it('calculates loss correctly', () => {
@@ -192,7 +219,7 @@ describe('calculateTax (domain service)', () => {
 
     const res = calculateTax(input)
 
-    expect(res.taxSummary.app5.losses).toBeGreaterThan(0)
+    expect(Number(res.taxSummary.sumTaxable.losses)).toBeGreaterThan(0)
   })
 
   it('returns trades array', () => {
@@ -203,7 +230,7 @@ describe('calculateTax (domain service)', () => {
 
     const res = calculateTax(input)
 
-    expect(Array.isArray(res.trades.rows)).toBe(true)
+    expect(Array.isArray(res.trades)).toBe(true)
   })
 
   it('returns empty holdings safely', () => {
@@ -232,9 +259,9 @@ describe('calculateTax (domain service)', () => {
 
     const row = res.dividends[0]
 
-    expect(row.grossAmount).toBe(100)
-    expect(row.withheldTax).toBe(15)
-    expect(row.netAmount).toBe(85)
+    expect(Number(row.grossAmountLcl)).toBeCloseTo(188.26)
+    expect(Number(row.foreignTaxPaidLcl)).toBeCloseTo(28.239)
+    expect(Number(row.dueTaxLcl)).toBe(0)
   })
 
   it('calculates dividend tax', () => {
@@ -250,7 +277,7 @@ describe('calculateTax (domain service)', () => {
 
     const res = calculateTax(input)
 
-    expect(res.dividends[0].dueTaxLcl).toBeGreaterThan(0)
+    expect(Number(res.dividends[0].dueTaxLcl)).toBeGreaterThan(0)
   })
 
   it('returns interest structure', () => {

@@ -23,7 +23,7 @@ src/
     theme.js      MUI day/night themes
     hooks/        Page-level React hooks (workflow state + commands)
     input/        File I/O + input assembly (browser adapters, CSV/HTML, validation)
-    ui/           React components (passive — render props, emit events)
+    components/           React components (passive — render props, emit events)
       presentation/ Output formatters — domain objects to display-ready values
     localization/ Bulgarian strings (bg.json + i18n.js)
   styles/         Global CSS (index.css)
@@ -34,7 +34,7 @@ src/
 ### Dependency direction
 
 ```
-app/ui/ResultTabs → app/ui/presentation
+app/components/ResultTabs → app/components/presentation
 app/App.jsx       → app/hooks
                        ├── app/input/fileReader
                        │     └── app/input/{csvParser,htmlParser}
@@ -78,7 +78,7 @@ app/hooks/useTaxAppController.js
   inferPriorPositions(inputData)  -- detect positions opened before tax year
         |
         v
-app/ui/PriorYearPositionsForm  -- user edits inferred cost basis values
+app/components/PriorYearPositionsForm  -- user edits inferred cost basis values
         |
         v
 core/services/calculateTax.js
@@ -90,10 +90,10 @@ core/services/calculateTax.js
         +-> InterestCalculator -- aggregated interest income
         |
         v
-app/ui/presentation/ (TradePresenter, DividendPresenter, ...)
+app/components/presentation/ (TradePresenter, DividendPresenter, ...)
         |
         v
-app/ui/ResultTabs/ (TradesTab, HoldingsTab, DividendsTab, InterestTab)
+app/components/ResultTabs/ (TradesTab, HoldingsTab, DividendsTab, InterestTab)
 ```
 
 ---
@@ -154,7 +154,7 @@ FX conversion utilities.
   EUR uses the fixed BGN peg (1.95583); USD uses BNB daily rate from JSON files
 - `rates/2024.fx.json`, `2025.fx.json`, `2026.fx.json` — bundled BNB rate tables
 
-### `app/ui/presentation/`
+### `app/components/presentation/`
 
 Output formatters — no React imports, no business logic. Maps `Decimal` domain
 values to locale strings at the display boundary.
@@ -207,7 +207,7 @@ calling `DOMParser` itself. This keeps the entire `core/` tree runnable in Node.
 
 JavaScript `number` cannot represent monetary values exactly. All amounts that
 enter the domain are immediately wrapped in `Decimal`; they are only converted
-back to `number` at the `app/ui/presentation/` boundary.
+back to `number` at the `app/components/presentation/` boundary.
 
 ---
 

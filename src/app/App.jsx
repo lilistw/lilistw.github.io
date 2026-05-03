@@ -5,14 +5,14 @@ import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from
 import { dayTheme, nightTheme } from './theme.js'
 import { useTaxAppController } from './hooks/useTaxAppController.js'
 
-import AppHeader from './ui/AppHeader.jsx'
-import AppFooter from './ui/AppFooter.jsx'
-import Disclaimer from './ui/Disclaimer.jsx'
-import InfoModal from './ui/InfoModal.jsx'
-import Dropzone from './ui/Dropzone.jsx'
-import ResultTabs from './ui/ResultTabs/ResultTabs.jsx'
-import PriorYearPositionsForm from './ui/PriorYearPositionsForm.jsx'
-import CostBasisStrategySelector from './ui/CostBasisStrategySelector.jsx'
+import AppHeader from './components/AppHeader.jsx'
+import AppFooter from './components/AppFooter.jsx'
+import Disclaimer from './components/Disclaimer.jsx'
+import InfoModal from './components/InfoModal.jsx'
+import Dropzone from './components/Dropzone.jsx'
+import ResultTabs from './components/ResultTabs/ResultTabs.jsx'
+import PriorYearPositionsForm from './components/PriorYearPositionsForm.jsx'
+import CostBasisStrategySelector from './components/CostBasisStrategySelector.jsx'
 
 export default function App() {
   const {

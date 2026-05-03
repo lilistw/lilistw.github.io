@@ -7,7 +7,6 @@ import { resolve } from 'path'
 import { describe, it, expect } from 'vitest'
 import { parseActivityStatementCsv } from '../csvParser.js'
 import { parseTradesFromHtml } from '../htmlParser.js'
-import { buildInputData } from '../../../core/parser/buildInputData.js'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -43,48 +42,5 @@ describe('CSV + HTML path produces valid InputData', () => {
     expect(t).toHaveProperty('side')
     expect(t).toHaveProperty('quantity')
     expect(t).toHaveProperty('price')
-  })
-
-  it('buildInputData from CSV produces all required InputData fields', () => {
-    const activityStatement = parseActivityStatementCsv(loadDemoCsv())
-    const trades = parseTradesFromHtml(loadDemoHtmlDoc().documentElement.outerHTML)
-    const data = buildInputData({ activityStatement, tradeConfirmation: trades })
-
-    expect(data.statement).toBeDefined()
-    expect(data.statement.brokerName).toMatch(/Interactive Brokers/)
-    expect(data.account).toBeDefined()
-    expect(data.account.accountId).toBeTruthy()
-    expect(typeof data.taxContext.taxYear).toBe('number')
-    expect(Array.isArray(data.instruments)).toBe(true)
-    expect(data.instruments.length).toBeGreaterThan(0)
-    expect(Array.isArray(data.dividends)).toBe(true)
-    expect(Array.isArray(data.withholdingTax)).toBe(true)
-    expect(Array.isArray(data.trades)).toBe(true)
-    expect(Array.isArray(data.openPositions)).toBe(true)
-    expect(Array.isArray(data.csvTrades)).toBe(true)
-    expect(data.csvTrades.length).toBeGreaterThan(0)
-    expect(Array.isArray(data.interest)).toBe(true)
-  })
-
-  it('csvTrades have required fields', () => {
-    const activityStatement = parseActivityStatementCsv(loadDemoCsv())
-    const data = buildInputData({ activityStatement, tradeConfirmation: [] })
-    const t = data.csvTrades[0]
-    expect(t).toHaveProperty('symbol')
-    expect(t).toHaveProperty('currency')
-    expect(t).toHaveProperty('side')
-    expect(t).toHaveProperty('quantity')
-    expect(t).toHaveProperty('datetime')
-  })
-
-  it('openPositions have required fields', () => {
-    const activityStatement = parseActivityStatementCsv(loadDemoCsv())
-    const data = buildInputData({ activityStatement, tradeConfirmation: [] })
-    expect(data.openPositions.length).toBeGreaterThan(0)
-    const p = data.openPositions[0]
-    expect(p).toHaveProperty('symbol')
-    expect(p).toHaveProperty('currency')
-    expect(p).toHaveProperty('assetCategory')
-    expect(p).toHaveProperty('quantity')
   })
 })

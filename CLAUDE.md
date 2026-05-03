@@ -116,7 +116,7 @@ Browser adapters for parsing/validation before passing raw text/DOM into core.
 
 ---
 
-### UI layer (`src/app/ui/`)
+### UI layer (`src/app/components/`)
 
 All React components and output formatters. Passive — render props only, emit events.
 
@@ -140,7 +140,7 @@ No business logic. No direct browser API imports (except `presentation/` which i
 Tax-toggle behavior note:
 
 * Trade classification starts from `TradeCalculator` + `classifier.js`.
-* User overrides happen in UI/controller state (per-trade `taxable` flag).
+* User overrides happen in COMPONENTS/controller state (per-trade `taxable` flag).
 * Overrides do **not** recalculate cost basis; they recalculate only reporting
   aggregates through `core/services/tradeSummary.js`:
   * `calculateTotals(...).totals` for table totals
@@ -152,7 +152,7 @@ Tax-toggle behavior note:
 ### Dependency direction
 
 ```
-app/ui/ResultTabs → app/ui/presentation
+app/components/ResultTabs → app/components/presentation
 app/App.jsx       → app/hooks
                        ├── app/input/fileReader
                        │     └── app/input/{csvParser,htmlParser}
@@ -268,7 +268,7 @@ src/
     theme.js     ← MUI day/night themes
     hooks/       ← page-level hooks (workflow state + commands, useThemeMode)
     input/       ← file I/O + input assembly (browser adapters, CSV/HTML reading, validation)
-    ui/          ← React components (passive)
+    components/          ← React components (passive)
       presentation/ ← output formatters (translate codes → display strings)
     localization/ ← Bulgarian strings (bg.json + i18n.js)
   styles/        ← global CSS (index.css)
