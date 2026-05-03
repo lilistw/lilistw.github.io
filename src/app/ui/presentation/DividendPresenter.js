@@ -36,12 +36,20 @@ export class DividendPresenter {
   }
 
   #mapRows(rows) {
-    return rows.map(r => ({
-      ...r,
-      grossAmountLcl:     this.#fmtNum(r.grossAmountLcl, 2),
-      foreignTaxPaidLcl:  this.#fmtNum(r.foreignTaxPaidLcl, 2),
-      allowableCreditLcl: this.#fmtNum(r.allowableCreditLcl, 2),
-      dueTaxLcl:          this.#fmtNum(r.dueTaxLcl, 2),
-    }))
+    return rows.map(r => {
+      const countryKey = `countryNames.${r.countryName}`
+      const countryDisplay = r.countryName
+        ? (t(countryKey) !== countryKey ? t(countryKey) : r.countryName)
+        : ''
+
+      return {
+        ...r,
+        countryName:       countryDisplay,
+        grossAmountLcl:     this.#fmtNum(r.grossAmountLcl, 2),
+        foreignTaxPaidLcl:  this.#fmtNum(r.foreignTaxPaidLcl, 2),
+        allowableCreditLcl: this.#fmtNum(r.allowableCreditLcl, 2),
+        dueTaxLcl:          this.#fmtNum(r.dueTaxLcl, 2),
+      }
+    })
   }
 }

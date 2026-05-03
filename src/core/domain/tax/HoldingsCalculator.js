@@ -79,7 +79,7 @@ export class HoldingsCalculator {
     return {
       symbol: h.symbol,
       type: info.type,          // raw, not localized
-      country: info.countryName || h.currency,
+      country: info.country || '',
       description: info.description ?? '',
       quantity: h.quantity,
       acquDate,

@@ -30,6 +30,7 @@ React 19 + Vite SPA deployed to GitHub Pages. The app parses Interactive Brokers
 * **Среднопретеглена цена** — weighted-average cost basis (mandatory in BG).
 * **BGN conversion** — BNB rate per trade date (EUR fixed).
 * **App5 / App13 split** — taxable vs exempt gains.
+* **Tax toggle** — user can manually move a trade between App5/App13 buckets.
 * **App8 Holdings** — all foreign positions at 31 Dec.
 * **App8 Dividends** — 5% tax with withholding credit.
 
@@ -135,6 +136,16 @@ All React components and output formatters. Passive — render props only, emit 
   * `fmt.js` — locale number formatting
 
 No business logic. No direct browser API imports (except `presentation/` which is React-free).
+
+Tax-toggle behavior note:
+
+* Trade classification starts from `TradeCalculator` + `classifier.js`.
+* User overrides happen in UI/controller state (per-trade `taxable` flag).
+* Overrides do **not** recalculate cost basis; they recalculate only reporting
+  aggregates through `core/services/tradeSummary.js`:
+  * `calculateTotals(...).totals` for table totals
+  * `calculateTotals(...).taxSummary.sumTaxable` for App5
+  * `calculateTotals(...).taxSummary.sumExempt` for App13
 
 ---
 
