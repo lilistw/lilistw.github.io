@@ -1,6 +1,10 @@
 import bg from './bg.json'
+import en from './en.json'
 
 const MISSING = Symbol('missing')
+
+const translations = { bg, en }
+let currentLanguage = 'bg'
 
 function getByPath(source, path) {
   return path.split('.').reduce((acc, key) => {
@@ -17,8 +21,18 @@ function interpolate(value, vars) {
   })
 }
 
+export function setLanguage(lang) {
+  if (lang === 'bg' || lang === 'en') {
+    currentLanguage = lang
+  }
+}
+
+export function getLanguage() {
+  return currentLanguage
+}
+
 export function t(key, options = {}) {
-  const translated = getByPath(bg, key)
+  const translated = getByPath(translations[currentLanguage], key)
   if (translated === MISSING) return key
   if (options.returnObjects) return translated
   return interpolate(translated, options)
