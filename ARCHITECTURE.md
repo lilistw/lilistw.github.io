@@ -187,6 +187,16 @@ radio selector (`CostBasisStrategySelector`); the choice is passed into
 Users can override the classification per trade via `TaxableToggleDialog`, which
 writes back to the result array held in the controller.
 
+The toggle is intentionally applied **after** tax calculation and only changes
+the App5/App13 grouping semantics (`taxable: true|false`) for reporting. The
+controller recomputes trade totals and tax summaries reactively through
+`core/services/tradeSummary.js` (`calculateTotals(rawRows, currency)`), so each
+toggle immediately updates:
+
+- trade table subtotal rows (`totals`)
+- App5 taxable summary (`taxSummary.sumTaxable`)
+- App13 exempt summary (`taxSummary.sumExempt`)
+
 ### `core/` has no browser dependencies
 
 All browser globals are confined to `app/input/`. `core/parser/` receives
