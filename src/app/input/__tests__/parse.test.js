@@ -5,7 +5,9 @@
 import { readFileSync } from 'fs'
 import { resolve } from 'path'
 import { describe, it, expect } from 'vitest'
-import { parseActivityStatementCsv, parseTradeConfirmationHtml, buildInputData } from '../buildInputData.js'
+import { parseActivityStatementCsv } from '../csvParser.js'
+import { parseTradesFromHtml } from '../htmlParser.js'
+import { buildInputData } from '../../../core/parser/buildInputData.js'
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -27,13 +29,13 @@ function loadDemoHtmlDoc() {
 // ---------------------------------------------------------------------------
 
 describe('CSV + HTML path produces valid InputData', () => {
-  it('parseActivityStatementCsv returns rows with Statement marker', () => {
+  it('parseCsv returns rows with Statement marker', () => {
     const rows = parseActivityStatementCsv(loadDemoCsv())
     expect(rows.some(r => r[0] === 'Statement' && r[1] === 'Data')).toBe(true)
   })
 
   it('parseTradeConfirmationHtml returns trade objects with required fields', () => {
-    const trades = parseTradeConfirmationHtml(loadDemoHtmlDoc())
+    const trades = parseTradesFromHtml(loadDemoHtmlDoc().documentElement.outerHTML)
     expect(trades.length).toBeGreaterThan(0)
     const t = trades[0]
     expect(t).toHaveProperty('symbol')
@@ -44,15 +46,15 @@ describe('CSV + HTML path produces valid InputData', () => {
   })
 
   it('buildInputData from CSV produces all required InputData fields', () => {
-    const csvRows = parseActivityStatementCsv(loadDemoCsv())
-    const trades = parseTradeConfirmationHtml(loadDemoHtmlDoc())
-    const data = buildInputData(csvRows, trades)
+    const activityStatement = parseActivityStatementCsv(loadDemoCsv())
+    const trades = parseTradesFromHtml(loadDemoHtmlDoc().documentElement.outerHTML)
+    const data = buildInputData({ activityStatement, tradeConfirmation: trades })
 
     expect(data.statement).toBeDefined()
     expect(data.statement.brokerName).toMatch(/Interactive Brokers/)
     expect(data.account).toBeDefined()
     expect(data.account.accountId).toBeTruthy()
-    expect(typeof data.taxYear).toBe('number')
+    expect(typeof data.taxContext.taxYear).toBe('number')
     expect(Array.isArray(data.instruments)).toBe(true)
     expect(data.instruments.length).toBeGreaterThan(0)
     expect(Array.isArray(data.dividends)).toBe(true)
@@ -65,8 +67,8 @@ describe('CSV + HTML path produces valid InputData', () => {
   })
 
   it('csvTrades have required fields', () => {
-    const csvRows = parseActivityStatementCsv(loadDemoCsv())
-    const data = buildInputData(csvRows, [])
+    const activityStatement = parseActivityStatementCsv(loadDemoCsv())
+    const data = buildInputData({ activityStatement, tradeConfirmation: [] })
     const t = data.csvTrades[0]
     expect(t).toHaveProperty('symbol')
     expect(t).toHaveProperty('currency')
@@ -76,8 +78,8 @@ describe('CSV + HTML path produces valid InputData', () => {
   })
 
   it('openPositions have required fields', () => {
-    const csvRows = parseActivityStatementCsv(loadDemoCsv())
-    const data = buildInputData(csvRows, [])
+    const activityStatement = parseActivityStatementCsv(loadDemoCsv())
+    const data = buildInputData({ activityStatement, tradeConfirmation: [] })
     expect(data.openPositions.length).toBeGreaterThan(0)
     const p = data.openPositions[0]
     expect(p).toHaveProperty('symbol')
