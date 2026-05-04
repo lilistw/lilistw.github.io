@@ -1,4 +1,4 @@
-import { t } from './localization/i18n.js'
+import { useTranslation } from 'react-i18next'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from '@mui/material'
 
@@ -16,6 +16,7 @@ import PriorYearPositionsForm from './components/PriorYearPositionsForm.jsx'
 import CostBasisStrategySelector from './components/CostBasisStrategySelector.jsx'
 
 export default function App() {
+  const { t } = useTranslation()
   const [language, switchLanguage] = useLanguage()
 
   const {

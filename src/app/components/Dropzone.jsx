@@ -1,5 +1,5 @@
 import { useState, useRef } from 'react'
-import { t } from '../localization/i18n.js'
+import { useTranslation } from 'react-i18next'
 import {
   Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
   Link, Typography,
@@ -14,6 +14,7 @@ export default function Dropzone({
   fileType,
   hint,
 }) {
+  const { t } = useTranslation()
   const [showInfo, setShowInfo] = useState(false)
   const inputRef = useRef(null)
 
