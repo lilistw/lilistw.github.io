@@ -1,0 +1,528 @@
+{
+  "about": {
+    "cards": {
+      "purpose": {
+        "title": "Purpose",
+        "text": "Processes Activity Statements from Interactive Brokers and calculates taxable income from stock sales and dividends for the purposes of the annual tax return under Bulgarian tax legislation."
+      },
+      "method": {
+        "title": "Method",
+        "text": "FIFO/Weighted average acquisition cost per financial instrument, with conversion to BGN using the Bulgarian National Bank (BNB) official exchange rate applicable on the date of each transaction."
+      },
+      "privacy": {
+        "title": "Privacy",
+        "text": "All processing is performed locally in your browser. No data is transmitted, stored, or accessed by the developer."
+      }
+    },
+    "actions": {
+      "moreInfo": "More information"
+    },
+    "dialog": {
+      "title": "How the Application Works",
+      "intro": "The Application processes IBKR Activity Statement (CSV) and Trade Confirmation (HTML) files. Only USD and EUR are supported. Financial instruments such as options, cryptocurrencies, and transactions in other currencies are not supported.",
+      "steps": [
+        "Trade data is extracted from Trade Confirmation files, including quantity, price, commissions, and fees.",
+        "Open positions and instrument metadata are extracted from the Activity Statement CSV.",
+        "BUY transactions: position cost is accumulated as price plus commissions and fees, calculated both in the original currency and in BGN using the BNB exchange rate applicable on the trade date.",
+        "SELL transactions: proceeds are calculated as price minus commissions and fees, converted to BGN using the BNB exchange rate applicable on the settlement date.",
+        "The acquisition cost upon disposal is determined using the weighted average method across all purchases for the respective instrument.",
+        "Where no purchase data exists for the current tax year, prior-year data or IBKR CSV values are used and explicitly marked as approximate."
+      ],
+      "positions": "Displays open positions as of 31 December together with calculated acquisition cost. Where current-year data is unavailable, prior-year values or IBKR-reported data are used.",
+      "summary": "Transactions are classified as taxable (Appendix No. 5) or exempt (Appendix No. 13) under Bulgarian tax law, including ETFs traded on regulated EU markets. Tax is calculated at a flat rate of 10% on net taxable income after deduction of 10% statutory expenses, in accordance with applicable legislation.",
+      "disclaimer": "The information provided is indicative and for informational purposes only. It does not constitute financial, legal, or tax advice. Users are responsible for verifying all results before submission to the National Revenue Agency (NRA)."
+    }
+  },
+  "common": {
+    "close": "Close",
+    "cancel": "Cancel",
+    "confirm": "Confirm"
+  },
+  "currencyLabels": {
+    "eur": "Euro",
+    "bgn": "BGN"
+  },
+  "countryNames": {
+    "US": "United States",
+    "DE": "Germany",
+    "IE": "Ireland",
+    "FR": "France",
+    "GB": "United Kingdom",
+    "LU": "Luxembourg",
+    "NL": "Netherlands",
+    "CH": "Switzerland",
+    "JP": "Japan",
+    "CN": "China",
+    "CA": "Canada",
+    "AU": "Australia",
+    "SE": "Sweden",
+    "DK": "Denmark",
+    "NO": "Norway",
+    "AT": "Austria",
+    "BE": "Belgium",
+    "IT": "Italy",
+    "ES": "Spain",
+    "PT": "Portugal",
+    "FI": "Finland",
+    "PL": "Poland",
+    "CZ": "Czech Republic",
+    "HU": "Hungary",
+    "RO": "Romania",
+    "GR": "Greece",
+    "BG": "Bulgaria",
+    "HR": "Croatia",
+    "SK": "Slovakia",
+    "SI": "Slovenia",
+    "LT": "Lithuania",
+    "LV": "Latvia",
+    "EE": "Estonia",
+    "MT": "Malta",
+    "CY": "Cyprus",
+    "LI": "Liechtenstein",
+    "IS": "Iceland",
+    "SG": "Singapore",
+    "KY": "Cayman Islands",
+    "XS": "Euroclear"
+  },
+  "disclaimer": {
+    "text": "All data is calculated automatically and may contain inaccuracies. The results are provided for informational purposes only and must be reviewed and validated by the User prior to submission to the Bulgarian National Revenue Agency (NRA)."
+  },
+  "terms": {
+    "title": "Terms of Use",
+    "sections": [
+      {
+        "title": "1. General Provisions",
+        "paragraphs": [
+          "These Terms of Use (\"Terms\") govern the relationship between the user (\"User\") and the developer of the software application \"IBKR Tax Calculator\" (\"Application\").",
+          "By accessing or using the Application, the User confirms that they have read, understood, and agree to be bound by these Terms."
+        ]
+      },
+      {
+        "title": "2. Scope of the Service",
+        "paragraphs": [
+          "The Application is an informational and auxiliary software tool intended solely to assist in calculations related to personal tax obligations under Bulgarian tax legislation.",
+          "The competent authority on tax matters is the National Revenue Agency (NRA).",
+          "The Application:"
+        ],
+        "list": [
+          "does not provide tax, financial, or legal advice;",
+          "does not replace consultation with a licensed or qualified professional;",
+          "does not constitute an official or legally binding source of information."
+        ]
+      },
+      {
+        "title": "3. Functionality and Data Processing",
+        "paragraphs": [
+          "The Application operates entirely within the User's browser environment."
+        ],
+        "list": [
+          "No data is transmitted to external servers",
+          "No data is stored by the developer",
+          "All processing is performed locally on the User's device"
+        ]
+      },
+      {
+        "title": "4. User Responsibility",
+        "paragraphs": [
+          "The User bears full and exclusive responsibility for:"
+        ],
+        "list": [
+          "the accuracy, completeness, and legality of the data provided;",
+          "the verification and validation of all calculated results;",
+          "the use of such results in preparing and submitting tax declarations;",
+          "compliance with applicable Bulgarian legislation."
+        ]
+      },
+      {
+        "title": "5. Disclaimer of Warranties",
+        "paragraphs": [
+          "The Application is provided on an \"as is\" and \"as available\" basis, without warranties of any kind, whether express or implied.",
+          "The developer makes no representations or guarantees regarding accuracy, completeness, reliability, or fitness for a particular purpose."
+        ]
+      },
+      {
+        "title": "6. Limitation of Liability",
+        "paragraphs": [
+          "To the maximum extent permitted by law, the developer shall not be liable for any direct, indirect, incidental, consequential, or special damages, including but not limited to financial losses, penalties, missed benefits, or incorrect tax filings arising from the use of the Application."
+        ]
+      },
+      {
+        "title": "7. Personal Data",
+        "paragraphs": [
+          "The Application does not collect, store, or process personal data. It does not use cookies or tracking technologies. All data remains on the User's device.",
+          "Accordingly, the developer does not act as a data controller or processor within the meaning of applicable data protection laws, including the General Data Protection Regulation (GDPR)."
+        ]
+      },
+      {
+        "title": "8. Intellectual Property",
+        "paragraphs": [
+          "All intellectual property rights in and to the Application, including but not limited to source code, design, and functionality, are owned by the developer.",
+          "Any unauthorized reproduction, modification, distribution, or commercial use is strictly prohibited without prior written consent."
+        ]
+      },
+      {
+        "title": "9. Amendments",
+        "paragraphs": [
+          "The developer reserves the right to amend these Terms at any time. The latest version shall be made available within the Application and shall take effect upon publication."
+        ]
+      },
+      {
+        "title": "10. Governing Law",
+        "paragraphs": [
+          "These Terms shall be governed by and construed in accordance with the laws of the Republic of Bulgaria.",
+          "Any disputes arising from or in connection with these Terms shall be subject to the exclusive jurisdiction of the competent Bulgarian courts."
+        ]
+      },
+      {
+        "title": "11. Contact",
+        "paragraphs": [
+          "For inquiries related to the Application, the User may contact the developer via the contact details provided within the Application."
+        ]
+      }
+    ]
+  },
+  "errors": {
+    "invalidFileTypeCsv": "Invalid file type. Expected .csv file.",
+    "invalidFileTypeHtml": "Invalid file type. Expected .htm or .html file.",
+    "invalidCsvFormat": "Invalid file. Expected Activity Statement CSV from IBKR.",
+    "invalidHtmlFormat": "Invalid file. Expected Trade Confirmation HTML from IBKR.",
+    "unsupportedCurrency": "Unsupported currency: {{currency}}. Only USD and EUR are supported.",
+    "missingRequiredData": "Missing required data: {{field}}."
+  },
+  "app": {
+    "title": "IBKR Tax Calculator",
+    "copyJson": "Copy JSON",
+    "tabs": {
+      "trades": "Trades",
+      "positions": "Positions",
+      "dividends": "Dividends",
+      "interest": "Interest",
+      "dev": "Dev",
+      "summary": "Summary"
+    },
+    "copyExcel": "Copy to Excel",
+    "copyExcelDone": "Copied",
+    "copyExcelError": "Copy error",
+    "copyExcelTooltip": "Copies data from all sections",
+    "dev": {
+      "inputJson": "Input JSON",
+      "outputJson": "Output JSON"
+    },
+    "tradesTableTitle": "Trade Confirmation – Trades",
+    "countLabel": {
+      "trades": "trades",
+      "payments": "payments"
+    },
+    "taxStatus": {
+      "taxable": "Taxable",
+      "exempt": "Exempt"
+    },
+    "changeStatusDialog": {
+      "title": "Change tax status"
+    },
+    "calculate": "Calculate",
+    "calculating": "Loading...",
+    "noFileQuestion": "Don't have a file?",
+    "loadDemo": "Load demo",
+    "demoLoadError": "Failed to load demo file:",
+    "copyright": "© 2026 IBKR Tax Calculator. All rights reserved.",
+    "footer": {
+      "githubLabel": "GitHub",
+      "termsLink": "Terms of Use",
+      "privacyLink": "Privacy",
+      "supportLink": "Support cause",
+      "supportTooltip": "Support Wildlife Foundation"
+    },
+    "termsAgree": "I agree with",
+    "termsAgreeLink": "terms of use",
+    "csvHint": "IBKR Portal → Reports → Statements → Activity (CSV format)",
+    "htmlHint": "IBKR Portal → Reports → Statements → Trade Confirmation (HTML)",
+    "interest": {
+      "title": "Appendix No. 6 – Income from Other Sources (Art. 35)",
+      "bodyPart1": "Interest from IBKR is declared in",
+      "bodyApp6": "Appendix No. 6",
+      "bodyPart2": ", Row 6,",
+      "bodyCode": "Code 606",
+      "bodyPart3": " : \"Total amount of income with code 606, payers of which are not enterprises or self-insured persons\". In field",
+      "bodyField": "Income amount",
+      "bodyPart4": "enter the total amount in {{localCurrencyLabel}} ({{localCurrencyCode}}), calculated by the BNB exchange rate applicable on the date of each payment."
+    }
+  },
+  "dropzone": {
+    "csvLabel": "Activity Statement CSV here",
+    "htmlLabel": "Trade Confirmation HTML here",
+    "openFile": "Open file",
+    "downloadFile": "Download file",
+    "removeFile": "Remove file",
+    "info": "Information"
+  },
+  "dropzoneInfo": {
+    "csv": {
+      "title": "How to Download Activity Statement",
+      "steps": [
+        "Log in to Interactive Brokers Client Portal",
+        "Go to Performance & Reports > Statements",
+        "Select Activity Statement",
+        "In the form, select desired period — \"Annual\"",
+        "Generate and download CSV file"
+      ]
+    },
+    "htm": {
+      "title": "How to Download Trade Confirmation",
+      "steps": [
+        "Log in to Interactive Brokers Client Portal",
+        "Go to Performance & Reports > Trade Confirmations",
+        "Select desired period",
+        "Click Run and after generation — Download",
+        "Download file in HTML format"
+      ]
+    }
+  },
+  "dataTable": {
+    "copied": "Copied!",
+    "copyToExcel": "Copy to Excel",
+    "showAll": "Show all {{hidden}} hidden {{countLabel}}",
+    "hide": "Hide"
+  },
+  "taxApp5": {
+    "title": "Appendix No. 5 – Table 2",
+    "subtitle": "Income from transfer of financial assets (stocks, ETFs outside EU, etc.). Code – 508",
+    "totalProceeds": "Total amount of sale prices on sale or exchange of financial assets ({{lcl}})",
+    "totalCost": "Total amount of acquisition prices ({{lcl}})",
+    "profits": "Realized gains ({{lcl}})",
+    "losses": "Realized losses ({{lcl}})",
+    "netIncome": "Net taxable income (gains − losses) ({{lcl}})",
+    "taxableBase": "Tax base after recognized expenses 10% (Art. 33, Para. 3) ({{lcl}})",
+    "taxDue": "Tax due 10% on tax base ({{lcl}})",
+    "infoLine1": "Tax is calculated under Art. 33, Para. 3:",
+    "infoFormula": "(gains − losses) × 90% × 10%",
+    "infoLine2": ". If losses exceed gains, tax is 0. Losses are",
+    "infoLine2Bold": "not",
+    "infoLine3": "carried forward to subsequent years. Enter values from the table in the corresponding fields of Appendix No. 5, Table 2, Code 508."
+  },
+  "taxApp13": {
+    "title": "Appendix No. 13 – Part II",
+    "subtitle": "Non-taxable income from sale of ETF units on regulated markets in EU. Code – 508",
+    "grossIncome": "Gross amount of income (sale prices) ({{lcl}})",
+    "acquisitionCost": "Acquisition cost ({{lcl}})",
+    "result": "Net result ({{lcl}})"
+  },
+  "taxApp8Holdings": {
+    "tableTitle": "Held shares and units as of 31 December",
+    "title": "Appendix No. 8 – Part I Held shares and units in foreign companies as of 31.12",
+    "accordingTo": "According to",
+    "legalRef": "Art. 50, Para. 1, p. 2",
+    "bodyLine1": "all foreign shares and units held as of 31 December",
+    "bodyMustDeclare": "must be declared",
+    "bodyLine2": "regardless of whether income was realized. They are entered in Appendix No. 8, Part I — one line per position. Data is based on open positions from IBKR at year-end.",
+    "shares": "Shares",
+    "funds": "Units",
+    "countLabel": "positions"
+  },
+  "tradeTableCols": {
+    "taxable": "Taxable?",
+    "taxExemptLabel": "Tax status",
+    "securityIdHelp": "Open the link, select the instrument, go to \"Trading venues\" and check if market type is \"Regulated market\"",
+    "symbol": "Symbol",
+    "instrType": "Type",
+    "exchange": "Exchange",
+    "datetime": "Trade Date/Time",
+    "currency": "Currency",
+    "side": "Type",
+    "quantityDisplay": "Quantity",
+    "price": "Price",
+    "proceeds": "Proceeds",
+    "commission": "Commission",
+    "fee": "Fee",
+    "totalWithFee": "Total + fees (currency)",
+    "rate": "Rate ({{lcl}})",
+    "totalWithFeeLcl": "Total + fees ({{lcl}})",
+    "costBasis": "Acquisition cost (currency)",
+    "costBasisLcl": "Acquisition cost ({{lcl}})"
+  },
+  "holdingTableCols": {
+    "symbol": "Symbol",
+    "type": "Type",
+    "country": "Country",
+    "quantity": "Quantity",
+    "acquDate": "Acquisition date and year",
+    "acquDateShort": "Date",
+    "costBasis": "Total cost in respective currency",
+    "currency": "Currency",
+    "costLcl": "Total cost in {{lcl}}"
+  },
+  "dividendTableCols": {
+    "symbol": "Symbol",
+    "description": "Name of payer",
+    "descriptionShort": "Name",
+    "countryName": "Country",
+    "incomeCategoryCode": "Income type code",
+    "incomeCategoryCodeShort": "Income code",
+    "methodCode": "Double tax relief method code",
+    "methodCodeShort": "Method code",
+    "grossAmountLcl": "Gross income including paid tax (for code 8141 income)",
+    "grossAmountLclShort": "Gross income ({{lcl}})",
+    "foreignTaxPaidLcl": "Tax paid abroad",
+    "foreignTaxPaidLclShort": "Tax abroad ({{lcl}})",
+    "allowableCreditLcl": "Allowable tax credit",
+    "allowableCreditLclShort": "Allowable credit ({{lcl}})",
+    "dueTaxLcl": "Tax due under Art. 67, Para. 4",
+    "dueTaxLclShort": "Tax due ({{lcl}})"
+  },
+  "interestTableCols": {
+    "date": "Date",
+    "currency": "Currency",
+    "description": "Description",
+    "amount": "Amount",
+    "amountLcl": "Amount ({{lcl}})",
+    "total": "Total"
+  },
+  "openPositionsCols": {
+    "assetCategory": "Category",
+    "currency": "Currency",
+    "symbol": "Symbol",
+    "instrType": "Type",
+    "quantity": "Quantity",
+    "multiplier": "Multiplier",
+    "costPrice": "Price",
+    "costBasis": "Base",
+    "closePrice": "Close price",
+    "value": "Value",
+    "unrealizedPL": "Unrealized P/L"
+  },
+  "spb8Warning": {
+    "title": "SPB-8 Report Filing Required (BNB Regulation No. 27)",
+    "body": "The total value of your open positions exceeds the EUR 25,000 threshold. Under BNB Regulation No. 27, you must file an Annual Report — SPB-8 form.",
+    "totalLine": "Total value of positions: {{total}} {{currency}}",
+    "details": [
+      "Deadline: by March 31 of the following year",
+      "Filing: electronically via BNB ISIS with qualified electronic signature (QES), by mail or in person at BNB office",
+      "SPB-8 is a statistical form for BNB — not a tax declaration for the Tax Agency",
+      "Must declare shares, bonds, ETFs, ETPs and cash in foreign accounts (incl. IBKR), acquired without intermediation of Bulgarian investment intermediary"
+    ]
+  },
+  "taxApp8Dividends": {
+    "title": "Appendix No. 8 – Part III Dividends from Abroad",
+    "taxRate": "final tax 5%",
+    "withheldTax": "Tax withheld abroad",
+    "taxCredit": "tax credit",
+    "bodyLine1": "Dividends are taxed with",
+    "bodyLine2": "on the gross amount. If the company withheld tax abroad, it is entered in column",
+    "bodyLine3": "and is deducted from the due Bulgarian tax (",
+    "tableTitle": "Tax due for dividends from abroad",
+    "countLabel": "records"
+  },
+  "priorYearForm": {
+    "title": "Prior year ({{prevYearLabel}}) positions — review and adjust if needed",
+    "bodyLine1": "Positions acquired before the current tax year have been detected. The acquisition cost in {{lcl}} was calculated using the BNB rate at end of {{prevYearLabel}} ({{prevYearEndDate}}{{rateInfo}}). You can adjust values according to the actual acquisition rate and date of last purchase, then click",
+    "calculateButton": "Calculate",
+    "rateInfo": " — 1 USD = {{rate}} {{lcl}}",
+    "colSymbol": "Symbol",
+    "colCurrency": "Currency",
+    "colQty": "Quantity",
+    "colCostCurrency": "Acquisition cost (currency)",
+    "colCostLocal": "Acquisition cost ({{lcl}})",
+    "colLastBuyDate": "Date of last purchase"
+  },
+  "etfClassificationWarning": {
+    "title": "The \"taxable / non-taxable\" status was automatically determined based on available data.",
+    "line3": "Click on the \"taxable?\" checkbox ✓",
+    "attention": "To change manually:",
+    "line2": "In most cases the determination is correct – ETFs on regulated markets that are not crypto are marked as Exempt from tax, and all other instruments as Taxable.",
+    "line1": "It is recommended to verify before submitting to the Tax Agency."
+  },
+  "theme": {
+    "dark": "Dark",
+    "light": "Light"
+  },
+  "costBasisStrategy": {
+    "label": "Acquisition cost method",
+    "defaultWarning": "You don't need to change this setting unless you know what you're doing.",
+    "ibkr": "IBKR lot basis (FIFO from CSV)",
+    "ibkrDesc": "Uses \"Basis\" column from CSV file as documentation for specific closed lots. The cost in local currency is entered in the table above.",
+    "weightedAverage": "Weighted average cost",
+    "weightedAverageDesc": "Backup method under Bulgarian law when you cannot prove which specific lot was sold (Art. 33, Para. 4)."
+  },
+  "priorYearWarning": {
+    "title": "Approximate acquisition cost in {{lcl}} — prior year positions",
+    "bodyLine1": "For the trades listed below, no purchase data was found in the current reporting year. The acquisition cost in {{lcl}} was calculated using the BNB rate at end of {{prevYearLabel}} ({{prevYearEndDate}}{{rateInfo}}). The actual value may differ if shares were acquired at a different rate within {{prevYearLabel}}. We recommend checking the exact acquisition rate in your trading history and adjusting the value manually if needed.",
+    "rateInfo": " — 1 USD = {{rate}} {{lcl}}",
+    "salePart": "sale of",
+    "units": "units",
+    "at": "@",
+    "on": "on",
+    "acquisitionCost": "acquisition cost:",
+    "approx": "(approximate)"
+  },
+  "privacy": {
+    "title": "Privacy Policy",
+    "sections": [
+      {
+        "title": "1. General Provisions",
+        "paragraphs": [
+          "This privacy policy describes how information is processed when using this website."
+        ]
+      },
+      {
+        "title": "2. Data Collected",
+        "paragraphs": [
+          "This website does not collect personal data that could identify users."
+        ]
+      },
+      {
+        "title": "3. File Processing",
+        "paragraphs": [
+          "Files uploaded by users are processed entirely locally in the browser and are not sent to any server. The site has no access to the contents of these files."
+        ]
+      },
+      {
+        "title": "4. Local Storage",
+        "paragraphs": [
+          "The site uses local storage in the user's browser only to save selected display settings (light or dark mode, and language)."
+        ],
+        "list": [
+          "Stored information does not contain personal data",
+          "Data remains entirely on the user's device",
+          "Data is not shared with third parties",
+          "Data is used only to improve user experience"
+        ]
+      },
+      {
+        "title": "5. Cookies",
+        "paragraphs": [
+          "The site does not use cookies for tracking, analytics, or marketing purposes."
+        ]
+      },
+      {
+        "title": "6. Third Parties",
+        "paragraphs": [
+          "The site does not share information with third parties and does not use external tracking services."
+        ]
+      },
+      {
+        "title": "7. Security",
+        "paragraphs": [
+          "Reasonable technical and organizational measures have been taken to protect the site and data."
+        ]
+      },
+      {
+        "title": "8. User Rights",
+        "paragraphs": [
+          "Since no personal data is collected, no processing is performed that would be subject to GDPR rights."
+        ]
+      },
+      {
+        "title": "9. Policy Changes",
+        "paragraphs": [
+          "This policy may be updated as needed. Changes take effect upon publication on the site."
+        ]
+      },
+      {
+        "title": "10. Contact",
+        "paragraphs": [
+          "For questions about this policy, you can contact via the site's GitHub profile."
+        ]
+      }
+    ]
+  }
+}

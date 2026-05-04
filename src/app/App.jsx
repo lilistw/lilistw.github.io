@@ -1,9 +1,10 @@
-import { t } from './localization/i18n.js'
+import { useTranslation } from 'react-i18next'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from '@mui/material'
 
 import { dayTheme, nightTheme } from './theme.js'
 import { useTaxAppController } from './hooks/useTaxAppController.js'
+import { useLanguage } from './hooks/useLanguage.js'
 
 import AppHeader from './components/AppHeader.jsx'
 import AppFooter from './components/AppFooter.jsx'
@@ -15,6 +16,9 @@ import PriorYearPositionsForm from './components/PriorYearPositionsForm.jsx'
 import CostBasisStrategySelector from './components/CostBasisStrategySelector.jsx'
 
 export default function App() {
+  const { t } = useTranslation()
+  const [language, switchLanguage] = useLanguage()
+
   const {
     nightMode, setNightMode,
     costBasisStrategy, setCostBasisStrategy,
@@ -38,7 +42,7 @@ export default function App() {
       <CssBaseline />
 
       <div className="app">
-        <AppHeader nightMode={nightMode} setNightMode={setNightMode} />
+        <AppHeader nightMode={nightMode} setNightMode={setNightMode} language={language} onLanguageSwitch={switchLanguage} />
 
         <div className="app-content">
           <main>

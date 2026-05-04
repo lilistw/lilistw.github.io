@@ -1,5 +1,5 @@
 import Decimal from 'decimal.js'
-import { t } from '../localization/i18n.js'
+import { useTranslation } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { WarningAmberOutlined } from '@mui/icons-material'
@@ -18,6 +18,7 @@ function fmtNum(n) {
 }
 
 export default function ThresholdWarning({ holdings, localCurrencyLabel, localCurrencyCode }) {
+  const { t } = useTranslation()
   const currencyDisplay = t(`currencyLabels.${localCurrencyLabel.toLowerCase()}`)
   const totalLcl = holdings.reduce((sum, h) => sum.plus(toDecimal(h.costLcl ?? D0)), D0)
   if (totalToEur(totalLcl, localCurrencyCode).lte(SPB8_THRESHOLD_EUR)) return null

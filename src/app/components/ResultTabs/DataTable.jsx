@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { t } from '../../localization/i18n.js'
+import { useTranslation } from 'react-i18next'
 import {
   Box, Button, Checkbox, Chip, Paper, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Tooltip, Typography,
@@ -115,6 +115,7 @@ function buildTsv(columns, rows) {
 }
 
 function CopyExcelButton({ columns, rows }) {
+  const { t } = useTranslation()
   const [copied, setCopied] = useState(false)
   async function handleCopy() {
     await navigator.clipboard.writeText(buildTsv(columns, rows))
@@ -137,6 +138,7 @@ function CopyExcelButton({ columns, rows }) {
 }
 
 export default function DataTable({ title, columns, rows, countLabel, hint, embedded = false, sx, onToggle }) {
+  const { t } = useTranslation()
   const [expanded, setExpanded] = useState(false)
   const copyRows = rows.filter(r => !r._total && !r._subtitle)
   const dataRows = rows.filter(r => !r._total)

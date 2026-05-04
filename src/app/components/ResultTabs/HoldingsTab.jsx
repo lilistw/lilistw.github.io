@@ -1,4 +1,4 @@
-import { t } from '../../localization/i18n.js'
+import { useTranslation } from 'react-i18next'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
@@ -14,6 +14,7 @@ function addRowNumbers(rows) {
 const NUM_COL = { key: '#', label: '#', align: 'right', mono: true, decimals: 0 }
 
 export default function TaxApp8Holdings({ result }) {
+  const { t } = useTranslation()
   const holdingsPresenter = new HoldingPresenter({
     lcl: result.taxContext.localCurrencyLabel
   })

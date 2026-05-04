@@ -1,8 +1,9 @@
-import { t } from '../localization/i18n.js'
+import { useTranslation } from 'react-i18next'
 import { Tooltip } from '@mui/material';
 import { GitHub, InfoOutlined, Favorite, PrivacyTipOutlined } from '@mui/icons-material';
 
 export default function AppFooter({ onShowTerms, onShowPrivacy }) {
+  const { t } = useTranslation()
 
   return (
     <footer className="app-footer">
