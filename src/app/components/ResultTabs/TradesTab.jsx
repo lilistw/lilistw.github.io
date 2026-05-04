@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react'
-import { t } from '../../localization/i18n.js'
+import { t, getLanguage } from '../../localization/i18n.js'
 import DataTable from './DataTable'
 import TaxSummary from './TaxSummary'
 import PriorYearApproxWarning from '../PriorYearApproxWarning'
@@ -12,6 +12,7 @@ import { useTradesViewModel } from '../../hooks/useTradesViewModel.js'
 
 export default function TradesTab({ result }) {
   const { localCurrencyCode, localCurrencyLabel } = result.taxContext
+  const language = getLanguage()
 
   // Raw Decimal rows (no _total rows); updated when user toggles taxable status
   const [rawRows, setRawRows] = useState(
@@ -20,7 +21,7 @@ export default function TradesTab({ result }) {
 
   const tradePresenter = useMemo(
     () => new TradePresenter({ lcl: localCurrencyLabel }),
-    [localCurrencyLabel]
+    [localCurrencyLabel, language]
   )
 
   const { columns, rows, taxSummary } = useTradesViewModel({
