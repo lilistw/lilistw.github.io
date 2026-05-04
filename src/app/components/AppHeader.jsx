@@ -1,14 +1,11 @@
-import { t, getLanguage, setLanguage } from '../localization/i18n.js'
+import { t } from '../localization/i18n.js'
 import { Typography, Box } from '@mui/material';
 import { LightModeOutlined, DarkModeOutlined } from '@mui/icons-material';
 import AboutSection from './AboutSection';
 
-export default function AppHeader({ nightMode, setNightMode }) {
+export default function AppHeader({ nightMode, setNightMode, language, onLanguageSwitch }) {
   const handleLanguageToggle = () => {
-    const newLanguage = getLanguage() === 'bg' ? 'en' : 'bg'
-    setLanguage(newLanguage)
-    // Trigger re-render by setting a temporary state or using a context
-    window.dispatchEvent(new CustomEvent('languageChanged', { detail: newLanguage }))
+    onLanguageSwitch(language === 'bg' ? 'en' : 'bg')
   }
 
   return (
@@ -39,7 +36,7 @@ export default function AppHeader({ nightMode, setNightMode }) {
           }}
         >
           <Typography variant="caption" sx={{ fontWeight: 500 }}>
-            {getLanguage().toUpperCase()}
+            {language.toUpperCase()}
           </Typography>
         </Box>
 

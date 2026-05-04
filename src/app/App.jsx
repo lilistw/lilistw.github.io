@@ -1,11 +1,10 @@
-import { t, setLanguage } from './localization/i18n.js'
-import { getStoredLanguage, storeLanguage } from './hooks/languageStorage.js'
+import { t } from './localization/i18n.js'
 import { ThemeProvider, CssBaseline } from '@mui/material'
 import { Box, Button, Checkbox, FormControlLabel, Typography, Link, Alert } from '@mui/material'
-import { useState, useEffect } from 'react'
 
 import { dayTheme, nightTheme } from './theme.js'
 import { useTaxAppController } from './hooks/useTaxAppController.js'
+import { useLanguage } from './hooks/useLanguage.js'
 
 import AppHeader from './components/AppHeader.jsx'
 import AppFooter from './components/AppFooter.jsx'
@@ -17,26 +16,7 @@ import PriorYearPositionsForm from './components/PriorYearPositionsForm.jsx'
 import CostBasisStrategySelector from './components/CostBasisStrategySelector.jsx'
 
 export default function App() {
-  const [, setRerenderTrigger] = useState(0)
-
-  // Initialize language on app load
-  useEffect(() => {
-    const storedLanguage = getStoredLanguage()
-    const initialLanguage = storedLanguage || 'bg'
-    setLanguage(initialLanguage)
-    storeLanguage(initialLanguage)
-  }, [])
-
-  // Listen for language changes from language toggle button
-  useEffect(() => {
-    const handleLanguageChange = (event) => {
-      const newLanguage = event.detail
-      storeLanguage(newLanguage)
-      setRerenderTrigger(prev => prev + 1)
-    }
-    window.addEventListener('languageChanged', handleLanguageChange)
-    return () => window.removeEventListener('languageChanged', handleLanguageChange)
-  }, [])
+  const [language, switchLanguage] = useLanguage()
 
   const {
     nightMode, setNightMode,
@@ -61,7 +41,7 @@ export default function App() {
       <CssBaseline />
 
       <div className="app">
-        <AppHeader nightMode={nightMode} setNightMode={setNightMode} />
+        <AppHeader nightMode={nightMode} setNightMode={setNightMode} language={language} onLanguageSwitch={switchLanguage} />
 
         <div className="app-content">
           <main>
