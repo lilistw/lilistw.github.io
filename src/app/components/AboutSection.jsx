@@ -18,8 +18,10 @@ import {
 } from '@mui/icons-material';
 import { useState } from 'react';
 import { t } from '../localization/i18n.js'
+import { useLocale } from '../hooks/useLocale.js'
 
 export default function AboutSection() {
+  useLocale()
   const [open, setOpen] = useState(false);
 
   const cardSx = {

@@ -1,8 +1,10 @@
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton } from '@mui/material'
 import { Close } from '@mui/icons-material'
 import { t } from '../../localization/i18n.js'
+import { useLocale } from '../../hooks/useLocale.js'
 
 export default function TaxableToggleDialog({ pending, onClose, onConfirm }) {
+  useLocale()
 
   if (!pending) return null
 

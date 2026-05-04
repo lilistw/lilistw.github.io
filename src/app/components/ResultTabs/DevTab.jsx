@@ -7,6 +7,7 @@ import {
   Box
 } from '@mui/material'
 import { t } from '../../localization/i18n.js'
+import { useLocale } from '../../hooks/useLocale.js'
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore'
 import ContentCopyIcon from '@mui/icons-material/ContentCopy'
 
@@ -52,6 +53,7 @@ function JsonAccordion({ title, text, defaultExpanded = false }) {
 }
 
 export default function DevTab({ inputJsonText, outputJsonText }) {
+  useLocale()
   return (
     <>
       <JsonAccordion

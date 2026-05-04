@@ -1,9 +1,11 @@
 import { t } from '../localization/i18n.js'
+import { useLocale } from '../hooks/useLocale.js'
 import { Typography, Box } from '@mui/material';
 import { LightModeOutlined, DarkModeOutlined } from '@mui/icons-material';
 import AboutSection from './AboutSection';
 
 export default function AppHeader({ nightMode, setNightMode, language, onLanguageSwitch }) {
+  useLocale()
   const handleLanguageToggle = () => {
     onLanguageSwitch(language === 'bg' ? 'en' : 'bg')
   }

@@ -1,4 +1,5 @@
 import { t } from '../../localization/i18n.js'
+import { useLocale } from '../../hooks/useLocale.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
@@ -6,6 +7,7 @@ import DataTable from './DataTable.jsx'
 import { DividendPresenter } from '../presentation/DividendPresenter.js'
 
 export default function DividendsTab({ result }) {
+  useLocale()
   // --- DIVIDENDS (presentation) ---
   const data = new DividendPresenter({
     lcl: result.taxContext.localCurrencyLabel,

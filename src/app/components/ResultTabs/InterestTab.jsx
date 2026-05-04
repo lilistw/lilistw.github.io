@@ -1,4 +1,5 @@
 import { t } from '../../localization/i18n.js'
+import { useLocale } from '../../hooks/useLocale.js'
 import { Box, Typography } from '@mui/material'
 import { alpha } from '@mui/material/styles'
 import { ReceiptLongOutlined } from '@mui/icons-material'
@@ -6,6 +7,7 @@ import DataTable from './DataTable'
 import { InterestPresenter } from '../presentation/InterestPresenter.js'
 
 export default function InterestTab({ result }) {
+  useLocale()
   const { localCurrencyLabel, localCurrencyCode } = result
 
   const interestTable = new InterestPresenter({

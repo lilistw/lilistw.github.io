@@ -1,9 +1,11 @@
 import { useState } from 'react'
 import { t } from '../../localization/i18n.js'
+import { useLocale } from '../../hooks/useLocale.js'
 import { IconButton } from '@mui/material'
 import { Check, ContentCopy } from '@mui/icons-material'
 
 export default function CopyButton({ text }) {
+  useLocale()
   const [copied, setCopied] = useState(false)
 
   async function handleCopy() {

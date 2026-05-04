@@ -5,6 +5,7 @@ const MISSING = Symbol('missing')
 
 const translations = { bg, en }
 let currentLanguage = 'bg'
+const _subscribers = new Set()
 
 function getByPath(source, path) {
   return path.split('.').reduce((acc, key) => {
@@ -24,7 +25,17 @@ function interpolate(value, vars) {
 export function setLanguage(lang) {
   if (lang === 'bg' || lang === 'en') {
     currentLanguage = lang
+    _subscribers.forEach(fn => fn())
   }
+}
+
+export function subscribeToLanguage(callback) {
+  _subscribers.add(callback)
+  return () => _subscribers.delete(callback)
+}
+
+export function getLanguageSnapshot() {
+  return currentLanguage
 }
 
 export function getLanguage() {

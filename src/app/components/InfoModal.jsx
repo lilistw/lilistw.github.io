@@ -1,8 +1,10 @@
 import { t } from '../localization/i18n.js'
+import { useLocale } from '../hooks/useLocale.js'
 import { Dialog, DialogTitle, DialogContent, DialogActions, Button, IconButton } from '@mui/material';
 import { Close } from '@mui/icons-material';
 
 export default function InfoModal({ titleKey, sectionsKey, onClose }) {
+  useLocale()
   const sections = t(sectionsKey, { returnObjects: true })
   return (
     <Dialog open onClose={onClose} maxWidth="sm" fullWidth scroll="paper">

@@ -1,8 +1,10 @@
 import { t } from '../localization/i18n.js'
+import { useLocale } from '../hooks/useLocale.js'
 import { Tooltip } from '@mui/material';
 import { GitHub, InfoOutlined, Favorite, PrivacyTipOutlined } from '@mui/icons-material';
 
 export default function AppFooter({ onShowTerms, onShowPrivacy }) {
+  useLocale()
 
   return (
     <footer className="app-footer">

@@ -1,5 +1,6 @@
 import { useState } from 'react'
 import { t } from '../../localization/i18n.js'
+import { useLocale } from '../../hooks/useLocale.js'
 import { Box, Tabs, Tab } from '@mui/material'
 
 import TradesTab from './TradesTab'
@@ -16,6 +17,7 @@ function TabPanel({ children, value, index }) {
 }
 
 export default function ResultTabs({ result, inputJsonText, outputJsonText }) {
+  useLocale()
   const [tab, setTab] = useState(0)
 
   const hasDividends = result.dividends.length > 0

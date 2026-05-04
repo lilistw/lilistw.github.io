@@ -1,5 +1,6 @@
 import { useState, useRef } from 'react'
 import { t } from '../localization/i18n.js'
+import { useLocale } from '../hooks/useLocale.js'
 import {
   Box, Button, Chip, Dialog, DialogActions, DialogContent, DialogTitle, IconButton,
   Link, Typography,
@@ -14,6 +15,7 @@ export default function Dropzone({
   fileType,
   hint,
 }) {
+  useLocale()
   const [showInfo, setShowInfo] = useState(false)
   const inputRef = useRef(null)
 
